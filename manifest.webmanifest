@@ -1,0 +1,13 @@
+{
+  "name": "Zoë",
+  "short_name": "Zoë",
+  "description": "Sua vida extraordinária, um dia por vez",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#F7F8F6",
+  "theme_color": "#075B59",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "./icone.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
