@@ -11,6 +11,9 @@ import Financeiro from './Financeiro.jsx';
 import Ingles from './Ingles.jsx';
 import Dopamina from './Dopamina.jsx';
 import Conquistas from './Conquistas.jsx';
+import { FASES as FASES_INGLES } from './ingles.data';
+import { totalLicoesDopamina } from './dopamina.data';
+import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 
 /* ══════════ FOTOS ══════════
    As imagens são comprimidas antes de salvar (lado maior 900px, jpeg 72%),
@@ -305,7 +308,8 @@ export default function ZoeApp() {
       up(s => ({ ...s, fotos: [{ id, data: hoje(), cat: ctxFoto.cat, etapaId: ctxFoto.etapaId, legenda: '' }, ...s.fotos] }));
       aviso('Foto salva no diário');
     } catch {
-F    }
+      aviso('Não consegui ler essa imagem');
+    }
   };
 
   const apagarFoto = (id) => {
@@ -1087,6 +1091,16 @@ F    }
   /* ══════════ INÍCIO ══════════ */
   const Inicio = () => {
     const macros = dia.refeicoes.reduce((a, r) => ({ c: a.c + (r.carb || 0), p: a.p + (r.prot || 0), g: a.g + (r.gord || 0) }), { c: 0, p: 0, g: 0 });
+    const dopaminaFeitas = Object.values(d.dopamina?.licoes || {}).filter(Boolean).length;
+    const inglesFeitas = Object.values(d.ingles?.fasesConcluidas || {}).filter(Boolean).length;
+    const metaAnual = d.financeiro?.metaAnual || METAANUAL_PADRAO;
+    const economizado = (d.financeiro?.transacoes || []).reduce((a, t) => a + (t.tipo === 'entrada' ? t.valor : -t.valor), 0);
+    const pilares = [
+      { id: 'trilha', nome: 'Vida', icone: Route, cor: C.green, valor: concluidas, meta: totalEtapas },
+      { id: 'dopamina', nome: 'Dopamina', icone: Flame, cor: C.coral, valor: dopaminaFeitas, meta: totalLicoesDopamina },
+      { id: 'ingles', nome: 'Inglês', icone: Languages, cor: C.sky, valor: inglesFeitas, meta: FASES_INGLES.length },
+      { id: 'financeiro', nome: 'Financeiro', icone: Wallet, cor: C.lilac, valor: economizado, meta: metaAnual.alvo, moeda: true }
+    ];
     return (
       <div style={{ paddingBottom: 120 }}>
         <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg} 78%)`, padding: '18px 18px 8px' }}>
@@ -1101,6 +1115,27 @@ F    }
               <button onClick={permissao} style={{ background: C.card, border: 'none', borderRadius: 99, width: 38, height: 38, cursor: 'pointer', color: C.ink, boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}><Bell size={17} /></button>
               <button onClick={sair} style={{ background: C.card, border: 'none', borderRadius: 99, width: 38, height: 38, cursor: 'pointer', color: C.ink3, boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}><LogOut size={16} /></button>
             </div>
+          </div>
+
+          {/* fileira de pilares — Vida / Dopamina / Inglês / Financeiro */}
+          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', margin: '0 -18px 14px', padding: '2px 18px 4px' }}>
+            {pilares.map((p, i) => {
+              const pct = Math.min(100, p.meta ? (p.valor / p.meta) * 100 : 0);
+              const texto = sobre(p.cor);
+              return (
+                <div key={p.id} onClick={() => setAba(p.id)} className="zoe-surge" style={{
+                  animationDelay: `${i * 45}ms`, minWidth: 122, flexShrink: 0, background: p.cor, borderRadius: 18,
+                  padding: 14, cursor: 'pointer', color: texto
+                }}>
+                  <p.icone size={18} />
+                  <div style={{ fontSize: 12.5, fontWeight: 800, marginTop: 9 }}>{p.nome}</div>
+                  <div style={{ fontSize: 11, opacity: .85, marginTop: 2 }}>{p.moeda ? formatoMoeda(p.valor) : `${p.valor}/${p.meta}`}</div>
+                  <div style={{ height: 5, background: 'rgba(255,255,255,.35)', borderRadius: 99, marginTop: 9, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: texto, borderRadius: 99 }} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* etapa atual — o coach */}
@@ -1175,6 +1210,19 @@ F    }
               <Btn variante="outline" cor={C.lilac} style={{ width: '100%', padding: 8, fontSize: 12.5 }} onClick={() => setSheet('treino')}>Registrar</Btn>
             </Card>
           </div>
+
+          <Card cls="zoe-surge" style={{ marginBottom: 12, animationDelay: '250ms' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 800, color: C.ink, fontSize: 15 }}><Wallet size={16} color={C.lilac} /> Meta financeira {metaAnual.ano}</span>
+              <button onClick={() => setAba('financeiro')} style={{ background: 'none', border: 'none', color: C.greenDark, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Ver tudo</button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 11 }}>
+              <span style={{ fontSize: 28, fontWeight: 800, color: C.ink, lineHeight: 1 }}>{formatoMoeda(economizado)}</span>
+              <span style={{ fontSize: 14, color: C.ink3, fontWeight: 600 }}>/ {formatoMoeda(metaAnual.alvo)}</span>
+            </div>
+            <Barra v={economizado} max={metaAnual.alvo} cor={C.lilac} />
+            <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 8 }}>{Math.max(0, Math.min(100, Math.round(economizado / metaAnual.alvo * 100)))}% da meta até o fim do ano</div>
+          </Card>
 
           <Card cls="zoe-surge" style={{ animationDelay: '270ms' }}>
             <div style={{ fontWeight: 800, color: C.ink, fontSize: 13.5, marginBottom: 11 }}>Como está sua energia hoje?</div>
@@ -1590,9 +1638,10 @@ F    }
   const NAV = [
     { id: 'inicio', n: 'Início', i: Home },
     { id: 'trilha', n: 'Trilha', i: Route },
+    { id: 'ingles', n: 'Inglês', i: Languages },
     { id: 'fab', n: '', i: Plus },
-    { id: 'diario', n: 'Diário', i: Camera },
-    { id: 'progresso', n: 'Progresso', i: TrendingUp }
+    { id: 'dopamina', n: 'Dopamina', i: Flame },
+    { id: 'financeiro', n: 'Financeiro', i: Wallet }
   ];
 
   return (
@@ -1615,9 +1664,8 @@ F    }
         <Sheet aberto={maisAberto} fechar={() => setMaisAberto(false)} titulo="Mais">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {[
-              ['financeiro', 'Financeiro', Wallet, C.green],
-              ['ingles', 'Inglês', Languages, C.sky],
-              ['dopamina', 'Reservatório de Dopamina', Flame, C.coral],
+              ['diario', 'Feed', Camera, C.sky],
+              ['progresso', 'Performance', TrendingUp, C.green],
               ['conquistas', 'Conquistas', Trophy, C.gold],
               ['extras', 'Apoio', Compass, C.lilac]
             ].map(([id, nome, Icone, cor]) => (
@@ -1694,7 +1742,7 @@ F    }
           })}
         </div>
 
-        {!['extras', 'financeiro', 'ingles', 'dopamina', 'conquistas'].includes(aba) && !fab && (
+        {!['extras', 'diario', 'progresso', 'conquistas'].includes(aba) && !fab && (
           <button onClick={() => setMaisAberto(true)} style={{ position: 'fixed', bottom: 92, right: 16, width: 48, height: 48, borderRadius: 16, border: 'none', background: C.petroleo, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 16px rgba(11,20,22,.26)', zIndex: 60 }}><Compass size={21} /></button>
         )}
       </div>
