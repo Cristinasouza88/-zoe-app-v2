@@ -305,8 +305,7 @@ export default function ZoeApp() {
       up(s => ({ ...s, fotos: [{ id, data: hoje(), cat: ctxFoto.cat, etapaId: ctxFoto.etapaId, legenda: '' }, ...s.fotos] }));
       aviso('Foto salva no diário');
     } catch {
-      aviso('Não consegui ler essa imagem');
-    }
+F    }
   };
 
   const apagarFoto = (id) => {
