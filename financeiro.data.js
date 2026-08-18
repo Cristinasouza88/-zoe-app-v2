@@ -14,3 +14,7 @@ export const CONTAS_PADRAO = ['Carteira', 'Conta corrente', 'Cartão de crédito
 export const MESES_LBL = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 export const formatoMoeda = (v) => (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+/* Meta de acúmulo/economia do ano — placeholder até a usuária mandar a
+   planilha real com o cálculo exato (referência: barra de meta do Fastic). */
+export const METAANUAL_PADRAO = { alvo: 80000, ano: new Date().getFullYear() };
