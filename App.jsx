@@ -15,7 +15,7 @@ import { FASES as FASES_INGLES } from './ingles.data';
 import { totalLicoesDopamina } from './dopamina.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 import { supabase } from './supabase.js';
-import zoeMascot from './zoe-mascot.png';
+import zoeMascot from './zoe-mascot.data.js';
 
 /* ══════════ FOTOS ══════════
    As imagens são comprimidas antes de salvar (lado maior 900px, jpeg 72%),
