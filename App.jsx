@@ -3,7 +3,7 @@ import {
   Home, Route, Plus, Utensils, TrendingUp, Camera, ImagePlus, Bell, BellRing, ChevronLeft, ChevronRight,
   X, Check, Lock, Timer, Droplets, Dumbbell, BookOpen, Film, Video, Sparkles, Target,
   Heart, Scale, Circle, LogOut, Flame, Trash2, Compass, PenLine, ClipboardList, Sun,
-  Wallet, Languages, Trophy, Moon, Smile, CheckCircle2, UserCircle, Zap, CalendarDays, ChevronDown, ChevronUp, MessageCircle
+  Wallet, Languages, Trophy, Moon, Smile, CheckCircle2, Zap, CalendarDays, ChevronDown, ChevronUp, MessageCircle
 } from 'lucide-react';
 import { TRILHA, RODA_SETORES, RITUAL_ACORDAR, VISAO_PILARES, RESUMO_VISAO, PILARES, VINCULOS, totalEtapas } from './conteudo';
 import { store, C, sobre, CLARAS, hoje, CSS, Card, Btn, Campo, Area, Barra, Sheet, Wordmark, Foto, GraficoBarras, GraficoLinha } from './ui.jsx';
@@ -15,8 +15,8 @@ import { FASES as FASES_INGLES } from './ingles.data';
 import { totalLicoesDopamina } from './dopamina.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 import { supabase } from './supabase.js';
-import zoeMascot from './zoe-mascot.data.js';
-import zoeBeijaFlorHome from './zoe-beijaflor-home.data.js';
+import avatarZoeFun from './avatar-zoe-fun.data.js';
+import avatarZoeEssencial from './avatar-zoe-essencial.data.js';
 
 /* ══════════ FOTOS ══════════
    As imagens são comprimidas antes de salvar (lado maior 900px, jpeg 72%),
@@ -284,7 +284,7 @@ function Login({ onEntrar }) {
 
 /* ══════════ ESTADO ══════════ */
 const inicial = {
-  perfil: { nome: '', email: '', metaKcal: 1500, metaAgua: 3000 },
+  perfil: { nome: '', email: '', metaKcal: 1500, metaAgua: 3000, avatar: null },
   etapas: {},        // { 's4-diagnostico': {feito:true, data:'...'} }
   agenda: {},        // { '2026-08-09': { 's1-agenda-3': true } }
   dias: {},
@@ -303,6 +303,8 @@ export default function ZoeApp() {
     () => window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery')
   );
   const [d, setD] = useState(inicial);
+  const avatarId = d.perfil?.avatar || 'fun';
+  const avatarImagem = avatarId === 'essencial' ? avatarZoeEssencial : avatarZoeFun;
   const [aba, setAba] = useState('inicio');
   const [data, setData] = useState(hoje());
   const [etapaAberta, setEtapaAberta] = useState(null);
@@ -1286,7 +1288,7 @@ export default function ZoeApp() {
     return (
       <div style={{ paddingBottom: 120 }}>
         <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 14px' }}>
-          <div style={{ display:'flex',alignItems:'center',minHeight:94 }}><div style={{ flex:1 }}><h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Minha trilha</h1><p style={{ fontSize: 13, color: C.ink2, margin: 0 }}>Uma missão por vez. Eu sigo com você.</p></div><img src={zoeMascot} alt="ZOE" style={{ width:88,height:96,objectFit:'contain',objectPosition:'center',filter:'drop-shadow(0 8px 12px rgba(55,28,105,.18))' }}/></div>
+          <div style={{ display:'flex',alignItems:'center',minHeight:94 }}><div style={{ flex:1 }}><h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Minha trilha</h1><p style={{ fontSize: 13, color: C.ink2, margin: 0 }}>Uma missão por vez. Eu sigo com você.</p></div><img src={avatarImagem} alt="ZOE" style={{ width:88,height:96,objectFit:'contain',objectPosition:'center',filter:'drop-shadow(0 8px 12px rgba(55,28,105,.18))' }}/></div>
           <Card>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>Progresso da jornada</span>
@@ -1422,7 +1424,7 @@ export default function ZoeApp() {
     return (
       <div style={{ padding: '18px 16px 120px', background: 'radial-gradient(circle at 50% 7%,rgba(168,255,0,.13),transparent 27%),radial-gradient(circle at 92% 18%,rgba(0,230,210,.10),transparent 24%),linear-gradient(180deg,#FCFFFD 0%,#F7FAF9 100%)' }}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 22 }}>
-          <button onClick={() => setAba('perfil')} style={{ width: 42, height: 42, border: 'none', borderRadius: 15, background: '#fff', color: C.ink, boxShadow: '0 5px 16px rgba(24,42,65,.08)', display: 'grid', placeItems: 'center' }}><UserCircle size={25} /></button>
+          <button onClick={() => setSheet('avatar')} aria-label="Trocar avatar da ZOE" style={{ width: 42, height: 42, border: 'none', borderRadius: 15, background: '#fff', color: C.ink, boxShadow: '0 5px 16px rgba(24,42,65,.08)', display: 'grid', placeItems: 'center', overflow: 'hidden', padding: 3 }}><img src={avatarImagem} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></button>
           <div style={{ flex: 1, marginLeft: 10, fontSize: 17, fontWeight: 800, color: C.ink }}>Olá, {d.perfil.nome || usuario.nome} <span aria-hidden="true">👋</span></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: C.green, fontWeight: 800 }}><Heart size={18} /> {pontosDia}</div>
@@ -1438,7 +1440,7 @@ export default function ZoeApp() {
             <div style={{ position: 'absolute', top: -9, left: '50%', transform: 'translateX(-50%)', zIndex: 2, minWidth: 66, height: 38, padding: '0 13px', borderRadius: 16, background: '#fff', display: 'grid', placeItems: 'center', color: C.petroleo, fontSize: 13, fontWeight: 900, boxShadow: '0 7px 18px rgba(15,58,56,.12)' }}>{pctVida}%</div>
             <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle at 50% 42%,#FFFFFF 0%,#FBFFFD 58%,#F0FFF8 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
               <div style={{ color: '#25B97F', fontSize: 11, fontWeight: 800, marginTop: 22, zIndex: 1 }}>Progresso geral</div>
-              <img src={zoeBeijaFlorHome} alt="ZOE, sua coach" style={{ width: 205, height: 159, objectFit: 'contain', margin: '-2px 0 -4px', filter: 'drop-shadow(0 12px 13px rgba(7,91,89,.12))', zIndex: 1 }} />
+              <img src={avatarImagem} alt="ZOE, sua coach" style={{ width: avatarId === 'essencial' ? 130 : 190, height: 159, objectFit: 'contain', margin: '-2px 0 -4px', filter: 'drop-shadow(0 12px 13px rgba(74,25,133,.13))', zIndex: 1 }} />
               <div style={{ color: C.ink, fontWeight: 900, fontSize: 17, zIndex: 1 }}>{concluidas} <span style={{ color: C.ink3, fontWeight: 600 }}>/ {totalEtapas}</span></div>
               <div style={{ color: C.ink3, fontSize: 11.5, marginTop: 1, zIndex: 1 }}>etapas concluídas</div>
             </div>
@@ -1932,6 +1934,38 @@ export default function ZoeApp() {
           </div>
         </Sheet>
 
+        <Sheet
+          aberto={sheet === 'avatar' || !!(usuario && !d.perfil?.avatar)}
+          fechar={() => { if (d.perfil?.avatar) setSheet(null); }}
+          titulo="Como a ZOE acompanha você?"
+        >
+          <p style={{ margin: '-6px 0 18px', color: C.ink2, fontSize: 13, lineHeight: 1.5 }}>
+            Escolha a companhia que combina com seu jeito. Você poderá trocar quando quiser.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            {[
+              { id: 'essencial', nome: 'ZOE Essencial', texto: 'Mais madura, discreta e reflexiva.', imagem: avatarZoeEssencial, fundo: '#F4EDFF' },
+              { id: 'fun', nome: 'ZOE Fun', texto: 'Mais expressiva, leve e gamificada.', imagem: avatarZoeFun, fundo: '#F1FFDB' }
+            ].map(opcao => {
+              const ativa = d.perfil?.avatar === opcao.id;
+              return (
+                <button key={opcao.id} onClick={() => {
+                  up(s => ({ ...s, perfil: { ...s.perfil, avatar: opcao.id } }));
+                  setSheet(null);
+                  aviso(`${opcao.nome} escolhida`);
+                }} style={{ border: `2px solid ${ativa ? C.roxo : C.line}`, background: ativa ? '#FBF8FF' : '#fff', borderRadius: 20, padding: 12, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', boxShadow: ativa ? '0 8px 22px rgba(142,45,226,.13)' : 'none' }}>
+                  <div style={{ height: 170, borderRadius: 16, background: opcao.fundo, display: 'grid', placeItems: 'center', overflow: 'hidden', marginBottom: 11 }}>
+                    <img src={opcao.imagem} alt="" style={{ width: opcao.id === 'essencial' ? '78%' : '92%', height: '94%', objectFit: 'contain' }} />
+                  </div>
+                  <div style={{ color: C.ink, fontWeight: 900, fontSize: 13.5 }}>{opcao.nome}</div>
+                  <div style={{ color: C.ink3, fontSize: 10.5, lineHeight: 1.4, marginTop: 4 }}>{opcao.texto}</div>
+                  <div style={{ height: 28, marginTop: 10, borderRadius: 10, display: 'grid', placeItems: 'center', background: ativa ? C.roxo : '#F2F5F4', color: ativa ? '#fff' : C.ink3, fontSize: 10.5, fontWeight: 900 }}>{ativa ? 'ESCOLHIDA' : 'ESCOLHER'}</div>
+                </button>
+              );
+            })}
+          </div>
+        </Sheet>
+
         <Sheet aberto={sheet === 'treino'} fechar={() => setSheet(null)} titulo="Registrar treino">
           <Campo label="Calorias queimadas" type="number" inputMode="numeric" id="tk" />
           <Campo label="Passos" type="number" inputMode="numeric" id="tp" />
@@ -1949,7 +1983,7 @@ export default function ZoeApp() {
         {coach && (
           <div style={{ position: 'fixed', inset: 0, zIndex: 110, background: `linear-gradient(160deg,${coach.bloco.cor},${C.petroleo})`, padding: '28px 20px', overflowY: 'auto', color: '#fff' }}>
             <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ width: 240, height: 245, margin: '4px auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFEFA', borderRadius: '47% 53% 44% 56% / 55% 45% 55% 45%', boxShadow: '0 16px 32px rgba(21,12,58,.2)' }}><img src={zoeMascot} alt="ZOE celebrando" style={{ height: 220, maxWidth: 205, objectFit: 'contain' }} /></div>
+              <div style={{ width: 240, height: 245, margin: '4px auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFEFA', borderRadius: '47% 53% 44% 56% / 55% 45% 55% 45%', boxShadow: '0 16px 32px rgba(21,12,58,.2)' }}><img src={avatarImagem} alt="ZOE celebrando" style={{ height: avatarId === 'essencial' ? 220 : 190, maxWidth: 205, objectFit: 'contain' }} /></div>
               <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: 1.4, opacity: .75 }}>ZOE · SUA COACH</div>
               <h1 style={{ textAlign: 'center', fontSize: 27, lineHeight: 1.18, margin: '8px 0 18px' }}>{coach.titulo}</h1>
               <div style={{ background: 'rgba(255,255,255,.96)', color: C.ink, borderRadius: 24, padding: 20, boxShadow: '0 18px 45px rgba(0,0,0,.18)' }}>
