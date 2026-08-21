@@ -17,6 +17,7 @@ import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 import { supabase } from './supabase.js';
 import avatarZoeFun from './avatar-zoe-fun.data.js';
 import avatarZoeEssencial from './avatar-zoe-essencial.data.js';
+import avatarExpressoes from './avatar-expressoes.data.js';
 
 /* ══════════ FOTOS ══════════
    As imagens são comprimidas antes de salvar (lado maior 900px, jpeg 72%),
@@ -1320,6 +1321,8 @@ export default function ZoeApp() {
             const aberto = sessoesAbertas[b.id] ?? (!completo || contemAtual);
             const posicoes = [50, 68, 58, 34, 25, 43, 67, 72, 51, 29, 35, 61];
             const alturaMapa = b.etapas.length * 116 + 18;
+            const emocao = ['acolher', 'refletir', 'incentivar', 'celebrar'][bi % 4];
+            const avatarModulo = avatarExpressoes[emocao][avatarId];
             return (
               <div key={b.id} style={{ marginBottom: 28, opacity: blocoLiberado ? 1 : .62 }}>
                 <button onClick={() => blocoLiberado && setSessoesAbertas(a => ({ ...a, [b.id]: !aberto }))} style={{ width: '100%', minHeight: 92, display: 'flex', alignItems: 'center', gap: 12, border: 0, borderRadius: 23, background: blocoLiberado ? b.cor : '#DDE3E3', color: blocoLiberado ? sobre(b.cor) : C.ink3, padding: '16px 17px', fontFamily: 'inherit', textAlign: 'left', cursor: blocoLiberado ? 'pointer' : 'default', boxShadow: blocoLiberado ? `0 8px 0 ${b.cor}42,0 15px 30px ${b.cor}20` : '0 7px 0 #C9D0D0' }}>
@@ -1338,7 +1341,7 @@ export default function ZoeApp() {
                     <polyline points={b.etapas.map((_, i) => `${posicoes[i % posicoes.length]},${i * 116 + 42}`).join(' ')} fill="none" stroke="#DDE5E3" strokeWidth="2.2" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
                     {b.etapas.slice(0, -1).map((e, i) => feito(e.id) && <line key={e.id} x1={posicoes[i % posicoes.length]} y1={i * 116 + 42} x2={posicoes[(i + 1) % posicoes.length]} y2={(i + 1) * 116 + 42} stroke={b.cor} strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />)}
                   </svg>
-                  {contemAtual && b.etapas.length > 3 && <img src={avatarImagem} alt="ZOE acompanhando sua jornada" style={{ position: 'absolute', top: Math.min(alturaMapa - 120, 310), left: 8, width: avatarId === 'essencial' ? 78 : 94, height: 104, objectFit: 'contain', filter: 'drop-shadow(0 8px 12px rgba(55,28,105,.16))', zIndex: 1 }} />}
+                  {blocoLiberado && b.etapas.length > 2 && <img src={avatarModulo} alt={`ZOE em modo ${emocao}`} style={{ position: 'absolute', top: 94, left: 5, width: avatarId === 'essencial' ? 88 : 98, height: 112, objectFit: 'contain', objectPosition: 'left center', filter: 'drop-shadow(0 8px 12px rgba(55,28,105,.16))', zIndex: 3 }} />}
                   {b.etapas.map((e, i) => {
                     const lib = liberada(e.id), ok = feito(e.id), atual = etapaAtual && etapaAtual.id === e.id;
                     const x = posicoes[i % posicoes.length];
