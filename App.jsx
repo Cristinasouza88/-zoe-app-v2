@@ -16,6 +16,7 @@ import { totalLicoesDopamina } from './dopamina.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 import { supabase } from './supabase.js';
 import zoeMascot from './zoe-mascot.data.js';
+import zoeBeijaFlorHome from './zoe-beijaflor-home.data.js';
 
 /* ══════════ FOTOS ══════════
    As imagens são comprimidas antes de salvar (lado maior 900px, jpeg 72%),
@@ -1419,7 +1420,7 @@ export default function ZoeApp() {
     ];
     const secao = { background: C.card, borderRadius: 24, padding: 18, marginBottom: 14, border: `1px solid ${C.line}`, boxShadow: '0 9px 26px rgba(38,53,68,.055)' };
     return (
-      <div style={{ padding: '18px 16px 120px', background: 'linear-gradient(180deg,#FBFCFD 0%,#F7FAF9 100%)' }}>
+      <div style={{ padding: '18px 16px 120px', background: 'radial-gradient(circle at 50% 7%,rgba(168,255,0,.13),transparent 27%),radial-gradient(circle at 92% 18%,rgba(0,230,210,.10),transparent 24%),linear-gradient(180deg,#FCFFFD 0%,#F7FAF9 100%)' }}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 22 }}>
           <button onClick={() => setAba('perfil')} style={{ width: 42, height: 42, border: 'none', borderRadius: 15, background: '#fff', color: C.ink, boxShadow: '0 5px 16px rgba(24,42,65,.08)', display: 'grid', placeItems: 'center' }}><UserCircle size={25} /></button>
           <div style={{ flex: 1, marginLeft: 10, fontSize: 17, fontWeight: 800, color: C.ink }}>Olá, {d.perfil.nome || usuario.nome} <span aria-hidden="true">👋</span></div>
@@ -1430,19 +1431,19 @@ export default function ZoeApp() {
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', marginBottom: 22 }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <div style={{ color: C.ink3, fontSize: 14 }}>Sua trilha principal</div>
-          <div style={{ color: C.ink, fontWeight: 800, fontSize: 28, marginTop: 2 }}>Vida</div>
-          <div onClick={() => setAba('trilha')} style={{ width: 244, height: 244, margin: '16px auto 10px', borderRadius: '50%', padding: 12, background: `conic-gradient(${C.green} ${pctVida}%, #E7EFEC ${pctVida}% 100%)`, boxShadow: '0 16px 42px rgba(37,175,124,.13)', cursor: 'pointer' }}>
-            <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ fontSize: 50, lineHeight: 1, color: C.green, fontWeight: 800 }}>{pctVida}%</div>
-              <div style={{ color: C.green, fontSize: 12, fontWeight: 700, marginTop: 8 }}>Progresso geral</div>
-              <div style={{ width: 52, height: 1, background: C.line, margin: '14px 0 10px' }} />
-              <div style={{ color: C.ink, fontWeight: 800 }}>{concluidas} <span style={{ color: C.ink3, fontWeight: 600 }}>/ {totalEtapas}</span></div>
-              <div style={{ color: C.ink3, fontSize: 12, marginTop: 2 }}>etapas concluídas</div>
+          <div style={{ color: C.ink, fontWeight: 900, fontSize: 31, marginTop: 1, letterSpacing: -.7 }}>Vida</div>
+          <div onClick={() => setAba('trilha')} style={{ width: 284, height: 284, margin: '14px auto 12px', borderRadius: '50%', padding: 11, background: `conic-gradient(from 222deg,#A8FF00 0%,#25DFA8 ${pctVida}%,#E8F0EC ${pctVida}% 86%,transparent 86%)`, boxShadow: '0 18px 48px rgba(7,91,89,.12)', cursor: 'pointer', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: -9, left: '50%', transform: 'translateX(-50%)', zIndex: 2, minWidth: 66, height: 38, padding: '0 13px', borderRadius: 16, background: '#fff', display: 'grid', placeItems: 'center', color: C.petroleo, fontSize: 13, fontWeight: 900, boxShadow: '0 7px 18px rgba(15,58,56,.12)' }}>{pctVida}%</div>
+            <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle at 50% 42%,#FFFFFF 0%,#FBFFFD 58%,#F0FFF8 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+              <div style={{ color: '#25B97F', fontSize: 11, fontWeight: 800, marginTop: 22, zIndex: 1 }}>Progresso geral</div>
+              <img src={zoeBeijaFlorHome} alt="ZOE, sua coach" style={{ width: 205, height: 159, objectFit: 'contain', margin: '-2px 0 -4px', filter: 'drop-shadow(0 12px 13px rgba(7,91,89,.12))', zIndex: 1 }} />
+              <div style={{ color: C.ink, fontWeight: 900, fontSize: 17, zIndex: 1 }}>{concluidas} <span style={{ color: C.ink3, fontWeight: 600 }}>/ {totalEtapas}</span></div>
+              <div style={{ color: C.ink3, fontSize: 11.5, marginTop: 1, zIndex: 1 }}>etapas concluídas</div>
             </div>
           </div>
-          <button onClick={() => { setAba('trilha'); if (etapaAtual) setEtapaAberta(etapaAtual.id); }} style={{ border: 'none', borderRadius: 15, background: `linear-gradient(135deg,${C.green},${C.aqua})`, color: '#fff', padding: '13px 28px', minWidth: 210, fontFamily: 'inherit', fontWeight: 800, fontSize: 14, boxShadow: '0 9px 22px rgba(39,188,137,.2)' }}>Continuar trilha &nbsp; →</button>
+          <button onClick={() => { setAba('trilha'); if (etapaAtual) setEtapaAberta(etapaAtual.id); }} style={{ border: 'none', borderRadius: 17, background: 'linear-gradient(135deg,#36D98B,#17CBA8)', color: '#fff', padding: '14px 30px', minWidth: 224, fontFamily: 'inherit', fontWeight: 900, fontSize: 14, boxShadow: '0 10px 24px rgba(37,217,139,.24)' }}>Continuar trilha &nbsp; →</button>
         </div>
 
         <div style={{ color: C.ink3, fontSize: 13, textAlign: 'center', marginBottom: 12 }}>Outras trilhas que impulsionam você</div>
