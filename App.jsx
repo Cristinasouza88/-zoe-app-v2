@@ -1947,7 +1947,7 @@ export default function ZoeApp() {
         {coach && (
           <div style={{ position: 'fixed', inset: 0, zIndex: 110, background: `linear-gradient(160deg,${coach.bloco.cor},${C.petroleo})`, padding: '28px 20px', overflowY: 'auto', color: '#fff' }}>
             <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ height: 245, margin: '4px auto 6px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}><img src="/zoe-mascot.png" alt="ZOE celebrando" style={{ height: 235, maxWidth: '90vw', objectFit: 'contain', filter: 'drop-shadow(0 16px 24px rgba(21,12,58,.28))' }} /></div>
+              <div style={{ width: 240, height: 245, margin: '4px auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFEFA', borderRadius: '47% 53% 44% 56% / 55% 45% 55% 45%', boxShadow: '0 16px 32px rgba(21,12,58,.2)' }}><img src="/zoe-mascot.png" alt="ZOE celebrando" style={{ height: 220, maxWidth: 205, objectFit: 'contain' }} /></div>
               <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: 1.4, opacity: .75 }}>ZOE · SUA COACH</div>
               <h1 style={{ textAlign: 'center', fontSize: 27, lineHeight: 1.18, margin: '8px 0 18px' }}>{coach.titulo}</h1>
               <div style={{ background: 'rgba(255,255,255,.96)', color: C.ink, borderRadius: 24, padding: 20, boxShadow: '0 18px 45px rgba(0,0,0,.18)' }}>
