@@ -3,7 +3,7 @@ import {
   Home, Route, Plus, Utensils, TrendingUp, Camera, ImagePlus, Bell, BellRing, ChevronLeft, ChevronRight,
   X, Check, Lock, Timer, Droplets, Dumbbell, BookOpen, Film, Video, Sparkles, Target,
   Heart, Scale, Circle, LogOut, Flame, Trash2, Compass, PenLine, ClipboardList, Sun,
-  Wallet, Languages, Trophy
+  Wallet, Languages, Trophy, Moon, Smile, CheckCircle2, UserCircle, Zap
 } from 'lucide-react';
 import { TRILHA, RODA_SETORES, RITUAL_ACORDAR, VISAO_PILARES, RESUMO_VISAO, PILARES, VINCULOS, totalEtapas } from './conteudo';
 import { store, C, sobre, CLARAS, hoje, CSS, Card, Btn, Campo, Area, Barra, Sheet, Wordmark, Foto, GraficoBarras, GraficoLinha } from './ui.jsx';
@@ -1301,148 +1301,91 @@ export default function ZoeApp() {
 
   /* ══════════ INÍCIO ══════════ */
   const Inicio = () => {
-    const macros = dia.refeicoes.reduce((a, r) => ({ c: a.c + (r.carb || 0), p: a.p + (r.prot || 0), g: a.g + (r.gord || 0) }), { c: 0, p: 0, g: 0 });
     const dopaminaFeitas = Object.values(d.dopamina?.licoes || {}).filter(Boolean).length;
     const inglesFeitas = Object.values(d.ingles?.fasesConcluidas || {}).filter(Boolean).length;
     const metaAnual = d.financeiro?.metaAnual || METAANUAL_PADRAO;
     const economizado = (d.financeiro?.transacoes || []).reduce((a, t) => a + (t.tipo === 'entrada' ? t.valor : -t.valor), 0);
-    const pilares = [
-      { id: 'trilha', nome: 'Vida', icone: Route, cor: C.green, valor: concluidas, meta: totalEtapas },
-      { id: 'dopamina', nome: 'Dopamina', icone: Flame, cor: C.coral, valor: dopaminaFeitas, meta: totalLicoesDopamina },
-      { id: 'ingles', nome: 'Inglês', icone: Languages, cor: C.sky, valor: inglesFeitas, meta: FASES_INGLES.length },
-      { id: 'financeiro', nome: 'Financeiro', icone: Wallet, cor: C.lilac, valor: economizado, meta: metaAnual.alvo, moeda: true }
+    const pctVida = Math.min(100, Math.round((concluidas / totalEtapas) * 100));
+    const trilhas = [
+      { id: 'dopamina', nome: 'Dopamina', icone: Sparkles, cor: '#A86BF4', suave: '#F0E5FF', valor: `${dopaminaFeitas} / ${totalLicoesDopamina}`, pct: (dopaminaFeitas / totalLicoesDopamina) * 100 },
+      { id: 'ingles', nome: 'Inglês', icone: Languages, cor: '#5B9CF6', suave: '#E3F0FF', valor: `${inglesFeitas} / ${FASES_INGLES.length}`, pct: (inglesFeitas / FASES_INGLES.length) * 100 },
+      { id: 'financeiro', nome: 'Finanças', icone: Wallet, cor: '#43BE8C', suave: '#DFF7EC', valor: formatoMoeda(economizado), pct: metaAnual.alvo ? (economizado / metaAnual.alvo) * 100 : 0 }
     ];
+    const humores = [
+      { n: 2, rosto: '⌢', nome: 'Muito mal', cor: '#F19A86' },
+      { n: 4, rosto: '︵', nome: 'Mal', cor: '#E8B34F' },
+      { n: 6, rosto: '—', nome: 'Neutro', cor: '#AEB6C3' },
+      { n: 8, rosto: '⌣', nome: 'Bem', cor: '#65C7A1' },
+      { n: 10, rosto: '★', nome: 'Muito bem', cor: '#28AF7E' }
+    ];
+    const metasSemana = [
+      { nome: 'Beber 2L de água', valor: Math.min(7, dia.agua >= 2000 ? 1 : 0), meta: 7, cor: C.sky, icone: Droplets },
+      { nome: 'Treinar 3x na semana', valor: Math.min(3, dia.treino > 0 ? 1 : 0), meta: 3, cor: C.lilac, icone: Dumbbell },
+      { nome: 'Estudar inglês', valor: inglesFeitas, meta: 5, cor: C.green, icone: BookOpen }
+    ];
+    const secao = { background: C.card, borderRadius: 24, padding: 18, marginBottom: 14, border: `1px solid ${C.line}`, boxShadow: '0 9px 26px rgba(38,53,68,.055)' };
     return (
-      <div style={{ paddingBottom: 120 }}>
-        <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg} 78%)`, padding: '18px 18px 8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div>
-              <p style={{ margin: 0, fontSize: 12.5, color: C.ink2, fontWeight: 600 }}>
-                {new Date(data + 'T12:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </p>
-              <h1 style={{ margin: '2px 0 0', fontSize: 25, fontWeight: 800, color: C.ink }}>Olá, {d.perfil.nome || usuario.nome}</h1>
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={permissao} style={{ background: C.card, border: 'none', borderRadius: 99, width: 38, height: 38, cursor: 'pointer', color: C.ink, boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}><Bell size={17} /></button>
-              <button onClick={sair} style={{ background: C.card, border: 'none', borderRadius: 99, width: 38, height: 38, cursor: 'pointer', color: C.ink3, boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}><LogOut size={16} /></button>
-            </div>
+      <div style={{ padding: '18px 16px 120px', background: 'linear-gradient(180deg,#FBFCFD 0%,#F7FAF9 100%)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 22 }}>
+          <button onClick={() => setAba('perfil')} style={{ width: 42, height: 42, border: 'none', borderRadius: 15, background: '#fff', color: C.ink, boxShadow: '0 5px 16px rgba(24,42,65,.08)', display: 'grid', placeItems: 'center' }}><UserCircle size={25} /></button>
+          <div style={{ flex: 1, marginLeft: 10, fontSize: 17, fontWeight: 800, color: C.ink }}>Olá, {d.perfil.nome || usuario.nome} <span aria-hidden="true">👋</span></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: C.green, fontWeight: 800 }}><Heart size={18} /> {pontosDia}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: C.ink, fontWeight: 800 }}><Flame size={18} /> {streak}</div>
+            <button onClick={permissao} style={{ position: 'relative', width: 42, height: 42, border: 'none', borderRadius: 15, background: '#fff', color: C.ink, boxShadow: '0 5px 16px rgba(24,42,65,.08)' }}><Bell size={19} /><span style={{ position: 'absolute', right: -2, top: -3, minWidth: 18, height: 18, borderRadius: 99, background: '#F15A3C', color: '#fff', fontSize: 10, display: 'grid', placeItems: 'center', border: '2px solid #fff' }}>2</span></button>
           </div>
-
-          {/* fileira de pilares — Vida / Dopamina / Inglês / Financeiro */}
-          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', margin: '0 -18px 14px', padding: '2px 18px 4px' }}>
-            {pilares.map((p, i) => {
-              const pct = Math.min(100, p.meta ? (p.valor / p.meta) * 100 : 0);
-              const texto = sobre(p.cor);
-              return (
-                <div key={p.id} onClick={() => setAba(p.id)} className="zoe-surge" style={{
-                  animationDelay: `${i * 45}ms`, minWidth: 122, flexShrink: 0, background: p.cor, borderRadius: 18,
-                  padding: 14, cursor: 'pointer', color: texto
-                }}>
-                  <p.icone size={18} />
-                  <div style={{ fontSize: 12.5, fontWeight: 800, marginTop: 9 }}>{p.nome}</div>
-                  <div style={{ fontSize: 11, opacity: .85, marginTop: 2 }}>{p.moeda ? formatoMoeda(p.valor) : `${p.valor}/${p.meta}`}</div>
-                  <div style={{ height: 5, background: 'rgba(255,255,255,.35)', borderRadius: 99, marginTop: 9, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${pct}%`, background: texto, borderRadius: 99 }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* etapa atual — o coach */}
-          {etapaAtual && (
-            <Card cls="zoe-surge" onClick={() => { setAba('trilha'); setEtapaAberta(etapaAtual.id); }}
-              style={{ marginBottom: 12, cursor: 'pointer', borderLeft: `4px solid ${etapaAtual.bloco.cor}` }}>
-              <div style={{ fontSize: 10.5, fontWeight: 800, color: etapaAtual.bloco.cor, textTransform: 'uppercase', letterSpacing: .6, marginBottom: 5 }}>
-                Sua etapa agora · {etapaAtual.bloco.bloco}
-              </div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: C.ink, marginBottom: 4 }}>{etapaAtual.titulo}</div>
-              <div style={{ fontSize: 12.5, color: C.ink2, marginBottom: 12 }}>{etapaAtual.bloco.resumo}</div>
-              <Barra v={concluidas} max={totalEtapas} cor={etapaAtual.bloco.cor} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-                <span style={{ fontSize: 11.5, color: C.ink3 }}>{concluidas} de {totalEtapas} etapas</span>
-                <span style={{ fontSize: 11.5, fontWeight: 700, color: etapaAtual.bloco.cor }}>Continuar →</span>
-              </div>
-            </Card>
-          )}
-
-          {agendaAtiva && (
-            <Card cls="zoe-surge" style={{ marginBottom: 12, animationDelay: '70ms' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: C.ink2 }}>Pontos de hoje</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12.5, fontWeight: 700, color: C.coral }}><Flame size={14} /> {streak}d</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 11 }}>
-                <span style={{ fontSize: 42, fontWeight: 800, color: C.ink, lineHeight: 1 }}>{pontosDia}</span>
-                <span style={{ fontSize: 15, color: C.ink3, fontWeight: 600 }}>/ {agendaAtiva.meta}</span>
-              </div>
-              <Barra v={pontosDia} max={agendaAtiva.meta} cor={C.lima} />
-              <button onClick={() => { setAba('trilha'); setEtapaAberta(agendaAtiva.id); }}
-                style={{ background: 'none', border: 'none', color: C.greenDark, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', padding: '10px 0 0' }}>
-                Abrir agenda da {agendaAtiva.bloco?.bloco || 'sessão'} →
-              </button>
-            </Card>
-          )}
         </div>
 
-        <div style={{ padding: '0 18px' }}>
-          <Card cls="zoe-surge" style={{ marginBottom: 12, animationDelay: '140ms' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 800, color: C.ink, fontSize: 15 }}><Flame size={16} color={C.coral} /> Calorias</span>
-              <button onClick={() => setAba('comida')} style={{ background: 'none', border: 'none', color: C.greenDark, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Ver tudo</button>
+        <div style={{ textAlign: 'center', marginBottom: 22 }}>
+          <div style={{ color: C.ink3, fontSize: 14 }}>Sua trilha principal</div>
+          <div style={{ color: C.ink, fontWeight: 800, fontSize: 28, marginTop: 2 }}>Vida</div>
+          <div onClick={() => setAba('trilha')} style={{ width: 244, height: 244, margin: '16px auto 10px', borderRadius: '50%', padding: 12, background: `conic-gradient(${C.green} ${pctVida}%, #E7EFEC ${pctVida}% 100%)`, boxShadow: '0 16px 42px rgba(37,175,124,.13)', cursor: 'pointer' }}>
+            <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ fontSize: 50, lineHeight: 1, color: C.green, fontWeight: 800 }}>{pctVida}%</div>
+              <div style={{ color: C.green, fontSize: 12, fontWeight: 700, marginTop: 8 }}>Progresso geral</div>
+              <div style={{ width: 52, height: 1, background: C.line, margin: '14px 0 10px' }} />
+              <div style={{ color: C.ink, fontWeight: 800 }}>{concluidas} <span style={{ color: C.ink3, fontWeight: 600 }}>/ {totalEtapas}</span></div>
+              <div style={{ color: C.ink3, fontSize: 12, marginTop: 2 }}>etapas concluídas</div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', marginBottom: 14 }}>
-              <div style={{ textAlign: 'center' }}><div style={{ fontSize: 19, fontWeight: 800, color: C.ink }}>{dia.kcal}</div><div style={{ fontSize: 10.5, color: C.ink3 }}>Consumidas</div></div>
-              <div style={{ textAlign: 'center' }}><div style={{ fontSize: 31, fontWeight: 800, color: C.azul }}>{Math.max(0, d.perfil.metaKcal - dia.kcal)}</div><div style={{ fontSize: 10.5, color: C.ink3 }}>kcal restantes</div></div>
-              <div style={{ textAlign: 'center' }}><div style={{ fontSize: 19, fontWeight: 800, color: C.ink }}>{dia.treino}</div><div style={{ fontSize: 10.5, color: C.ink3 }}>Queimadas</div></div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 11 }}>
-              {[['Carb', macros.c, 180, C.gold], ['Prot', macros.p, 110, C.sky], ['Gord', macros.g, 55, C.lilac]].map(([n, v, m, cor]) => (
-                <div key={n}>
-                  <div style={{ fontSize: 10.5, color: C.ink3, marginBottom: 5 }}>{n}</div>
-                  <Barra v={v} max={m} cor={cor} h={6} />
-                  <div style={{ fontSize: 11.5, color: C.ink, fontWeight: 700, marginTop: 4 }}>{v}/{m}g</div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11, marginBottom: 12 }}>
-            <Card cls="zoe-surge" style={{ animationDelay: '190ms' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 9 }}><Droplets size={15} color={C.sky} /><span style={{ fontWeight: 800, color: C.ink, fontSize: 13.5 }}>Água</span></div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: C.ink }}>{dia.agua}<span style={{ fontSize: 12, color: C.ink3 }}> ml</span></div>
-              <div style={{ margin: '8px 0 11px' }}><Barra v={dia.agua} max={d.perfil.metaAgua} cor={C.sky} h={6} /></div>
-              <Btn variante="outline" cor={C.sky} style={{ width: '100%', padding: 8, fontSize: 12.5 }} onClick={() => setDia({ agua: dia.agua + 250 })}>+ 250 ml</Btn>
-            </Card>
-            <Card cls="zoe-surge" style={{ animationDelay: '230ms' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 9 }}><Dumbbell size={15} color={C.lilac} /><span style={{ fontWeight: 800, color: C.ink, fontSize: 13.5 }}>Treino</span></div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: C.ink }}>{dia.treino}<span style={{ fontSize: 12, color: C.ink3 }}> kcal</span></div>
-              <div style={{ fontSize: 11.5, color: C.ink3, margin: '8px 0 11px' }}>{dia.passos} passos</div>
-              <Btn variante="outline" cor={C.lilac} style={{ width: '100%', padding: 8, fontSize: 12.5 }} onClick={() => setSheet('treino')}>Registrar</Btn>
-            </Card>
           </div>
+          <button onClick={() => { setAba('trilha'); if (etapaAtual) setEtapaAberta(etapaAtual.id); }} style={{ border: 'none', borderRadius: 15, background: `linear-gradient(135deg,${C.green},${C.aqua})`, color: '#fff', padding: '13px 28px', minWidth: 210, fontFamily: 'inherit', fontWeight: 800, fontSize: 14, boxShadow: '0 9px 22px rgba(39,188,137,.2)' }}>Continuar trilha &nbsp; →</button>
+        </div>
 
-          <Card cls="zoe-surge" style={{ marginBottom: 12, animationDelay: '250ms' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 800, color: C.ink, fontSize: 15 }}><Wallet size={16} color={C.lilac} /> Meta financeira {metaAnual.ano}</span>
-              <button onClick={() => setAba('financeiro')} style={{ background: 'none', border: 'none', color: C.greenDark, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Ver tudo</button>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 11 }}>
-              <span style={{ fontSize: 28, fontWeight: 800, color: C.ink, lineHeight: 1 }}>{formatoMoeda(economizado)}</span>
-              <span style={{ fontSize: 14, color: C.ink3, fontWeight: 600 }}>/ {formatoMoeda(metaAnual.alvo)}</span>
-            </div>
-            <Barra v={economizado} max={metaAnual.alvo} cor={C.lilac} />
-            <div style={{ fontSize: 11.5, color: C.ink3, marginTop: 8 }}>{Math.max(0, Math.min(100, Math.round(economizado / metaAnual.alvo * 100)))}% da meta até o fim do ano</div>
-          </Card>
+        <div style={{ color: C.ink3, fontSize: 13, textAlign: 'center', marginBottom: 12 }}>Outras trilhas que impulsionam você</div>
+        <div style={{ ...secao, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 4, padding: '17px 8px' }}>
+          {trilhas.map((t, i) => <button key={t.id} onClick={() => setAba(t.id)} style={{ border: 'none', borderLeft: i ? `1px solid ${C.line}` : 'none', background: 'transparent', fontFamily: 'inherit', padding: '0 7px', cursor: 'pointer' }}>
+            <div style={{ width: 62, height: 62, margin: '0 auto 8px', borderRadius: '50%', display: 'grid', placeItems: 'center', color: t.cor, background: `conic-gradient(${t.cor} ${Math.max(3, Math.min(100, t.pct))}%,${t.suave} 0)` }}><div style={{ width: 48, height: 48, borderRadius: '50%', background: t.suave, display: 'grid', placeItems: 'center' }}><t.icone size={24} /></div></div>
+            <div style={{ color: C.ink, fontSize: 13, fontWeight: 800 }}>{t.nome}</div>
+            <div style={{ color: C.ink3, fontSize: 10.5, margin: '4px 0 8px', whiteSpace: 'nowrap' }}>{t.valor}</div>
+            <Barra v={Math.max(0, t.pct)} max={100} cor={t.cor} h={4} />
+          </button>)}
+        </div>
 
-          <Card cls="zoe-surge" style={{ animationDelay: '270ms' }}>
-            <div style={{ fontWeight: 800, color: C.ink, fontSize: 13.5, marginBottom: 11 }}>Como está sua energia hoje?</div>
-            <div style={{ display: 'flex', gap: 5 }}>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                <button key={n} onClick={() => setDia({ humor: n })} style={{ flex: 1, aspectRatio: '1', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 11.5, fontFamily: 'inherit', background: dia.humor === n ? C.green : '#F2F5F4', color: dia.humor === n ? '#fff' : C.ink3 }}>{n}</button>
-              ))}
-            </div>
-          </Card>
+        <div style={secao}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 17 }}><strong style={{ color: C.ink, fontSize: 15 }}>Resumo de hoje</strong><button onClick={() => setAba('progresso')} style={{ border: 0, background: 'none', color: C.green, fontWeight: 800 }}>Ver tudo →</button></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)' }}>
+            {[{ I: Flame, cor: C.coral, v: dia.treino, l: 'kcal queimadas' }, { I: Heart, cor: C.green, v: pontosDia, l: 'pontos' }, { I: Zap, cor: C.gold, v: Math.round((dia.humor || 0) * 3), l: 'min de foco' }].map((x, i) => <div key={x.l} style={{ textAlign: 'center', borderLeft: i ? `1px solid ${C.line}` : 'none' }}><x.I size={17} color={x.cor} /><div style={{ color: C.ink, fontWeight: 800, fontSize: 23, marginTop: 5 }}>{x.v}</div><div style={{ color: C.ink3, fontSize: 10 }}>{x.l}</div></div>)}
+          </div>
+        </div>
+
+        <div style={secao}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Moon size={19} color={C.lilac} /> Sono</strong><span style={{ color: C.lilac, fontSize: 12, fontWeight: 800 }}>Ver histórico →</span></div>
+          <div style={{ display: 'flex', alignItems: 'end', gap: 20, marginTop: 15 }}><div style={{ minWidth: 92 }}><div style={{ fontSize: 25, fontWeight: 800, color: C.ink }}>{Math.floor(dia.sono || 0)}h {Math.round(((dia.sono || 0) % 1) * 60)}m</div><div style={{ color: C.ink3, fontSize: 11 }}>Sono de hoje</div></div><div style={{ display: 'flex', gap: 13, alignItems: 'end', flex: 1 }}>{[2,5,3,6,4,7,5].map((h,i)=><div key={i} style={{ flex:1, textAlign:'center' }}><div style={{ height: 42, borderRadius: 9, background: `linear-gradient(to top,${C.lilac} ${h*10}%,#EEF0F3 ${h*10}%)` }} /><span style={{ fontSize: 9, color: C.ink3 }}>{'DSTQQSS'[i]}</span></div>)}</div></div>
+        </div>
+
+        <div style={secao}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Smile size={19} color={C.green} /> Humor de hoje</strong><span style={{ color: C.green, fontSize: 12, fontWeight: 800 }}>Registrar humor →</span></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 5 }}>{humores.map(h => <button key={h.n} onClick={() => setDia({ humor: h.n })} style={{ border: 0, background: 'transparent', fontFamily: 'inherit' }}><div style={{ width: 42, height: 42, margin: 'auto', borderRadius: '50%', display: 'grid', placeItems: 'center', background: `${h.cor}22`, color: h.cor, border: dia.humor === h.n ? `2px solid ${h.cor}` : '2px solid transparent', fontSize: 20, fontWeight: 800 }}>{h.rosto}</div><div style={{ color: C.ink2, fontSize: 9.5, marginTop: 5 }}>{h.nome}</div></button>)}</div>
+        </div>
+
+        <div style={secao}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Target size={19} color={C.lilac} /> Metas da semana</strong><span style={{ color: C.lilac, fontSize: 12, fontWeight: 800 }}>Ver todas →</span></div>
+          {metasSemana.map((m,i)=><div key={m.nome} style={{ display:'grid', gridTemplateColumns:'34px 1fr auto', alignItems:'center', gap:10, marginTop:i?14:0 }}><div style={{ width:34,height:34,borderRadius:'50%',background:`${m.cor}18`,display:'grid',placeItems:'center' }}><m.icone size={17} color={m.cor}/></div><div><div style={{ color:C.ink,fontSize:12.5,marginBottom:6 }}>{m.nome}</div><Barra v={m.valor} max={m.meta} cor={m.cor} h={5}/></div><div style={{ color:C.ink2,fontSize:11,fontWeight:700 }}>{m.valor}/{m.meta} dias</div></div>)}
+        </div>
+
+        <div style={secao}>
+          <div style={{ display:'flex',justifyContent:'space-between',marginBottom:8 }}><strong style={{ display:'flex',gap:8,color:C.ink }}><CheckCircle2 size={19} color={C.green}/> Top hábitos</strong><span style={{ color:C.green,fontSize:12,fontWeight:800 }}>Ver todos →</span></div>
+          {[['Meditar',Compass],['Ler 20 páginas',BookOpen]].map(([nome,I],i)=><div key={nome} style={{ display:'flex',alignItems:'center',gap:11,padding:'13px 0',borderTop:i?`1px solid ${C.line}`:'none' }}><div style={{ width:36,height:36,borderRadius:'50%',background:i?'#F2E8FF':'#E4F7EF',display:'grid',placeItems:'center' }}><I size={17} color={i?C.lilac:C.green}/></div><span style={{ flex:1,color:C.ink,fontSize:13 }}>{nome}</span><div style={{ textAlign:'right',color:C.ink,fontWeight:800 }}>0<div style={{ color:C.ink3,fontSize:9,fontWeight:500 }}>dias seguidos</div></div><ChevronRight size={16} color={C.ink3}/></div>)}
         </div>
       </div>
     );
