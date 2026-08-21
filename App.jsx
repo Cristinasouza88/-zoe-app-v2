@@ -99,6 +99,48 @@ function GoogleIcon() {
   );
 }
 
+function NovaSenha({ onConcluir }) {
+  const [senha, setSenha] = useState('');
+  const [confirmacao, setConfirmacao] = useState('');
+  const [erro, setErro] = useState('');
+  const [salvando, setSalvando] = useState(false);
+
+  const salvarNovaSenha = async () => {
+    setErro('');
+    if (senha.length < 6) return setErro('A senha precisa ter pelo menos 6 caracteres');
+    if (senha !== confirmacao) return setErro('As senhas não são iguais');
+    setSalvando(true);
+    const { data, error } = await supabase.auth.updateUser({ password: senha });
+    setSalvando(false);
+    if (error) return setErro('Não foi possível salvar. Solicite um novo link.');
+    window.history.replaceState({}, document.title, window.location.pathname);
+    const u = data.user;
+    onConcluir({
+      nome: u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0] || 'Você',
+      email: u.email,
+      id: u.id
+    });
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 24 }}>
+      <div style={{ textAlign: 'center', marginBottom: 28, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Wordmark altura={58} />
+        <h1 style={{ color: C.ink, fontSize: 22, margin: '22px 0 6px' }}>Crie uma nova senha</h1>
+        <p style={{ color: C.ink2, fontSize: 13, margin: 0 }}>Use pelo menos 6 caracteres</p>
+      </div>
+      <Card style={{ padding: 22 }}>
+        <Campo label="Nova senha" type="password" placeholder="Mínimo de 6 caracteres" value={senha} onChange={e => setSenha(e.target.value)} />
+        <Campo label="Confirmar nova senha" type="password" placeholder="Digite novamente" value={confirmacao} onChange={e => setConfirmacao(e.target.value)} onKeyDown={e => e.key === 'Enter' && salvarNovaSenha()} />
+        {erro && <p style={{ color: C.coral, fontSize: 13, fontWeight: 600, margin: '0 0 12px' }}>{erro}</p>}
+        <Btn onClick={salvarNovaSenha} disabled={salvando} style={{ width: '100%', padding: 15 }}>
+          {salvando ? 'Salvando...' : 'Salvar nova senha'}
+        </Btn>
+      </Card>
+    </div>
+  );
+}
+
 function Login({ onEntrar }) {
   const [modo, setModo] = useState('entrar');
   const [nome, setNome] = useState('');
@@ -107,6 +149,16 @@ function Login({ onEntrar }) {
   const [erro, setErro] = useState('');
   const [mensagem, setMensagem] = useState('');
   const [enviando, setEnviando] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const oauthError = params.get('error_description') || hash.get('error_description');
+    if (oauthError) {
+      setErro(decodeURIComponent(oauthError.replace(/\+/g, ' ')));
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const traduzirErro = (message = '') => {
     if (/invalid login credentials/i.test(message)) return 'E-mail ou senha incorretos';
@@ -245,6 +297,9 @@ const inicial = {
 export default function ZoeApp() {
   const [usuario, setUsuario] = useState(null);
   const [carregando, setCarregando] = useState(true);
+  const [recuperandoSenha, setRecuperandoSenha] = useState(
+    () => window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery')
+  );
   const [d, setD] = useState(inicial);
   const [aba, setAba] = useState('inicio');
   const [data, setData] = useState(hoje());
@@ -302,16 +357,29 @@ export default function ZoeApp() {
       });
     };
 
+    const veioDeRecuperacao = window.location.hash.includes('type=recovery') ||
+      window.location.search.includes('type=recovery');
+
     supabase.auth.getSession().then(({ data, error }) => {
       if (!ativo) return;
       if (error) {
         setCarregando(false);
         return;
       }
+      if (veioDeRecuperacao) {
+        setRecuperandoSenha(true);
+        setCarregando(false);
+        return;
+      }
       aplicarSessao(data.session);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecuperandoSenha(true);
+        setCarregando(false);
+        return;
+      }
       // Evita operações assíncronas dentro do callback de autenticação.
       setTimeout(() => aplicarSessao(session), 0);
     });
@@ -501,6 +569,10 @@ export default function ZoeApp() {
   };
 
   if (carregando) return <div style={{ minHeight: '100vh', background: C.bg }} />;
+  if (recuperandoSenha) return <><style>{CSS}</style><NovaSenha onConcluir={async u => {
+    setRecuperandoSenha(false);
+    await entrar(u);
+  }} /></>;
   if (!usuario) return <><style>{CSS}</style><Login onEntrar={entrar} /></>;
 
   /* ══════════ FERRAMENTAS DENTRO DA ETAPA ══════════ */
