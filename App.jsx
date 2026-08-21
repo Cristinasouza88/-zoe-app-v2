@@ -9,11 +9,9 @@ import { TRILHA, RODA_SETORES, RITUAL_ACORDAR, VISAO_PILARES, RESUMO_VISAO, PILA
 import { store, C, sobre, CLARAS, hoje, CSS, Card, Btn, Campo, Area, Barra, Sheet, Wordmark, Foto, GraficoBarras, GraficoLinha } from './ui.jsx';
 import Financeiro from './Financeiro.jsx';
 import Ingles from './Ingles.jsx';
-import Dopamina from './Dopamina.jsx';
 import Conquistas from './Conquistas.jsx';
 import Cursos from './Cursos.jsx';
 import { FASES as FASES_INGLES } from './ingles.data';
-import { totalLicoesDopamina } from './dopamina.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 import { supabase } from './supabase.js';
 import avatarZoeFun from './avatar-zoe-fun.data.js';
@@ -1433,7 +1431,7 @@ export default function ZoeApp() {
     const economizado = (d.financeiro?.transacoes || []).reduce((a, t) => a + (t.tipo === 'entrada' ? t.valor : -t.valor), 0);
     const pctVida = Math.min(100, Math.round((concluidas / totalEtapas) * 100));
     const trilhas = [
-      { id: 'cursos', nome: 'Cursos', icone: BookOpen, cor: '#A86BF4', suave: '#F0E5FF', valor: cursos.length ? `${aulasCursosFeitas} / ${aulasCursos}` : 'Adicionar', pct: aulasCursos ? (aulasCursosFeitas / aulasCursos) * 100 : 0 },
+      { id: 'cursos', nome: 'Meus cursos', icone: BookOpen, cor: '#A86BF4', suave: '#F0E5FF', valor: cursos.length ? `${aulasCursosFeitas} / ${aulasCursos}` : 'Adicionar curso', pct: aulasCursos ? (aulasCursosFeitas / aulasCursos) * 100 : 0 },
       { id: 'ingles', nome: 'Inglês', icone: Languages, cor: '#5B9CF6', suave: '#E3F0FF', valor: `${inglesFeitas} / ${FASES_INGLES.length}`, pct: (inglesFeitas / FASES_INGLES.length) * 100 },
       { id: 'financeiro', nome: 'Finanças', icone: Wallet, cor: '#43BE8C', suave: '#DFF7EC', valor: formatoMoeda(economizado), pct: metaAnual.alvo ? (economizado / metaAnual.alvo) * 100 : 0 }
     ];
@@ -1937,7 +1935,7 @@ export default function ZoeApp() {
         {aba === 'extras' && Extras()}
         {aba === 'financeiro' && <Financeiro d={d} up={up} aviso={aviso} />}
         {aba === 'ingles' && <Ingles d={d} up={up} aviso={aviso} />}
-        {aba === 'dopamina' && <Dopamina d={d} up={up} aviso={aviso} />}
+        {aba === 'dopamina' && <Cursos d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
         {aba === 'cursos' && <Cursos d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
         {aba === 'conquistas' && <Conquistas d={d} up={up} aviso={aviso} />}
 
