@@ -14,6 +14,7 @@ import Conquistas from './Conquistas.jsx';
 import { FASES as FASES_INGLES } from './ingles.data';
 import { totalLicoesDopamina } from './dopamina.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
+import { supabase } from './supabase.js';
 
 /* ══════════ FOTOS ══════════
    As imagens são comprimidas antes de salvar (lado maior 900px, jpeg 72%),
@@ -89,25 +90,89 @@ function RodaGrafico({ valores, cor = C.green }) {
 /* ══════════ LOGIN ══════════ */
 function Login({ onEntrar }) {
   const [modo, setModo] = useState('entrar');
-  const [nome, setNome] = useState(''); const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState(''); const [erro, setErro] = useState('');
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState('');
+  const [mensagem, setMensagem] = useState('');
+  const [enviando, setEnviando] = useState(false);
+
+  const traduzirErro = (message = '') => {
+    if (/invalid login credentials/i.test(message)) return 'E-mail ou senha incorretos';
+    if (/user already registered/i.test(message)) return 'Esse e-mail já tem uma conta. Entre.';
+    if (/password should be at least/i.test(message)) return 'A senha precisa ter pelo menos 6 caracteres';
+    if (/email rate limit/i.test(message)) return 'Muitas tentativas. Aguarde alguns minutos.';
+    return 'Não foi possível continuar. Tente novamente.';
+  };
+
   const submeter = async () => {
-    setErro('');
+    setErro(''); setMensagem('');
     if (!email.includes('@')) return setErro('Digite um e-mail válido');
-    if (senha.length < 4) return setErro('A senha precisa de pelo menos 4 caracteres');
-    const contas = (await store.get('zoe:contas')) || {};
-    if (modo === 'criar') {
-      if (!nome.trim()) return setErro('Como você quer ser chamada?');
-      if (contas[email]) return setErro('Esse e-mail já tem conta. Entre.');
-      contas[email] = { nome: nome.trim(), senha };
-      await store.set('zoe:contas', contas);
-      onEntrar({ nome: nome.trim(), email });
-    } else {
-      const c = contas[email];
-      if (!c || c.senha !== senha) return setErro('E-mail ou senha incorretos');
-      onEntrar({ nome: c.nome, email });
+    if (senha.length < 6) return setErro('A senha precisa ter pelo menos 6 caracteres');
+    if (modo === 'criar' && !nome.trim()) return setErro('Como você quer ser chamada?');
+
+    setEnviando(true);
+    try {
+      if (modo === 'criar') {
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim().toLowerCase(),
+          password: senha,
+          options: {
+            data: { full_name: nome.trim() },
+            emailRedirectTo: window.location.origin
+          }
+        });
+        if (error) throw error;
+        if (data.session && data.user) {
+          onEntrar({ nome: nome.trim(), email: data.user.email, id: data.user.id });
+        } else {
+          setMensagem('Conta criada! Confira seu e-mail para confirmar o cadastro.');
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password: senha
+        });
+        if (error) throw error;
+        const u = data.user;
+        onEntrar({
+          nome: u.user_metadata?.full_name || u.email?.split('@')[0] || 'Você',
+          email: u.email,
+          id: u.id
+        });
+      }
+    } catch (e) {
+      setErro(traduzirErro(e.message));
+    } finally {
+      setEnviando(false);
     }
   };
+
+  const entrarGoogle = async () => {
+    setErro(''); setMensagem(''); setEnviando(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin }
+    });
+    if (error) {
+      setErro(traduzirErro(error.message));
+      setEnviando(false);
+    }
+  };
+
+  const recuperarSenha = async () => {
+    setErro(''); setMensagem('');
+    if (!email.includes('@')) return setErro('Digite seu e-mail primeiro');
+    setEnviando(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      email.trim().toLowerCase(),
+      { redirectTo: window.location.origin }
+    );
+    setEnviando(false);
+    if (error) return setErro(traduzirErro(error.message));
+    setMensagem('Enviamos o link para redefinir sua senha.');
+  };
+
   return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: -140, right: -110, width: 320, height: 320, borderRadius: '50%', filter: 'blur(80px)', opacity: .2, background: `conic-gradient(from 40deg, ${C.lima}, ${C.aqua}, ${C.azul}, ${C.lima})` }} />
@@ -118,19 +183,34 @@ function Login({ onEntrar }) {
       <Card cls="zoe-surge" style={{ padding: 22, animationDelay: '120ms' }}>
         <div style={{ display: 'flex', background: '#F2F5F4', borderRadius: 12, padding: 4, marginBottom: 20 }}>
           {[['entrar', 'Entrar'], ['criar', 'Criar conta']].map(([k, l]) => (
-            <button key={k} onClick={() => { setModo(k); setErro(''); }} style={{
+            <button key={k} onClick={() => { setModo(k); setErro(''); setMensagem(''); }} style={{
               flex: 1, padding: 10, borderRadius: 9, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 14, fontFamily: 'inherit',
               background: modo === k ? C.card : 'transparent', color: modo === k ? C.ink : C.ink2,
               boxShadow: modo === k ? '0 1px 3px rgba(0,0,0,.08)' : 'none'
             }}>{l}</button>
           ))}
         </div>
+        <button onClick={entrarGoogle} disabled={enviando} style={{
+          width: '100%', padding: 13, marginBottom: 14, borderRadius: 12, border: `1.5px solid ${C.line}`,
+          background: '#fff', color: C.ink, cursor: enviando ? 'wait' : 'pointer', fontWeight: 700, fontSize: 14, fontFamily: 'inherit'
+        }}>Continuar com Google</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, color: C.ink3, fontSize: 11 }}>
+          <span style={{ height: 1, background: C.line, flex: 1 }} /><span>ou use seu e-mail</span><span style={{ height: 1, background: C.line, flex: 1 }} />
+        </div>
         {modo === 'criar' && <Campo label="Nome" placeholder="Como quer ser chamada" value={nome} onChange={e => setNome(e.target.value)} />}
         <Campo label="E-mail" type="email" placeholder="voce@email.com" value={email} onChange={e => setEmail(e.target.value)} />
-        <Campo label="Senha" type="password" placeholder="••••••" value={senha} onChange={e => setSenha(e.target.value)} onKeyDown={e => e.key === 'Enter' && submeter()} />
+        <Campo label="Senha" type="password" placeholder="Mínimo de 6 caracteres" value={senha} onChange={e => setSenha(e.target.value)} onKeyDown={e => e.key === 'Enter' && submeter()} />
+        {modo === 'entrar' && (
+          <button onClick={recuperarSenha} disabled={enviando} style={{ background: 'none', border: 'none', padding: 0, margin: '-4px 0 14px', color: C.greenDark, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            Esqueci minha senha
+          </button>
+        )}
         {erro && <p style={{ color: C.coral, fontSize: 13, fontWeight: 600, margin: '0 0 12px' }}>{erro}</p>}
-        <Btn onClick={submeter} style={{ width: '100%', padding: 15, fontSize: 15 }}>{modo === 'criar' ? 'Criar minha conta' : 'Entrar'}</Btn>
-        <p style={{ fontSize: 11, color: C.ink3, textAlign: 'center', marginTop: 14 }}>Seus dados ficam salvos apenas neste dispositivo</p>
+        {mensagem && <p style={{ color: C.greenDark, fontSize: 13, fontWeight: 600, lineHeight: 1.45, margin: '0 0 12px' }}>{mensagem}</p>}
+        <Btn onClick={submeter} disabled={enviando} style={{ width: '100%', padding: 15, fontSize: 15 }}>
+          {enviando ? 'Aguarde...' : modo === 'criar' ? 'Criar minha conta' : 'Entrar'}
+        </Btn>
+        <p style={{ fontSize: 11, color: C.ink3, textAlign: 'center', marginTop: 14 }}>Login protegido pelo Supabase</p>
       </Card>
     </div>
   );
@@ -176,15 +256,28 @@ export default function ZoeApp() {
   const setForm = (k, p) => setForms(f => ({ ...f, [k]: typeof p === 'function' ? p(f[k]) : { ...f[k], ...p } }));
 
   useEffect(() => {
-    (async () => {
-      const s = await store.get('zoe:sessao');
-      if (s) {
-        setUsuario(s);
-        const dd = await store.get(`zoe:dados:${s.email}`);
-        setD(dd ? { ...inicial, ...dd } : { ...inicial, perfil: { ...inicial.perfil, nome: s.nome, email: s.email } });
+    const aplicarSessao = async (session) => {
+      const u = session?.user;
+      if (!u) {
+        setUsuario(null);
+        setD(inicial);
+        setCarregando(false);
+        return;
       }
+      const perfil = {
+        nome: u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0] || 'Você',
+        email: u.email,
+        id: u.id
+      };
+      setUsuario(perfil);
+      const dd = await store.get(`zoe:dados:${perfil.email}`);
+      setD(dd ? { ...inicial, ...dd } : { ...inicial, perfil: { ...inicial.perfil, nome: perfil.nome, email: perfil.email } });
       setCarregando(false);
-    })();
+    };
+
+    supabase.auth.getSession().then(({ data }) => aplicarSessao(data.session));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => aplicarSessao(session));
+    return () => listener.subscription.unsubscribe();
   }, []);
 
   /* só liga o relógio quando alguma coisa depende dele */
@@ -203,11 +296,15 @@ export default function ZoeApp() {
   const aviso = m => { setToast(m); setTimeout(() => setToast(''), 2300); };
 
   const entrar = async u => {
-    await store.set('zoe:sessao', u); setUsuario(u);
+    setUsuario(u);
     const dd = await store.get(`zoe:dados:${u.email}`);
     setD(dd ? { ...inicial, ...dd } : { ...inicial, perfil: { ...inicial.perfil, nome: u.nome, email: u.email } });
   };
-  const sair = async () => { await store.set('zoe:sessao', null); setUsuario(null); setD(inicial); };
+  const sair = async () => {
+    await supabase.auth.signOut();
+    setUsuario(null);
+    setD(inicial);
+  };
 
   /* ── trilha: sequência linear de etapas ── */
   const sequencia = useMemo(() => TRILHA.flatMap(b => b.etapas.map(e => ({ ...e, bloco: b }))), []);
