@@ -1311,50 +1311,53 @@ export default function ZoeApp() {
           </Card>
         </div>
 
-        <div style={{ padding: 18 }}>
+        <div style={{ padding: '18px 14px' }}>
           {TRILHA.map((b, bi) => {
             const feitasB = b.etapas.filter(e => feito(e.id)).length;
             const blocoLiberado = b.etapas.some(e => liberada(e.id));
             const completo = feitasB === b.etapas.length;
             const contemAtual = b.etapas.some(e => etapaAtual?.id === e.id);
             const aberto = sessoesAbertas[b.id] ?? (!completo || contemAtual);
+            const posicoes = [50, 68, 58, 34, 25, 43, 67, 72, 51, 29, 35, 61];
+            const alturaMapa = b.etapas.length * 116 + 18;
             return (
-              <div key={b.id} style={{ marginBottom: 22 }}>
-                <button onClick={() => blocoLiberado && setSessoesAbertas(a => ({ ...a, [b.id]: !aberto }))} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10, border: 0, background: 'transparent', padding: 0, fontFamily: 'inherit', textAlign: 'left', cursor: blocoLiberado ? 'pointer' : 'default' }}>
-                  <div style={{ width: 10, height: 10, borderRadius: 99, background: feitasB === b.etapas.length ? b.cor : blocoLiberado ? b.cor : C.line, flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 10.5, fontWeight: 800, color: blocoLiberado ? b.cor : C.ink3, textTransform: 'uppercase', letterSpacing: .6 }}>{b.bloco}</div>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: blocoLiberado ? C.ink : C.ink3 }}>{b.nome}</div>
+              <div key={b.id} style={{ marginBottom: 28, opacity: blocoLiberado ? 1 : .62 }}>
+                <button onClick={() => blocoLiberado && setSessoesAbertas(a => ({ ...a, [b.id]: !aberto }))} style={{ width: '100%', minHeight: 92, display: 'flex', alignItems: 'center', gap: 12, border: 0, borderRadius: 23, background: blocoLiberado ? b.cor : '#DDE3E3', color: blocoLiberado ? sobre(b.cor) : C.ink3, padding: '16px 17px', fontFamily: 'inherit', textAlign: 'left', cursor: blocoLiberado ? 'pointer' : 'default', boxShadow: blocoLiberado ? `0 8px 0 ${b.cor}42,0 15px 30px ${b.cor}20` : '0 7px 0 #C9D0D0' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1, opacity: .8 }}>{b.bloco}</div>
+                    <div style={{ fontSize: 18, fontWeight: 900, marginTop: 4, lineHeight: 1.2 }}>{b.nome}</div>
+                    <div style={{ fontSize: 10.5, marginTop: 6, opacity: .78 }}>{b.resumo}</div>
                   </div>
-                  <span style={{ fontSize: 11.5, fontWeight: 700, color: C.ink3 }}>{feitasB}/{b.etapas.length}</span>
-                  {blocoLiberado && (aberto ? <ChevronUp size={18} color={C.ink3} /> : <ChevronDown size={18} color={C.ink3} />)}
+                  <div style={{ width: 48, height: 48, borderRadius: 16, background: 'rgba(255,255,255,.22)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                    <div style={{ textAlign: 'center' }}><div style={{ fontSize: 14, fontWeight: 950 }}>{feitasB}/{b.etapas.length}</div>{aberto ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</div>
+                  </div>
                 </button>
-                {aberto && <p style={{ fontSize: 12.5, color: C.ink3, margin: '0 0 10px 19px' }}>{b.resumo}</p>}
 
-                {aberto && <div style={{ position: 'relative', padding: '8px 8px 18px' }}>
+                {aberto && <div style={{ position: 'relative', height: alturaMapa, marginTop: 16, overflow: 'hidden' }}>
+                  <svg viewBox={`0 0 100 ${alturaMapa}`} preserveAspectRatio="none" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                    <polyline points={b.etapas.map((_, i) => `${posicoes[i % posicoes.length]},${i * 116 + 42}`).join(' ')} fill="none" stroke="#DDE5E3" strokeWidth="2.2" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+                    {b.etapas.slice(0, -1).map((e, i) => feito(e.id) && <line key={e.id} x1={posicoes[i % posicoes.length]} y1={i * 116 + 42} x2={posicoes[(i + 1) % posicoes.length]} y2={(i + 1) * 116 + 42} stroke={b.cor} strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />)}
+                  </svg>
+                  {contemAtual && b.etapas.length > 3 && <img src={avatarImagem} alt="ZOE acompanhando sua jornada" style={{ position: 'absolute', top: Math.min(alturaMapa - 120, 310), left: 8, width: avatarId === 'essencial' ? 78 : 94, height: 104, objectFit: 'contain', filter: 'drop-shadow(0 8px 12px rgba(55,28,105,.16))', zIndex: 1 }} />}
                   {b.etapas.map((e, i) => {
                     const lib = liberada(e.id), ok = feito(e.id), atual = etapaAtual && etapaAtual.id === e.id;
-                    const deslocamento = [8, 34, 58, 32][i % 4];
+                    const x = posicoes[i % posicoes.length];
                     const IconeEtapa = e.tipo === 'agenda' ? CalendarDays : e.tipo === 'roda' ? Target : e.tipo === 'ferramenta' ? Sparkles : e.tipo === 'fichas' ? BookOpen : Route;
                     return (
                       <div key={e.id} onClick={() => lib && setEtapaAberta(e.id)}
                         className={atual ? 'zoe-surge' : ''}
                         style={{
-                          position: 'relative', display: 'flex', alignItems: 'center', gap: 13, margin: `0 0 18px ${deslocamento}px`,
-                          width: 'calc(100% - 66px)', cursor: lib ? 'pointer' : 'default', opacity: lib ? 1 : .46
+                          position: 'absolute', top: i * 116, left: `${x}%`, transform: 'translateX(-50%)', width: 144,
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: lib ? 'pointer' : 'default', opacity: lib ? 1 : .5, zIndex: 2
                         }}>
-                        {i < b.etapas.length - 1 && <div style={{ position: 'absolute', left: 31, top: 60, width: 4, height: 32, borderRadius: 99, background: ok ? `${b.cor}70` : C.line, transform: `rotate(${[28,20,-22,-28][i%4]}deg)`, transformOrigin: 'top' }} />}
-                        <div style={{ width: 66, height: 66, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', background: ok || atual ? b.cor : '#E3E7E7', color: ok || atual ? sobre(b.cor) : '#AAB1B3', border: atual ? '7px solid #fff' : '5px solid #fff', boxShadow: atual ? `0 0 0 5px ${b.cor}55,0 9px 18px ${b.cor}35` : '0 5px 0 rgba(40,55,62,.13)' }}>
+                        {atual && <span style={{ position: 'absolute', top: -13, padding: '4px 10px', borderRadius: 9, background: C.lima, color: C.petroleo, fontSize: 9, fontWeight: 950, letterSpacing: .5, boxShadow: '0 4px 10px rgba(7,91,89,.12)' }}>AGORA</span>}
+                        <div style={{ width: atual ? 82 : 74, height: atual ? 82 : 74, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', background: ok || atual ? b.cor : '#E1E6E5', color: ok || atual ? sobre(b.cor) : '#A8B1B1', border: atual ? '8px solid #fff' : '6px solid #fff', boxShadow: atual ? `0 0 0 5px ${b.cor}50,0 10px 0 ${b.cor}55,0 16px 28px ${b.cor}35` : '0 7px 0 rgba(46,61,67,.16)', transition: 'transform .2s ease' }}>
                           {ok ? <Check size={28} strokeWidth={3} /> : lib ? <IconeEtapa size={25} /> : <Lock size={22} />}
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 13.5, fontWeight: 800, color: lib ? C.ink : C.ink3 }}>{e.titulo}</div>
-                          <div style={{ fontSize: 11, color: C.ink3, marginTop: 2, textTransform: 'capitalize' }}>
-                            {({ leitura: 'Conteúdo', ferramenta: 'Ferramenta', fichas: 'Integração', agenda: 'Agenda de pontos', roda: 'Checkpoint', ritual: 'Prática diária', dia7: `Dia ${e.dia}` })[e.tipo]}
-                          </div>
-                          {ok && d.etapas[e.id]?.data && <div style={{ fontSize: 10.5, color: C.greenDark, marginTop: 3 }}>Concluída em {new Date(d.etapas[e.id].data + 'T12:00').toLocaleDateString('pt-BR')}</div>}
+                        <div style={{ width: 138, marginTop: 11, padding: '7px 8px', borderRadius: 11, background: atual ? '#fff' : 'rgba(255,255,255,.86)', boxShadow: atual ? '0 6px 18px rgba(20,43,48,.09)' : 'none', textAlign: 'center' }}>
+                          <div style={{ fontSize: 10.5, fontWeight: 850, lineHeight: 1.25, color: lib ? C.ink : C.ink3 }}>{e.titulo}</div>
+                          {ok && d.etapas[e.id]?.data && <div style={{ fontSize: 8.5, color: C.greenDark, marginTop: 3 }}>{new Date(d.etapas[e.id].data + 'T12:00').toLocaleDateString('pt-BR')}</div>}
                         </div>
-                        {atual && <span style={{ fontSize: 10, fontWeight: 800, color: b.cor, background: `${b.cor}1F`, padding: '4px 9px', borderRadius: 8, flexShrink: 0 }}>AGORA</span>}
                       </div>
                     );
                   })}
