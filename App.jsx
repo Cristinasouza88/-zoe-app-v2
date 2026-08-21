@@ -88,6 +88,17 @@ function RodaGrafico({ valores, cor = C.green }) {
 }
 
 /* ══════════ LOGIN ══════════ */
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      <path fill="#4285F4" d="M17.64 9.205c0-.638-.057-1.252-.164-1.841H9v3.482h4.844a4.14 4.14 0 0 1-1.797 2.715v2.259h2.909c1.702-1.567 2.684-3.875 2.684-6.615Z" />
+      <path fill="#34A853" d="M9 18c2.43 0 4.468-.806 5.956-2.18l-2.909-2.259c-.806.54-1.835.859-3.047.859-2.344 0-4.328-1.585-5.037-3.714H.956v2.332A9 9 0 0 0 9 18Z" />
+      <path fill="#FBBC05" d="M3.963 10.706A5.42 5.42 0 0 1 3.681 9c0-.592.102-1.168.282-1.706V4.962H.956A9 9 0 0 0 0 9c0 1.452.347 2.827.956 4.038l3.007-2.332Z" />
+      <path fill="#EA4335" d="M9 3.58c1.321 0 2.507.454 3.441 1.346l2.581-2.581C13.464.892 11.426 0 9 0A9 9 0 0 0 .956 4.962l3.007 2.332C4.672 5.165 6.656 3.58 9 3.58Z" />
+    </svg>
+  );
+}
+
 function Login({ onEntrar }) {
   const [modo, setModo] = useState('entrar');
   const [nome, setNome] = useState('');
@@ -192,8 +203,9 @@ function Login({ onEntrar }) {
         </div>
         <button onClick={entrarGoogle} disabled={enviando} style={{
           width: '100%', padding: 13, marginBottom: 14, borderRadius: 12, border: `1.5px solid ${C.line}`,
-          background: '#fff', color: C.ink, cursor: enviando ? 'wait' : 'pointer', fontWeight: 700, fontSize: 14, fontFamily: 'inherit'
-        }}>Continuar com Google</button>
+          background: '#fff', color: C.ink, cursor: enviando ? 'wait' : 'pointer', fontWeight: 700, fontSize: 14, fontFamily: 'inherit',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10
+        }}><GoogleIcon /> Continuar com Google</button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, color: C.ink3, fontSize: 11 }}>
           <span style={{ height: 1, background: C.line, flex: 1 }} /><span>ou use seu e-mail</span><span style={{ height: 1, background: C.line, flex: 1 }} />
         </div>
@@ -256,28 +268,58 @@ export default function ZoeApp() {
   const setForm = (k, p) => setForms(f => ({ ...f, [k]: typeof p === 'function' ? p(f[k]) : { ...f[k], ...p } }));
 
   useEffect(() => {
-    const aplicarSessao = async (session) => {
+    let ativo = true;
+
+    const aplicarSessao = (session) => {
       const u = session?.user;
       if (!u) {
-        setUsuario(null);
-        setD(inicial);
-        setCarregando(false);
+        if (ativo) {
+          setUsuario(null);
+          setD(inicial);
+          setCarregando(false);
+        }
         return;
       }
+
       const perfil = {
         nome: u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0] || 'Você',
         email: u.email,
         id: u.id
       };
-      setUsuario(perfil);
-      const dd = await store.get(`zoe:dados:${perfil.email}`);
-      setD(dd ? { ...inicial, ...dd } : { ...inicial, perfil: { ...inicial.perfil, nome: perfil.nome, email: perfil.email } });
-      setCarregando(false);
+
+      // Atualiza a tela imediatamente. A leitura dos dados locais acontece depois,
+      // fora do callback do Supabase, para não bloquear o retorno do OAuth.
+      if (ativo) {
+        setUsuario(perfil);
+        setCarregando(false);
+      }
+      store.get(`zoe:dados:${perfil.email}`).then(dd => {
+        if (!ativo) return;
+        setD(dd ? { ...inicial, ...dd } : {
+          ...inicial,
+          perfil: { ...inicial.perfil, nome: perfil.nome, email: perfil.email }
+        });
+      });
     };
 
-    supabase.auth.getSession().then(({ data }) => aplicarSessao(data.session));
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => aplicarSessao(session));
-    return () => listener.subscription.unsubscribe();
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!ativo) return;
+      if (error) {
+        setCarregando(false);
+        return;
+      }
+      aplicarSessao(data.session);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Evita operações assíncronas dentro do callback de autenticação.
+      setTimeout(() => aplicarSessao(session), 0);
+    });
+
+    return () => {
+      ativo = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   /* só liga o relógio quando alguma coisa depende dele */
