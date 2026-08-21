@@ -1321,8 +1321,12 @@ export default function ZoeApp() {
             const aberto = sessoesAbertas[b.id] ?? (!completo || contemAtual);
             const posicoes = [50, 68, 58, 34, 25, 43, 67, 72, 51, 29, 35, 61];
             const alturaMapa = b.etapas.length * 116 + 18;
-            const emocao = ['acolher', 'refletir', 'incentivar', 'celebrar'][bi % 4];
-            const avatarModulo = avatarExpressoes[emocao][avatarId];
+            const emocoes = ['acolher', 'refletir', 'incentivar', 'celebrar'];
+            const aparicoesZoe = [1, 4, 7].filter(i => i < b.etapas.length).map((indice, j) => ({
+              indice,
+              emocao: emocoes[(bi + j) % emocoes.length],
+              lado: posicoes[indice % posicoes.length] > 50 ? 'left' : 'right'
+            }));
             return (
               <div key={b.id} style={{ marginBottom: 28, opacity: blocoLiberado ? 1 : .62 }}>
                 <button onClick={() => blocoLiberado && setSessoesAbertas(a => ({ ...a, [b.id]: !aberto }))} style={{ width: '100%', minHeight: 92, display: 'flex', alignItems: 'center', gap: 12, border: 0, borderRadius: 23, background: blocoLiberado ? b.cor : '#DDE3E3', color: blocoLiberado ? sobre(b.cor) : C.ink3, padding: '16px 17px', fontFamily: 'inherit', textAlign: 'left', cursor: blocoLiberado ? 'pointer' : 'default', boxShadow: blocoLiberado ? `0 8px 0 ${b.cor}42,0 15px 30px ${b.cor}20` : '0 7px 0 #C9D0D0' }}>
@@ -1341,7 +1345,10 @@ export default function ZoeApp() {
                     <polyline points={b.etapas.map((_, i) => `${posicoes[i % posicoes.length]},${i * 116 + 42}`).join(' ')} fill="none" stroke="#DDE5E3" strokeWidth="2.2" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
                     {b.etapas.slice(0, -1).map((e, i) => feito(e.id) && <line key={e.id} x1={posicoes[i % posicoes.length]} y1={i * 116 + 42} x2={posicoes[(i + 1) % posicoes.length]} y2={(i + 1) * 116 + 42} stroke={b.cor} strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />)}
                   </svg>
-                  {blocoLiberado && b.etapas.length > 2 && <img src={avatarModulo} alt={`ZOE em modo ${emocao}`} style={{ position: 'absolute', top: 94, left: 5, width: avatarId === 'essencial' ? 88 : 98, height: 112, objectFit: 'contain', objectPosition: 'left center', filter: 'drop-shadow(0 8px 12px rgba(55,28,105,.16))', zIndex: 3 }} />}
+                  {blocoLiberado && aparicoesZoe.map((ap, j) => (
+                    <img key={`${b.id}-zoe-${ap.indice}`} src={avatarExpressoes[ap.emocao][avatarId]} alt={`ZOE em modo ${ap.emocao}`}
+                      style={{ position: 'absolute', top: ap.indice * 116 - 28, [ap.lado]: 4, width: avatarId === 'essencial' ? 86 : 96, height: 108, objectFit: 'contain', objectPosition: `${ap.lado} center`, filter: 'drop-shadow(0 8px 12px rgba(55,28,105,.16))', zIndex: 3, transform: j % 2 ? 'rotate(2deg)' : 'rotate(-2deg)' }} />
+                  ))}
                   {b.etapas.map((e, i) => {
                     const lib = liberada(e.id), ok = feito(e.id), atual = etapaAtual && etapaAtual.id === e.id;
                     const x = posicoes[i % posicoes.length];
@@ -1354,7 +1361,7 @@ export default function ZoeApp() {
                           display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: lib ? 'pointer' : 'default', opacity: lib ? 1 : .5, zIndex: 2
                         }}>
                         {atual && <span style={{ position: 'absolute', top: -13, padding: '4px 10px', borderRadius: 9, background: C.lima, color: C.petroleo, fontSize: 9, fontWeight: 950, letterSpacing: .5, boxShadow: '0 4px 10px rgba(7,91,89,.12)' }}>AGORA</span>}
-                        <div style={{ width: atual ? 82 : 74, height: atual ? 82 : 74, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', background: ok || atual ? b.cor : '#E1E6E5', color: ok || atual ? sobre(b.cor) : '#A8B1B1', border: atual ? '8px solid #fff' : '6px solid #fff', boxShadow: atual ? `0 0 0 5px ${b.cor}50,0 10px 0 ${b.cor}55,0 16px 28px ${b.cor}35` : '0 7px 0 rgba(46,61,67,.16)', transition: 'transform .2s ease' }}>
+                        <div style={{ width: atual ? 82 : 74, height: atual ? 82 : 74, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', background: ok ? b.cor : '#E1E6E5', color: ok ? sobre(b.cor) : '#A8B1B1', border: atual ? '8px solid #fff' : '6px solid #fff', boxShadow: atual ? `0 0 0 5px ${b.cor}50,0 10px 0 rgba(120,132,132,.32),0 16px 28px ${b.cor}25` : '0 7px 0 rgba(46,61,67,.16)', transition: 'transform .2s ease' }}>
                           {ok ? <Check size={28} strokeWidth={3} /> : lib ? <IconeEtapa size={25} /> : <Lock size={22} />}
                         </div>
                         <div style={{ width: 138, marginTop: 11, padding: '7px 8px', borderRadius: 11, background: atual ? '#fff' : 'rgba(255,255,255,.86)', boxShadow: atual ? '0 6px 18px rgba(20,43,48,.09)' : 'none', textAlign: 'center' }}>
