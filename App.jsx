@@ -11,6 +11,7 @@ import Financeiro from './Financeiro.jsx';
 import Ingles from './Ingles.jsx';
 import Dopamina from './Dopamina.jsx';
 import Conquistas from './Conquistas.jsx';
+import Cursos from './Cursos.jsx';
 import { FASES as FASES_INGLES } from './ingles.data';
 import { totalLicoesDopamina } from './dopamina.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
@@ -306,7 +307,7 @@ const inicial = {
   rodas: {},         // { 1: {Saúde:7,...} }
   desafio100: {}, ativacao40: { frase: '', marcas: {} }, caracteristicas: [],
   visao: {}, medidas: [], biblioteca: [], ritual: {}, jejum: null, alarmes: [],
-  metasSOL: [], redes: [], cartas: {}, gratidoes: [], fotos: []
+  metasSOL: [], redes: [], cartas: {}, gratidoes: [], fotos: [], cursos: []
 };
 
 /* ══════════ APP ══════════ */
@@ -1424,13 +1425,15 @@ export default function ZoeApp() {
 
   /* ══════════ INÍCIO ══════════ */
   const Inicio = () => {
-    const dopaminaFeitas = Object.values(d.dopamina?.licoes || {}).filter(Boolean).length;
+    const cursos = d.cursos || [];
+    const aulasCursos = cursos.reduce((n, c) => n + c.aulas.length, 0);
+    const aulasCursosFeitas = cursos.reduce((n, c) => n + c.aulas.filter(a => a.feito).length, 0);
     const inglesFeitas = Object.values(d.ingles?.fasesConcluidas || {}).filter(Boolean).length;
     const metaAnual = d.financeiro?.metaAnual || METAANUAL_PADRAO;
     const economizado = (d.financeiro?.transacoes || []).reduce((a, t) => a + (t.tipo === 'entrada' ? t.valor : -t.valor), 0);
     const pctVida = Math.min(100, Math.round((concluidas / totalEtapas) * 100));
     const trilhas = [
-      { id: 'dopamina', nome: 'Dopamina', icone: Sparkles, cor: '#A86BF4', suave: '#F0E5FF', valor: `${dopaminaFeitas} / ${totalLicoesDopamina}`, pct: (dopaminaFeitas / totalLicoesDopamina) * 100 },
+      { id: 'cursos', nome: 'Cursos', icone: BookOpen, cor: '#A86BF4', suave: '#F0E5FF', valor: cursos.length ? `${aulasCursosFeitas} / ${aulasCursos}` : 'Adicionar', pct: aulasCursos ? (aulasCursosFeitas / aulasCursos) * 100 : 0 },
       { id: 'ingles', nome: 'Inglês', icone: Languages, cor: '#5B9CF6', suave: '#E3F0FF', valor: `${inglesFeitas} / ${FASES_INGLES.length}`, pct: (inglesFeitas / FASES_INGLES.length) * 100 },
       { id: 'financeiro', nome: 'Finanças', icone: Wallet, cor: '#43BE8C', suave: '#DFF7EC', valor: formatoMoeda(economizado), pct: metaAnual.alvo ? (economizado / metaAnual.alvo) * 100 : 0 }
     ];
@@ -1917,7 +1920,7 @@ export default function ZoeApp() {
     { id: 'trilha', n: 'Trilha', i: Route },
     { id: 'agenda', n: 'Agenda', i: CalendarDays },
     { id: 'fab', n: '', i: Plus },
-    { id: 'dopamina', n: 'Dopamina', i: Flame },
+    { id: 'cursos', n: 'Cursos', i: BookOpen },
     { id: 'financeiro', n: 'Financeiro', i: Wallet }
   ];
 
@@ -1935,6 +1938,7 @@ export default function ZoeApp() {
         {aba === 'financeiro' && <Financeiro d={d} up={up} aviso={aviso} />}
         {aba === 'ingles' && <Ingles d={d} up={up} aviso={aviso} />}
         {aba === 'dopamina' && <Dopamina d={d} up={up} aviso={aviso} />}
+        {aba === 'cursos' && <Cursos d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
         {aba === 'conquistas' && <Conquistas d={d} up={up} aviso={aviso} />}
 
         {QuickAdd()}
