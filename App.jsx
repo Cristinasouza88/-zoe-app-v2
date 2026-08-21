@@ -101,6 +101,19 @@ function GoogleIcon() {
   );
 }
 
+function ZoeContaIcon({ tamanho = 36 }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 40 40" aria-hidden="true">
+      <rect x="2" y="2" width="36" height="36" rx="13" fill="#A8FF00" />
+      <ellipse cx="14.5" cy="18" rx="4.3" ry="5.2" fill="#fff" />
+      <ellipse cx="25.5" cy="18" rx="4.3" ry="5.2" fill="#fff" />
+      <circle cx="15.4" cy="19" r="2.1" fill="#075B59" />
+      <circle cx="24.6" cy="19" r="2.1" fill="#075B59" />
+      <path d="M14 26.2c1.8 2.6 4 3.8 6 3.8s4.2-1.2 6-3.8" fill="none" stroke="#075B59" strokeWidth="2.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function NovaSenha({ onConcluir }) {
   const [senha, setSenha] = useState('');
   const [confirmacao, setConfirmacao] = useState('');
@@ -1424,7 +1437,7 @@ export default function ZoeApp() {
     return (
       <div style={{ padding: '18px 16px 120px', background: 'radial-gradient(circle at 50% 7%,rgba(168,255,0,.13),transparent 27%),radial-gradient(circle at 92% 18%,rgba(0,230,210,.10),transparent 24%),linear-gradient(180deg,#FCFFFD 0%,#F7FAF9 100%)' }}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 22 }}>
-          <button onClick={() => setSheet('avatar')} aria-label="Trocar avatar da ZOE" style={{ width: 42, height: 42, border: 'none', borderRadius: 15, background: '#fff', color: C.ink, boxShadow: '0 5px 16px rgba(24,42,65,.08)', display: 'grid', placeItems: 'center', overflow: 'hidden', padding: 3 }}><img src={avatarImagem} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></button>
+          <button onClick={() => setSheet('perfil')} aria-label="Abrir menu da conta" style={{ width: 42, height: 42, border: 'none', borderRadius: 15, background: '#fff', color: C.ink, boxShadow: '0 5px 16px rgba(24,42,65,.08)', display: 'grid', placeItems: 'center', overflow: 'hidden', padding: 2 }}><ZoeContaIcon tamanho={38} /></button>
           <div style={{ flex: 1, marginLeft: 10, fontSize: 17, fontWeight: 800, color: C.ink }}>Olá, {d.perfil.nome || usuario.nome} <span aria-hidden="true">👋</span></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: C.green, fontWeight: 800 }}><Heart size={18} /> {pontosDia}</div>
@@ -1932,6 +1945,33 @@ export default function ZoeApp() {
               </button>
             ))}
           </div>
+        </Sheet>
+
+        <Sheet aberto={sheet === 'perfil'} fechar={() => setSheet(null)} titulo="Sua conta">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '2px 2px 18px', borderBottom: `1px solid ${C.line}` }}>
+            <div style={{ width: 52, height: 52, borderRadius: 18, background: '#fff', boxShadow: '0 6px 18px rgba(24,42,65,.09)', display: 'grid', placeItems: 'center' }}><ZoeContaIcon tamanho={46} /></div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ color: C.ink, fontWeight: 900, fontSize: 16 }}>{d.perfil.nome || usuario?.nome || 'Minha conta'}</div>
+              <div style={{ color: C.ink3, fontSize: 11.5, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.perfil.email || usuario?.email}</div>
+            </div>
+          </div>
+          <div style={{ display: 'grid', gap: 9, marginTop: 16 }}>
+            <button onClick={() => setSheet('avatar')} style={{ minHeight: 54, padding: '0 14px', borderRadius: 16, border: `1px solid ${C.line}`, background: '#fff', color: C.ink, display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left' }}>
+              <span style={{ width: 34, height: 34, borderRadius: 11, background: C.limaSuave, display: 'grid', placeItems: 'center', color: C.petroleo }}><Sparkles size={17} /></span>
+              <span style={{ flex: 1 }}><span style={{ display: 'block', fontSize: 13.5, fontWeight: 850 }}>Trocar avatar</span><span style={{ display: 'block', color: C.ink3, fontSize: 10.5, marginTop: 2 }}>Escolha entre Essencial e Fun</span></span>
+              <ChevronRight size={17} color={C.ink3} />
+            </button>
+            <button onClick={() => { setSheet(null); permissao(); }} style={{ minHeight: 54, padding: '0 14px', borderRadius: 16, border: `1px solid ${C.line}`, background: '#fff', color: C.ink, display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left' }}>
+              <span style={{ width: 34, height: 34, borderRadius: 11, background: C.aquaSuave, display: 'grid', placeItems: 'center', color: C.petroleo }}><Bell size={17} /></span>
+              <span style={{ flex: 1, fontSize: 13.5, fontWeight: 850 }}>Notificações</span>
+              <ChevronRight size={17} color={C.ink3} />
+            </button>
+            <button onClick={async () => { setSheet(null); await sair(); }} style={{ minHeight: 54, padding: '0 14px', borderRadius: 16, border: '1px solid #F1DEDE', background: '#FFF9F9', color: '#A43C3C', display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left' }}>
+              <span style={{ width: 34, height: 34, borderRadius: 11, background: '#FCEAEA', display: 'grid', placeItems: 'center' }}><LogOut size={17} /></span>
+              <span style={{ flex: 1, fontSize: 13.5, fontWeight: 850 }}>Sair do aplicativo</span>
+            </button>
+          </div>
+          <div style={{ textAlign: 'center', color: C.ink3, fontSize: 10.5, marginTop: 18 }}>ZOE · versão 1.0.0</div>
         </Sheet>
 
         <Sheet
