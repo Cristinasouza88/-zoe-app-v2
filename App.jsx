@@ -445,6 +445,7 @@ export default function ZoeApp() {
       ? `Nas suas respostas, você trouxe pontos importantes como “${respostas[0].slice(0, 120)}${respostas[0].length > 120 ? '…' : ''}”. Isso mostra que você já começou a transformar percepção em consciência.`
       : `Você concluiu ${bloco.nome}. Mesmo quando a resposta ainda não está totalmente clara, terminar esta sessão já é um movimento de consciência e compromisso com você.`;
     return {
+      tipo: 'sessao',
       bloco,
       titulo: `Você concluiu ${bloco.nome}`,
       texto: percebeu,
@@ -479,8 +480,11 @@ export default function ZoeApp() {
       setCoach(resumoCoach(etapa.bloco));
       setSessoesAbertas(a => ({ ...a, [etapa.bloco.id]: false }));
     } else {
-      aviso('Etapa concluída. Vamos para a próxima.');
-      setTimeout(() => abrirProximaEtapa(id), 260);
+      setCoach({
+        tipo: 'etapa', bloco: etapa.bloco, etapaId: id,
+        titulo: 'Missão concluída!',
+        texto: `Você concluiu “${etapa.titulo}”. Um passo pequeno, mas concreto, na direção da vida que está construindo. A próxima missão já está pronta para você.`
+      });
     }
   };
 
@@ -1280,8 +1284,7 @@ export default function ZoeApp() {
     return (
       <div style={{ paddingBottom: 120 }}>
         <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 14px' }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Minha trilha</h1>
-          <p style={{ fontSize: 13, color: C.ink2, margin: '0 0 14px' }}>Cada etapa libera a próxima. Na ordem do planner.</p>
+          <div style={{ display:'flex',alignItems:'center',minHeight:94 }}><div style={{ flex:1 }}><h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Minha trilha</h1><p style={{ fontSize: 13, color: C.ink2, margin: 0 }}>Uma missão por vez. Eu sigo com você.</p></div><img src="/zoe-mascot.png" alt="ZOE" style={{ width:88,height:96,objectFit:'contain',objectPosition:'center',filter:'drop-shadow(0 8px 12px rgba(55,28,105,.18))' }}/></div>
           <Card>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>Progresso da jornada</span>
@@ -1311,35 +1314,30 @@ export default function ZoeApp() {
                 </button>
                 {aberto && <p style={{ fontSize: 12.5, color: C.ink3, margin: '0 0 10px 19px' }}>{b.resumo}</p>}
 
-                {aberto && <div style={{ marginLeft: 4, borderLeft: `2px solid ${C.line}`, paddingLeft: 15 }}>
+                {aberto && <div style={{ position: 'relative', padding: '8px 8px 18px' }}>
                   {b.etapas.map((e, i) => {
                     const lib = liberada(e.id), ok = feito(e.id), atual = etapaAtual && etapaAtual.id === e.id;
+                    const deslocamento = [8, 34, 58, 32][i % 4];
+                    const IconeEtapa = e.tipo === 'agenda' ? CalendarDays : e.tipo === 'roda' ? Target : e.tipo === 'ferramenta' ? Sparkles : e.tipo === 'fichas' ? BookOpen : Route;
                     return (
                       <div key={e.id} onClick={() => lib && setEtapaAberta(e.id)}
                         className={atual ? 'zoe-surge' : ''}
                         style={{
-                          position: 'relative', display: 'flex', alignItems: 'center', gap: 11, padding: 13, marginBottom: 8,
-                          borderRadius: 15, cursor: lib ? 'pointer' : 'default',
-                          background: atual ? C.card : ok ? '#F7FBF9' : lib ? C.card : '#F6F8F7',
-                          border: `1.5px solid ${atual ? b.cor : ok ? C.mint : C.line}`,
-                          boxShadow: atual ? `0 3px 14px ${b.cor}33` : 'none', opacity: lib ? 1 : .55
+                          position: 'relative', display: 'flex', alignItems: 'center', gap: 13, margin: `0 0 18px ${deslocamento}px`,
+                          width: 'calc(100% - 66px)', cursor: lib ? 'pointer' : 'default', opacity: lib ? 1 : .46
                         }}>
-                        <div style={{
-                          position: 'absolute', left: -22, width: 12, height: 12, borderRadius: 99,
-                          background: ok ? b.cor : atual ? '#fff' : C.line, border: atual ? `3px solid ${b.cor}` : 'none'
-                        }} />
-                        <div style={{ width: 27, height: 27, borderRadius: 9, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: ok ? b.cor : lib ? '#F2F5F4' : 'transparent', color: ok ? '#fff' : C.ink3 }}>
-                          {ok ? <Check size={15} strokeWidth={3} /> : lib ? <span style={{ fontSize: 11, fontWeight: 800 }}>{i + 1}</span> : <Lock size={13} />}
+                        {i < b.etapas.length - 1 && <div style={{ position: 'absolute', left: 31, top: 60, width: 4, height: 32, borderRadius: 99, background: ok ? `${b.cor}70` : C.line, transform: `rotate(${[28,20,-22,-28][i%4]}deg)`, transformOrigin: 'top' }} />}
+                        <div style={{ width: 66, height: 66, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', background: ok || atual ? b.cor : '#E3E7E7', color: ok || atual ? sobre(b.cor) : '#AAB1B3', border: atual ? '7px solid #fff' : '5px solid #fff', boxShadow: atual ? `0 0 0 5px ${b.cor}55,0 9px 18px ${b.cor}35` : '0 5px 0 rgba(40,55,62,.13)' }}>
+                          {ok ? <Check size={28} strokeWidth={3} /> : lib ? <IconeEtapa size={25} /> : <Lock size={22} />}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 13.5, fontWeight: 700, color: lib ? C.ink : C.ink3 }}>{e.titulo}</div>
+                          <div style={{ fontSize: 13.5, fontWeight: 800, color: lib ? C.ink : C.ink3 }}>{e.titulo}</div>
                           <div style={{ fontSize: 11, color: C.ink3, marginTop: 2, textTransform: 'capitalize' }}>
                             {({ leitura: 'Conteúdo', ferramenta: 'Ferramenta', fichas: 'Integração', agenda: 'Agenda de pontos', roda: 'Checkpoint', ritual: 'Prática diária', dia7: `Dia ${e.dia}` })[e.tipo]}
                           </div>
                           {ok && d.etapas[e.id]?.data && <div style={{ fontSize: 10.5, color: C.greenDark, marginTop: 3 }}>Concluída em {new Date(d.etapas[e.id].data + 'T12:00').toLocaleDateString('pt-BR')}</div>}
                         </div>
                         {atual && <span style={{ fontSize: 10, fontWeight: 800, color: b.cor, background: `${b.cor}1F`, padding: '4px 9px', borderRadius: 8, flexShrink: 0 }}>AGORA</span>}
-                        {lib && !atual && <ChevronRight size={17} color={C.ink3} />}
                       </div>
                     );
                   })}
@@ -1355,12 +1353,12 @@ export default function ZoeApp() {
   /* ══════════ AGENDA ══════════ */
   const Agenda = () => {
     const base = new Date(data + 'T12:00');
-    const segunda = new Date(base);
-    const ajuste = (base.getDay() + 6) % 7;
-    segunda.setDate(base.getDate() - ajuste);
-    const dias = Array.from({ length: 7 }, (_, i) => {
-      const dt = new Date(segunda); dt.setDate(segunda.getDate() + i);
-      return { iso: dt.toISOString().slice(0, 10), n: dt.getDate(), d: ['S','T','Q','Q','S','S','D'][i] };
+    const inicioMes = new Date(base.getFullYear(), base.getMonth(), 1, 12);
+    const inicioGrade = new Date(inicioMes);
+    inicioGrade.setDate(1 - ((inicioMes.getDay() + 6) % 7));
+    const dias = Array.from({ length: 42 }, (_, i) => {
+      const dt = new Date(inicioGrade); dt.setDate(inicioGrade.getDate() + i);
+      return { iso: dt.toISOString().slice(0, 10), n: dt.getDate(), atual: dt.getMonth() === base.getMonth() };
     });
     const marcas = d.agenda[data] || {};
     const tarefas = agendaAtiva?.tarefas || [];
@@ -1368,16 +1366,21 @@ export default function ZoeApp() {
     return (
       <div style={{ padding: '20px 16px 120px', minHeight: '100vh', background: '#F7FAF9' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}><CalendarDays size={24} color={C.green} /><h1 style={{ margin: 0, color: C.ink, fontSize: 24 }}>Minha agenda</h1></div>
-        <p style={{ margin: '4px 0 18px 34px', color: C.ink3, fontSize: 12.5 }}>A ZOE organizou sua prática desta semana</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 6, marginBottom: 16 }}>
-          {dias.map(x => <button key={x.iso} onClick={() => setData(x.iso)} style={{ border: 0, borderRadius: 14, padding: '9px 2px', background: data === x.iso ? C.green : '#fff', color: data === x.iso ? '#fff' : C.ink, boxShadow: '0 4px 12px rgba(20,42,55,.06)', fontFamily: 'inherit' }}><div style={{ fontSize: 10, opacity: .75 }}>{x.d}</div><div style={{ fontSize: 15, fontWeight: 800, marginTop: 3 }}>{x.n}</div></button>)}
-        </div>
-        <Card style={{ marginBottom: 14, background: C.petroleo, color: '#fff' }}>
+        <p style={{ margin: '4px 0 18px 34px', color: C.ink3, fontSize: 12.5 }}>Agenda e missões organizadas pela ZOE</p>
+        <Card style={{ marginBottom: 16, padding: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}><button onClick={() => { const x=new Date(base); x.setMonth(x.getMonth()-1); setData(x.toISOString().slice(0,10)); }} style={{ border:0,background:'transparent' }}><ChevronLeft size={20}/></button><strong style={{ color:C.ink, textTransform:'capitalize' }}>{base.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</strong><button onClick={() => { const x=new Date(base); x.setMonth(x.getMonth()+1); setData(x.toISOString().slice(0,10)); }} style={{ border:0,background:'transparent' }}><ChevronRight size={20}/></button></div>
+          <div style={{ display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:4,marginBottom:5 }}>{['S','T','Q','Q','S','S','D'].map((x,i)=><div key={i} style={{ textAlign:'center',fontSize:9,fontWeight:800,color:C.ink3 }}>{x}</div>)}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4 }}>
+            {dias.map(x => { const temMissao=Object.values(d.agenda[x.iso]||{}).some(Boolean); return <button key={x.iso} onClick={() => setData(x.iso)} style={{ position:'relative',border: 0, borderRadius: 11, aspectRatio:'1', background: data === x.iso ? C.green : x.iso===hoje()?C.mint:'transparent', color: data === x.iso ? '#fff' : x.atual?C.ink:C.ink3, opacity:x.atual?1:.4, fontFamily: 'inherit', fontWeight:700 }}><span>{x.n}</span>{temMissao&&<span style={{ position:'absolute',bottom:4,left:'50%',transform:'translateX(-50%)',width:4,height:4,borderRadius:9,background:data===x.iso?'#fff':C.lilac }}/>}</button>})}
+          </div>
+          </Card>
+          <Card style={{ marginBottom: 14, background: C.petroleo, color: '#fff' }}>
           <div style={{ fontSize: 11, opacity: .7 }}>Plano do dia</div>
           <div style={{ fontSize: 19, fontWeight: 800, margin: '3px 0 10px' }}>{agendaAtiva?.bloco?.nome || 'Sua semana'}</div>
           <Barra v={realizadas} max={Math.max(1, tarefas.length)} cor={C.lima} h={8} />
           <div style={{ fontSize: 11, opacity: .75, marginTop: 7 }}>{realizadas} de {tarefas.length} tarefas realizadas</div>
         </Card>
+        <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',margin:'20px 2px 12px' }}><h2 style={{ margin:0,fontSize:18,color:C.ink }}>Missões do mês</h2><span style={{ color:C.lilac,fontSize:11,fontWeight:800 }}>VER TODAS</span></div>
         {tarefas.length ? tarefas.map((t, i) => {
           const on = !!marcas[`${agendaAtiva.id}-${i}`];
           return <div key={i} onClick={() => toggleTarefaDe(agendaAtiva, i)} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: 14, marginBottom: 8, borderRadius: 16, background: on ? C.mint : '#fff', border: `1.5px solid ${on ? C.green : C.line}`, cursor: 'pointer' }}>
@@ -1944,15 +1947,15 @@ export default function ZoeApp() {
         {coach && (
           <div style={{ position: 'fixed', inset: 0, zIndex: 110, background: `linear-gradient(160deg,${coach.bloco.cor},${C.petroleo})`, padding: '28px 20px', overflowY: 'auto', color: '#fff' }}>
             <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ width: 74, height: 74, margin: '30px auto 18px', borderRadius: 24, background: 'rgba(255,255,255,.16)', display: 'grid', placeItems: 'center', border: '1px solid rgba(255,255,255,.25)' }}><MessageCircle size={36} /></div>
+              <div style={{ height: 245, margin: '4px auto 6px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}><img src="/zoe-mascot.png" alt="ZOE celebrando" style={{ height: 235, maxWidth: '90vw', objectFit: 'contain', filter: 'drop-shadow(0 16px 24px rgba(21,12,58,.28))' }} /></div>
               <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: 1.4, opacity: .75 }}>ZOE · SUA COACH</div>
               <h1 style={{ textAlign: 'center', fontSize: 27, lineHeight: 1.18, margin: '8px 0 18px' }}>{coach.titulo}</h1>
               <div style={{ background: 'rgba(255,255,255,.96)', color: C.ink, borderRadius: 24, padding: 20, boxShadow: '0 18px 45px rgba(0,0,0,.18)' }}>
                 <p style={{ fontSize: 14, lineHeight: 1.65, margin: '0 0 17px', color: C.ink2 }}>{coach.texto}</p>
-                <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Antes de seguir, leve estas reflexões:</div>
-                {coach.reflexoes.map((q, i) => <div key={q} style={{ marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 700, color: coach.bloco.cor }}>{i + 1}. {q}</label><textarea value={campo(`coach-${coach.bloco.id}-${i}`)} onChange={ev => setCampo(`coach-${coach.bloco.id}-${i}`, ev.target.value)} placeholder="Escreva o que vier com sinceridade" style={{ width: '100%', minHeight: 62, marginTop: 6, borderRadius: 12, border: `1.5px solid ${C.line}`, padding: 11, resize: 'vertical', fontFamily: 'inherit', color: C.ink, outline: 'none' }} /></div>)}
+                {coach.tipo === 'sessao' && <><div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Antes de seguir, leve estas reflexões:</div>
+                {coach.reflexoes.map((q, i) => <div key={q} style={{ marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 700, color: coach.bloco.cor }}>{i + 1}. {q}</label><textarea value={campo(`coach-${coach.bloco.id}-${i}`)} onChange={ev => setCampo(`coach-${coach.bloco.id}-${i}`, ev.target.value)} placeholder="Escreva o que vier com sinceridade" style={{ width: '100%', minHeight: 62, marginTop: 6, borderRadius: 12, border: `1.5px solid ${C.line}`, padding: 11, resize: 'vertical', fontFamily: 'inherit', color: C.ink, outline: 'none' }} /></div>)}</>}
               </div>
-              <button onClick={() => { const ultimo = coach.bloco.etapas[coach.bloco.etapas.length - 1].id; setCoach(null); abrirProximaEtapa(ultimo); }} style={{ width: '100%', marginTop: 18, border: 0, borderRadius: 16, background: '#fff', color: coach.bloco.cor, padding: 16, fontSize: 15, fontWeight: 900, fontFamily: 'inherit', boxShadow: '0 6px 0 rgba(0,0,0,.16)' }}>CONTINUAR PARA A PRÓXIMA ETAPA</button>
+              <button onClick={() => { const ultimo = coach.tipo === 'etapa' ? coach.etapaId : coach.bloco.etapas[coach.bloco.etapas.length - 1].id; setCoach(null); abrirProximaEtapa(ultimo); }} style={{ width: '100%', marginTop: 18, border: 0, borderRadius: 16, background: '#fff', color: coach.bloco.cor, padding: 16, fontSize: 15, fontWeight: 900, fontFamily: 'inherit', boxShadow: '0 6px 0 rgba(0,0,0,.16)' }}>{coach.tipo === 'etapa' ? 'CONTINUAR' : 'CONTINUAR PARA A PRÓXIMA SESSÃO'}</button>
             </div>
           </div>
         )}
