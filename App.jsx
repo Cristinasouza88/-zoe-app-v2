@@ -15,6 +15,7 @@ import { FASES as FASES_INGLES } from './ingles.data';
 import { totalLicoesDopamina } from './dopamina.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 import { supabase } from './supabase.js';
+import zoeMascot from './zoe-mascot.png';
 
 /* ══════════ FOTOS ══════════
    As imagens são comprimidas antes de salvar (lado maior 900px, jpeg 72%),
@@ -1284,7 +1285,7 @@ export default function ZoeApp() {
     return (
       <div style={{ paddingBottom: 120 }}>
         <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 14px' }}>
-          <div style={{ display:'flex',alignItems:'center',minHeight:94 }}><div style={{ flex:1 }}><h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Minha trilha</h1><p style={{ fontSize: 13, color: C.ink2, margin: 0 }}>Uma missão por vez. Eu sigo com você.</p></div><img src="/zoe-mascot.png" alt="ZOE" style={{ width:88,height:96,objectFit:'contain',objectPosition:'center',filter:'drop-shadow(0 8px 12px rgba(55,28,105,.18))' }}/></div>
+          <div style={{ display:'flex',alignItems:'center',minHeight:94 }}><div style={{ flex:1 }}><h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Minha trilha</h1><p style={{ fontSize: 13, color: C.ink2, margin: 0 }}>Uma missão por vez. Eu sigo com você.</p></div><img src={zoeMascot} alt="ZOE" style={{ width:88,height:96,objectFit:'contain',objectPosition:'center',filter:'drop-shadow(0 8px 12px rgba(55,28,105,.18))' }}/></div>
           <Card>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>Progresso da jornada</span>
@@ -1947,7 +1948,7 @@ export default function ZoeApp() {
         {coach && (
           <div style={{ position: 'fixed', inset: 0, zIndex: 110, background: `linear-gradient(160deg,${coach.bloco.cor},${C.petroleo})`, padding: '28px 20px', overflowY: 'auto', color: '#fff' }}>
             <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ width: 240, height: 245, margin: '4px auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFEFA', borderRadius: '47% 53% 44% 56% / 55% 45% 55% 45%', boxShadow: '0 16px 32px rgba(21,12,58,.2)' }}><img src="/zoe-mascot.png" alt="ZOE celebrando" style={{ height: 220, maxWidth: 205, objectFit: 'contain' }} /></div>
+              <div style={{ width: 240, height: 245, margin: '4px auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFEFA', borderRadius: '47% 53% 44% 56% / 55% 45% 55% 45%', boxShadow: '0 16px 32px rgba(21,12,58,.2)' }}><img src={zoeMascot} alt="ZOE celebrando" style={{ height: 220, maxWidth: 205, objectFit: 'contain' }} /></div>
               <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: 1.4, opacity: .75 }}>ZOE · SUA COACH</div>
               <h1 style={{ textAlign: 'center', fontSize: 27, lineHeight: 1.18, margin: '8px 0 18px' }}>{coach.titulo}</h1>
               <div style={{ background: 'rgba(255,255,255,.96)', color: C.ink, borderRadius: 24, padding: 20, boxShadow: '0 18px 45px rgba(0,0,0,.18)' }}>
