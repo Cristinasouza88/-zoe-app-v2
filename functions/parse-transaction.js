@@ -50,7 +50,9 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: 400,
+        // Uma fatura completa pode gerar dezenas de lançamentos. O limite
+        // anterior cortava o JSON antes do fechamento.
+        max_tokens: 8000,
         system: PROMPT_SISTEMA,
         messages: [{ role: 'user', content: conteudo }]
       })
