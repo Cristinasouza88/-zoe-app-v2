@@ -35,9 +35,10 @@ exports.handler=async event=>{
     const headers={...loginHeaders,authorization:`Bearer ${token}`},timeline=await request(`${base}timeline/auth`,{headers});
     if(!timeline.response.ok)return json(502,{erro:'Login aceito, mas a plataforma não liberou a lista de cursos.'});
     const sources=[timeline.data],ids=new Set();
-    const findIds=node=>{if(!node||typeof node!=='object')return;const title=first(node,['title','name','product_name']);if(title&&node.id&&(node.modules||node.lessons||node.courses||node.progress!==undefined))ids.add(node.id);for(const value of Object.values(node))findIds(value)};
+    const findIds=node=>{if(!node||typeof node!=='object')return;const title=first(node,['title','name','product_name']),type=first(node,['type','content_type']).toUpperCase(),hasCollection=['modules','lessons','courses','products','contents','items','sections','categories'].some(key=>Array.isArray(node[key]));if(title&&node.id&&!isLesson(node)&&(hasCollection||node.progress!==undefined||node.lessons_count!==undefined||/PRODUCT|COURSE|TRAINING/.test(type)))ids.add(node.id);for(const value of Object.values(node))findIds(value)};
     findIds(timeline.data);
-    for(const id of [...ids].slice(0,20)){const product=await request(`${base}products/${encodeURIComponent(id)}/auth`,{headers});if(product.response.ok)sources.push(product.data)}
+    const productIds=[...ids].slice(0,80);
+    for(let i=0;i<productIds.length;i+=6){const batch=await Promise.all(productIds.slice(i,i+6).map(id=>request(`${base}products/${encodeURIComponent(id)}/auth`,{headers})));for(const product of batch)if(product.response.ok)sources.push(product.data)}
     const aulas=[],seen=new Set();sources.forEach(source=>collect(source,aulas,seen,courseUrl));
     if(!aulas.length)return json(422,{erro:'O acesso funcionou, mas a plataforma não devolveu aulas disponíveis para este usuário.'});
     return json(200,{tipo:'entregadigital',origem:'Entrega Digital',nome:first(timeline.data,['title','name','product_name'])||'Curso da Entrega Digital',url:courseUrl,aulas});
