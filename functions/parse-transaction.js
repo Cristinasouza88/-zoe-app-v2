@@ -31,7 +31,12 @@ exports.handler = async (event) => {
   try { payload = JSON.parse(event.body || '{}'); } catch { return { statusCode: 400, body: JSON.stringify({ erro: 'JSON inválido.' }) }; }
 
   const conteudo = [];
-  if ((payload.tipo === 'imagem'||payload.tipo==='documento') && payload.imagemBase64) {
+  let sistema = PROMPT_SISTEMA;
+  if (payload.tipo === 'csv' && Array.isArray(payload.descricoes)) {
+    const descricoes = payload.descricoes.slice(0, 200).map((descricao, id) => ({ id, descricao }));
+    sistema = `Você classifica descrições de lançamentos financeiros brasileiros. Responda APENAS JSON válido no formato {"categorias":[{"id":0,"categoria":"...","confianca":0.0}]}. Categorias permitidas: ${[...CATEGORIAS_DESPESA, ...CATEGORIAS_RECEITA].join(', ')}. Analise estabelecimento, serviço e contexto; não invente detalhes. Use Outros e confiança baixa quando não for possível concluir.`;
+    conteudo.push({ type: 'text', text: `Classifique estas descrições:\n${JSON.stringify(descricoes)}` });
+  } else if ((payload.tipo === 'imagem'||payload.tipo==='documento') && payload.imagemBase64) {
     conteudo.push({ type: payload.tipo==='documento'?'document':'image', source: { type: 'base64', media_type: payload.mimeType || 'image/jpeg', data: payload.imagemBase64 } });
     conteudo.push({ type: 'text', text: 'Organize todas as informações financeiras deste arquivo. Identifique também consórcio ou financiamento, valores pagos, saldo e parcelas quando estiverem explícitos.' });
   } else if (payload.texto) {
@@ -55,7 +60,7 @@ exports.handler = async (event) => {
         // Uma fatura completa pode gerar dezenas de lançamentos. O limite
         // anterior cortava o JSON antes do fechamento.
         max_tokens: 8000,
-        system: PROMPT_SISTEMA,
+        system: sistema,
         messages: [{ role: 'user', content: conteudo }]
       })
     });
