@@ -22,9 +22,9 @@ Extraia todos os lançamentos visíveis. Use confiança entre 0 e 1. Não invent
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.ZOE_API_KEY || process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { statusCode: 500, body: JSON.stringify({ erro: 'ANTHROPIC_API_KEY não configurada no Netlify.' }) };
+    return { statusCode: 500, body: JSON.stringify({ erro: 'ZOE_API_KEY não configurada no Netlify.' }) };
   }
 
   let payload;
