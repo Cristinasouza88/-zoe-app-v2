@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { C, sobre, Card, Btn, Campo, Area, Barra, Sheet, GraficoLinha, hoje } from './ui.jsx';
 import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA, CONTAS_PADRAO, MESES_LBL, formatoMoeda } from './financeiro.data';
-import { parseTransacao } from './ia.jsx';
+import { parseTransacao, classificarDescricoesCsv } from './ia.jsx';
 
 const vazio = { transacoes: [], contas: CONTAS_PADRAO, metas: [], dividas: [], pendenciasClassificacao: [], documentos: [] };
 const rascunhoVazio = () => ({ tipo: 'saida', valor: '', categoria: CATEGORIAS_DESPESA[0], conta: CONTAS_PADRAO[0], data: hoje(), descricao: '', pendente: false });
@@ -93,7 +93,30 @@ const dataCsv = (valor = '') => {
     return `${ano}-${br[2].padStart(2, '0')}-${br[1].padStart(2, '0')}`;
   }
   const iso = texto.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-  return iso ? `${iso[1]}-${iso[2].padStart(2, '0')}-${iso[3].padStart(2, '0')}` : hoje();
+  if (iso) return `${iso[1]}-${iso[2].padStart(2, '0')}-${iso[3].padStart(2, '0')}`;
+  const excel = Number(texto.replace(',', '.'));
+  if (Number.isFinite(excel) && excel > 25000 && excel < 80000) {
+    const dt = new Date(Date.UTC(1899, 11, 30) + excel * 86400000);
+    return dt.toISOString().slice(0, 10);
+  }
+  return '';
+};
+
+const categoriaPorDescricao = (descricao, tipo) => {
+  if (tipo === 'entrada') return /salario|pro labore|pagamento empresa|folha/.test(descricao) ? 'Salário' : /reembolso|estorno/.test(descricao) ? 'Reembolso' : 'Outros';
+  const regras = [
+    ['Moradia', /aluguel|condominio|energia|eletric|sabesp|agua|gas|internet|iptu/],
+    ['Alimentação', /mercado|supermerc|restaurante|ifood|padaria|acougue|hortifruti|caf[eé]|burger|pizza/],
+    ['Transporte', /uber|99 |posto|combust|estacion|pedagio|sem parar|oficina|pneu/],
+    ['Saúde', /farmacia|drogaria|hospital|clinica|medic|laborat|odont|academia/],
+    ['Educação', /escola|faculdade|curso|livro|udemy|hotmart/],
+    ['Assinaturas', /netflix|spotify|apple\.com|google one|amazon prime|assinatura/],
+    ['Consórcio', /consorcio/], ['Financiamento', /financiamento|parcela veiculo|credito imobiliario/],
+    ['Investimentos', /investimento|aplicacao|tesouro|cdb|corretora/],
+    ['Cuidados pessoais', /salao|cabeleire|manicure|cosmetic|estetica/],
+    ['Lazer', /cinema|teatro|viagem|hotel|ingresso|parque/],
+  ];
+  return regras.find(([, regra]) => regra.test(descricao))?.[0] || 'Outros';
 };
 
 const transacoesDeCsv = async (file) => {
@@ -102,7 +125,9 @@ const transacoesDeCsv = async (file) => {
   if (linhas.length < 2) return [];
   const candidatos = [',', ';', '\t'];
   const delimitador = candidatos.sort((a, b) => separarLinhaCsv(linhas[0], b).length - separarLinhaCsv(linhas[0], a).length)[0];
-  const cabecalhos = separarLinhaCsv(linhas[0], delimitador).map(normalizarTexto);
+  const linhaCabecalho = linhas.findIndex((linha, pos) => pos < 15 && /data|date|valor|amount|debito|credito|descri|historico/i.test(normalizarTexto(linha)));
+  if (linhaCabecalho < 0) throw new Error('Não encontrei o cabeçalho com data e valor neste CSV.');
+  const cabecalhos = separarLinhaCsv(linhas[linhaCabecalho], delimitador).map(normalizarTexto);
   const indice = (...nomes) => cabecalhos.findIndex(h => nomes.some(n => h === n || h.includes(n)));
   const iData = indice('data', 'date', 'dt');
   const iDescricao = indice('descricao', 'description', 'historico', 'estabelecimento', 'titulo', 'memo');
@@ -113,7 +138,7 @@ const transacoesDeCsv = async (file) => {
   const iCategoria = indice('categoria', 'category');
   const iConta = indice('conta', 'account', 'banco', 'cartao');
   if (iValor < 0 && iDebito < 0 && iCredito < 0) throw new Error('Não encontrei uma coluna de valor no CSV.');
-  return linhas.slice(1).map((linha, i) => {
+  const transacoes = linhas.slice(linhaCabecalho + 1).map((linha, i) => {
     const c = separarLinhaCsv(linha, delimitador);
     const debito = iDebito >= 0 ? Math.abs(valorCsv(c[iDebito])) : 0;
     const credito = iCredito >= 0 ? Math.abs(valorCsv(c[iCredito])) : 0;
@@ -127,12 +152,17 @@ const transacoesDeCsv = async (file) => {
       tipo, valor,
       categoria: (iCategoria >= 0 && c[iCategoria]) || (tipo === 'entrada' ? CATEGORIAS_RECEITA[0] : 'Outros'),
       conta: (iConta >= 0 && c[iConta]) || 'Conta corrente',
-      data: iData >= 0 ? dataCsv(c[iData]) : hoje(),
+      data: iData >= 0 ? dataCsv(c[iData]) : '',
       descricao: (iDescricao >= 0 && c[iDescricao]) || `Linha ${i + 2}`,
       pendente: false,
       origemDocumento: file.name,
     };
   }).filter(Boolean);
+  const semData = transacoes.filter(t => !t.data).length;
+  if (iData < 0 || semData > Math.max(2, Math.floor(transacoes.length * 0.05))) {
+    throw new Error('As datas deste CSV não foram reconhecidas. Nenhum lançamento foi salvo.');
+  }
+  return transacoes.filter(t => t.data);
 };
 
 export default function Financeiro({ d, up, aviso }) {
@@ -154,6 +184,9 @@ export default function Financeiro({ d, up, aviso }) {
   const receita = transacoesDoMes.filter(t => t.tipo === 'entrada').reduce((a, t) => a + t.valor, 0);
   const despesa = transacoesDoMes.filter(t => t.tipo === 'saida').reduce((a, t) => a + t.valor, 0);
   const saldo = receita - despesa;
+  const saldoAcumulado = transacoesUnicas
+    .filter(t => (t.data || '').slice(0, 7) <= mesRef)
+    .reduce((total, t) => total + (t.tipo === 'entrada' ? Number(t.valor || 0) : -Number(t.valor || 0)), 0);
   const contasAPagar = transacoesDoMes.filter(t => t.tipo === 'saida' && t.pendente).reduce((a, t) => a + t.valor, 0);
   const gastosPorCategoria = useMemo(() => CATEGORIAS_DESPESA.map((categoria, i) => {
     const total = transacoesDoMes.filter(t => t.tipo === 'saida' && t.categoria === categoria).reduce((a, t) => a + t.valor, 0);
@@ -210,13 +243,24 @@ export default function Financeiro({ d, up, aviso }) {
     if (!file) return;
     if(file.size>4.5*1024*1024)return aviso('Envie um arquivo de até 4,5 MB.');
     const arquivoHash = await hashArquivo(file);
-    if ((fin.documentos || []).some(doc => doc.hash === arquivoHash)) return aviso('Este documento já foi importado. Nenhum dado foi duplicado.');
+    const documentoAnterior = (fin.documentos || []).find(doc => doc.hash === arquivoHash);
     const csv = /\.csv$/i.test(file.name) || /text\/csv|application\/csv|application\/vnd\.ms-excel/.test(file.type);
     if (csv) {
       setProcessandoIA(true);
       try {
-        const extraidas = await transacoesDeCsv(file);
-        const chavesExistentes = new Set(transacoesUnicas.map(chaveTransacao));
+        let extraidas = await transacoesDeCsv(file);
+        const descricoes = [...new Set(extraidas.filter(t => t.categoria === 'Outros').map(t => normalizarTexto(t.descricao)).filter(Boolean))].slice(0, 200);
+        let categoriasIA = new Map();
+        if (descricoes.length) {
+          const classificacao = await classificarDescricoesCsv(descricoes);
+          if (classificacao.ok && Array.isArray(classificacao.dados?.categorias)) {
+            categoriasIA = new Map(classificacao.dados.categorias.filter(x => x.confianca >= 0.7).map(x => [descricoes[x.id], x.categoria]));
+          }
+        }
+        extraidas = extraidas.map(t => ({ ...t, categoria: t.categoria !== 'Outros' ? t.categoria : (categoriasIA.get(normalizarTexto(t.descricao)) || categoriaPorDescricao(normalizarTexto(t.descricao), t.tipo)) }));
+        const anterioresDoArquivo = new Set(transacoesUnicas.filter(t => t.origemDocumento === file.name).map(chaveTransacao));
+        const baseSemArquivo = documentoAnterior ? transacoesUnicas.filter(t => t.origemDocumento !== file.name) : transacoesUnicas;
+        const chavesExistentes = new Set(baseSemArquivo.map(chaveTransacao));
         const certas = extraidas.filter(t => {
           const chave = chaveTransacao(t);
           if (chavesExistentes.has(chave)) return false;
@@ -226,10 +270,11 @@ export default function Financeiro({ d, up, aviso }) {
         const ignoradas = extraidas.length - certas.length;
         atualizar(fx => ({
           ...fx,
-          transacoes: [...fx.transacoes, ...certas],
-          documentos: [...(fx.documentos || []), { id: `doc-${Date.now()}`, nome: file.name, data: hoje(), itens: certas.length, hash: arquivoHash }]
+          transacoes: [...(documentoAnterior ? fx.transacoes.filter(t => t.origemDocumento !== file.name) : fx.transacoes), ...certas],
+          documentos: [...(fx.documentos || []).filter(doc => doc.hash !== arquivoHash), { id: `doc-${Date.now()}`, nome: file.name, data: hoje(), itens: certas.length, hash: arquivoHash }]
         }));
-        aviso(`${certas.length} lançamentos importados do CSV${ignoradas ? ` · ${ignoradas} duplicados ignorados` : ''}`);
+        const meses = [...new Set(certas.map(t => t.data.slice(0, 7)))].sort();
+        aviso(`${certas.length} lançamentos organizados em ${meses.length} mês(es)${documentoAnterior ? ' · importação anterior corrigida' : ''}${ignoradas ? ` · ${ignoradas} duplicados ignorados` : ''}`);
       } catch (erro) {
         aviso(erro?.message || 'Não consegui ler este CSV.');
       } finally {
@@ -237,6 +282,7 @@ export default function Financeiro({ d, up, aviso }) {
       }
       return;
     }
+    if (documentoAnterior) return aviso('Este documento já foi importado. Nenhum dado foi duplicado.');
     const reader = new FileReader();
     reader.onload = async () => {
       setProcessandoIA(true);
@@ -296,6 +342,13 @@ export default function Financeiro({ d, up, aviso }) {
           <div style={{ fontSize: 19, fontWeight: 800, color: C.ink, marginTop: 4 }}>{formatoMoeda(contasAPagar)}</div>
         </Card>
       </div>
+
+      <Card style={{ marginBottom: 16, background: saldoAcumulado >= 0 ? '#F2FBF7' : '#FFF4F1', border: `1px solid ${saldoAcumulado >= 0 ? '#CDEDE0' : '#F4D4CC'}` }}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}}>
+          <div><div style={{fontSize:12,fontWeight:800,color:C.ink2}}>Saldo acumulado</div><div style={{fontSize:10.5,color:C.ink3,marginTop:3}}>Entradas menos saídas até {MESES_LBL[Number(mesRef.slice(5,7))-1]} de {mesRef.slice(0,4)}</div></div>
+          <strong style={{fontSize:20,color:saldoAcumulado>=0?C.green:C.coral,whiteSpace:'nowrap'}}>{formatoMoeda(saldoAcumulado)}</strong>
+        </div>
+      </Card>
 
       <Card style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: C.ink2, marginBottom: 10 }}>Entradas nos últimos 6 meses</div>
