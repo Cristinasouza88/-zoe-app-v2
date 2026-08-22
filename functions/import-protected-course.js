@@ -3,7 +3,7 @@ const text=v=>typeof v==='string'?v.trim():'';
 const first=(o,keys)=>{for(const k of keys)if(text(o?.[k]))return text(o[k]);return''};
 const request=async(url,options={})=>{const c=new AbortController(),timer=setTimeout(()=>c.abort(),15000);try{const response=await fetch(url,{...options,signal:c.signal}),raw=await response.text();let data={};try{data=raw?JSON.parse(raw):{}}catch{}return{response,data}}finally{clearTimeout(timer)}};
 const csrfSession=async(apiOrigin,courseOrigin,headers)=>{
-  const response=await request(`${apiOrigin}/sanctum/csrf-cookie`,{headers:{...headers,origin:courseOrigin,referer:`${courseOrigin}/`}});
+  const response=await request(`${apiOrigin}/api/v1/pwa/home`,{headers:{...headers,origin:courseOrigin,referer:`${courseOrigin}/`}});
   const setCookie=response.response.headers.get('set-cookie')||'';
   const cookies=setCookie.split(/,(?=\s*[^;,]+=)/).map(value=>value.split(';')[0].trim()).filter(Boolean);
   const tokenCookie=cookies.find(value=>value.startsWith('XSRF-TOKEN='));
