@@ -31,6 +31,11 @@ export function parseTransacao({ texto, imagemBase64, mimeType }) {
   return chamar('parse-transaction', texto ? { tipo: 'voz', texto } : { tipo: mimeType === 'application/pdf' ? 'documento' : 'imagem', imagemBase64, mimeType });
 }
 
+/** descrições únicas de um CSV → categorias sugeridas pela IA */
+export function classificarDescricoesCsv(descricoes) {
+  return chamar('parse-transaction', { tipo: 'csv', descricoes });
+}
+
 /** resumo do histórico/metas → sugestões em texto do agente financeiro */
 export function pedirSugestoes(resumo) {
   return chamar('financial-agent', { resumo });
