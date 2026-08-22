@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Wallet, TrendingUp, TrendingDown, FileClock, Plus, ShieldCheck,
   ChevronLeft, ChevronRight, Upload, HelpCircle, Landmark, PenLine, FileText, Target, Sparkles
@@ -124,7 +124,12 @@ const transacoesDeCsv = async (file) => {
   const linhas = texto.split(/\r?\n/).filter(l => l.trim());
   if (linhas.length < 2) return [];
   const candidatos = [',', ';', '\t'];
-  const delimitador = candidatos.sort((a, b) => separarLinhaCsv(linhas[0], b).length - separarLinhaCsv(linhas[0], a).length)[0];
+  const amostra = linhas.slice(0, 15);
+  const delimitador = candidatos.sort((a, b) => {
+    const colunasA = Math.max(...amostra.map(l => separarLinhaCsv(l, a).length));
+    const colunasB = Math.max(...amostra.map(l => separarLinhaCsv(l, b).length));
+    return colunasB - colunasA;
+  })[0];
   const linhaCabecalho = linhas.findIndex((linha, pos) => pos < 15 && /data|date|valor|amount|debito|credito|descri|historico/i.test(normalizarTexto(linha)));
   if (linhaCabecalho < 0) throw new Error('Não encontrei o cabeçalho com data e valor neste CSV.');
   const cabecalhos = separarLinhaCsv(linhas[linhaCabecalho], delimitador).map(normalizarTexto);
@@ -174,11 +179,33 @@ export default function Financeiro({ d, up, aviso }) {
   const [rascunho, setRascunho] = useState(rascunhoVazio());
   const [processandoIA, setProcessandoIA] = useState(false);
   const inputFotoRef = useRef(null);
+  const limpezaExecutada = useRef(false);
 
   const atualizar = (fn) => up(s => ({
     ...s,
     financeiro: normalizarFinanceiro(fn({ ...vazio, ...s.financeiro }))
   }));
+
+  useEffect(() => {
+    if (limpezaExecutada.current) return;
+    limpezaExecutada.current = true;
+    const documentosCsv = (fin.documentos || []).filter(doc => /\.csv$/i.test(doc.nome || ''));
+    const suspeitos = documentosCsv.filter(doc => {
+      const itens = (fin.transacoes || []).filter(t => t.origemDocumento === doc.nome);
+      if (itens.length < 20) return false;
+      const datas = itens.reduce((acc, t) => { acc[t.data || 'sem-data'] = (acc[t.data || 'sem-data'] || 0) + 1; return acc; }, {});
+      return Math.max(...Object.values(datas)) / itens.length >= 0.9;
+    });
+    if (!suspeitos.length) return;
+    const nomes = new Set(suspeitos.map(doc => doc.nome));
+    atualizar(fx => ({
+      ...fx,
+      transacoes: (fx.transacoes || []).filter(t => !nomes.has(t.origemDocumento)),
+      pendenciasClassificacao: (fx.pendenciasClassificacao || []).filter(p => !nomes.has(p.arquivo)),
+      documentos: (fx.documentos || []).filter(doc => !nomes.has(doc.nome)),
+    }));
+    aviso('A importação com datas concentradas incorretamente foi removida. Reenvie o CSV para a leitura mês a mês.');
+  }, []);
 
   const transacoesDoMes = useMemo(() => transacoesUnicas.filter(t => (t.data || '').startsWith(mesRef)), [transacoesUnicas, mesRef]);
   const receita = transacoesDoMes.filter(t => t.tipo === 'entrada').reduce((a, t) => a + t.valor, 0);
