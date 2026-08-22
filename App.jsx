@@ -306,7 +306,7 @@ const inicial = {
   rodas: {},         // { 1: {Saúde:7,...} }
   desafio100: {}, ativacao40: { frase: '', marcas: {} }, caracteristicas: [],
   visao: {}, medidas: [], biblioteca: [], ritual: {}, jejum: null, alarmes: [],
-  metasSOL: [], redes: [], cartas: {}, gratidoes: [], fotos: [], cursos: [],
+  metasSOL: [], redes: [], cartas: {}, gratidoes: [], fotos: [], cursos: [], agendaCursos: [],
   jornada: { checkins: [], mapaNos: [], planoSemana: null }
 };
 
@@ -1416,6 +1416,7 @@ export default function ZoeApp() {
     });
     const marcas = d.agenda[data] || {};
     const tarefas = agendaAtiva?.tarefas || [];
+    const eventosCursos = (d.agendaCursos || []).filter(e => e.data === data);
     const realizadas = tarefas.filter((_, i) => marcas[`${agendaAtiva?.id}-${i}`]).length;
     return (
       <div style={{ padding: '20px 16px 120px', minHeight: '100vh', background: '#F7FAF9' }}>
@@ -1425,7 +1426,7 @@ export default function ZoeApp() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}><button onClick={() => { const x=new Date(base); x.setMonth(x.getMonth()-1); setData(x.toISOString().slice(0,10)); }} style={{ border:0,background:'transparent' }}><ChevronLeft size={20}/></button><strong style={{ color:C.ink, textTransform:'capitalize' }}>{base.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</strong><button onClick={() => { const x=new Date(base); x.setMonth(x.getMonth()+1); setData(x.toISOString().slice(0,10)); }} style={{ border:0,background:'transparent' }}><ChevronRight size={20}/></button></div>
           <div style={{ display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:4,marginBottom:5 }}>{['S','T','Q','Q','S','S','D'].map((x,i)=><div key={i} style={{ textAlign:'center',fontSize:9,fontWeight:800,color:C.ink3 }}>{x}</div>)}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4 }}>
-            {dias.map(x => { const temMissao=Object.values(d.agenda[x.iso]||{}).some(Boolean); return <button key={x.iso} onClick={() => setData(x.iso)} style={{ position:'relative',border: 0, borderRadius: 11, aspectRatio:'1', background: data === x.iso ? C.green : x.iso===hoje()?C.mint:'transparent', color: data === x.iso ? '#fff' : x.atual?C.ink:C.ink3, opacity:x.atual?1:.4, fontFamily: 'inherit', fontWeight:700 }}><span>{x.n}</span>{temMissao&&<span style={{ position:'absolute',bottom:4,left:'50%',transform:'translateX(-50%)',width:4,height:4,borderRadius:9,background:data===x.iso?'#fff':C.lilac }}/>}</button>})}
+            {dias.map(x => { const temMissao=Object.values(d.agenda[x.iso]||{}).some(Boolean)||(d.agendaCursos||[]).some(e=>e.data===x.iso); return <button key={x.iso} onClick={() => setData(x.iso)} style={{ position:'relative',border: 0, borderRadius: 11, aspectRatio:'1', background: data === x.iso ? C.green : x.iso===hoje()?C.mint:'transparent', color: data === x.iso ? '#fff' : x.atual?C.ink:C.ink3, opacity:x.atual?1:.4, fontFamily: 'inherit', fontWeight:700 }}><span>{x.n}</span>{temMissao&&<span style={{ position:'absolute',bottom:4,left:'50%',transform:'translateX(-50%)',width:4,height:4,borderRadius:9,background:data===x.iso?'#fff':C.lilac }}/>}</button>})}
           </div>
           </Card>
         <Card style={{ marginBottom: 14, background: C.petroleo, color: '#fff' }}>
@@ -1440,6 +1441,7 @@ export default function ZoeApp() {
             <div style={{ flex:1,minWidth:0 }}><div style={{ color:C.ink,fontSize:10,fontWeight:900,letterSpacing:.7 }}>EXPERIMENTO ZOE</div><div style={{ color:C.ink,fontSize:13.5,fontWeight:850,marginTop:3,textDecoration:marcas['zoe-experimento']?'line-through':'none' }}>{planoZoe.acao}</div><div style={{ color:C.ink3,fontSize:10.5,marginTop:4 }}>{planoZoe.hora} · {planoZoe.duracao} min</div></div>
           </div>
         </Card>}
+        {eventosCursos.length>0&&<><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'18px 2px 10px'}}><h2 style={{margin:0,fontSize:17,color:C.ink}}>Cursos na agenda</h2><span style={{fontSize:10,color:C.roxo,fontWeight:850}}>{eventosCursos.filter(e=>e.feito).length}/{eventosCursos.length}</span></div>{eventosCursos.map(e=><Card key={e.id} onClick={()=>setAba('cursos')} style={{marginBottom:9,border:`1.5px solid ${e.feito?C.green:'#E3D8F1'}`,background:e.feito?C.mint:'#FBF8FF',cursor:'pointer'}}><div style={{display:'flex',gap:11,alignItems:'center'}}><div style={{width:38,height:38,borderRadius:13,background:e.feito?C.green:C.roxo,color:'#fff',display:'grid',placeItems:'center'}}>{e.feito?<Check size={19}/>:<BookOpen size={18}/>}</div><div style={{flex:1}}><div style={{fontSize:9,fontWeight:900,color:C.roxo,letterSpacing:.6}}>{e.modulo||'CURSO'} · {e.hora}</div><div style={{fontSize:13,fontWeight:850,color:C.ink,marginTop:3,textDecoration:e.feito?'line-through':'none'}}>{e.titulo}</div></div><ChevronRight size={18} color={C.ink3}/></div></Card>)}</>}
         <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',margin:'20px 2px 12px' }}><h2 style={{ margin:0,fontSize:18,color:C.ink }}>Missões do mês</h2><span style={{ color:C.lilac,fontSize:11,fontWeight:800 }}>VER TODAS</span></div>
         {tarefas.length ? tarefas.map((t, i) => {
           const on = !!marcas[`${agendaAtiva.id}-${i}`];
@@ -1455,14 +1457,16 @@ export default function ZoeApp() {
   /* ══════════ INÍCIO ══════════ */
   const Inicio = () => {
     const cursos = d.cursos || [];
+    const cursosFixados = cursos.filter(c=>c.fixadoInicio).slice(0,2);
     const aulasCursos = cursos.reduce((n, c) => n + c.aulas.length, 0);
     const aulasCursosFeitas = cursos.reduce((n, c) => n + c.aulas.filter(a => a.feito).length, 0);
     const inglesFeitas = Object.values(d.ingles?.fasesConcluidas || {}).filter(Boolean).length;
     const metaAnual = d.financeiro?.metaAnual || METAANUAL_PADRAO;
     const economizado = (d.financeiro?.transacoes || []).reduce((a, t) => a + (t.tipo === 'entrada' ? t.valor : -t.valor), 0);
     const pctVida = Math.min(100, Math.round((concluidas / totalEtapas) * 100));
+    const trilhasCursos = cursosFixados.length ? cursosFixados.map(c=>{const feitas=c.aulas.filter(a=>a.feito).length;return {id:'cursos',nome:c.nome,icone:BookOpen,cor:'#A86BF4',suave:'#F0E5FF',valor:`${feitas} / ${c.aulas.length}`,pct:c.aulas.length?(feitas/c.aulas.length)*100:0}}) : [{ id: 'cursos', nome: 'Meus cursos', icone: BookOpen, cor: '#A86BF4', suave: '#F0E5FF', valor: cursos.length ? `${aulasCursosFeitas} / ${aulasCursos}` : 'Adicionar curso', pct: aulasCursos ? (aulasCursosFeitas / aulasCursos) * 100 : 0 }];
     const trilhas = [
-      { id: 'cursos', nome: 'Meus cursos', icone: BookOpen, cor: '#A86BF4', suave: '#F0E5FF', valor: cursos.length ? `${aulasCursosFeitas} / ${aulasCursos}` : 'Adicionar curso', pct: aulasCursos ? (aulasCursosFeitas / aulasCursos) * 100 : 0 },
+      ...trilhasCursos,
       { id: 'ingles', nome: 'Inglês', icone: Languages, cor: '#5B9CF6', suave: '#E3F0FF', valor: `${inglesFeitas} / ${FASES_INGLES.length}`, pct: (inglesFeitas / FASES_INGLES.length) * 100 },
       { id: 'financeiro', nome: 'Finanças', icone: Wallet, cor: '#43BE8C', suave: '#DFF7EC', valor: formatoMoeda(economizado), pct: metaAnual.alvo ? (economizado / metaAnual.alvo) * 100 : 0 }
     ];
@@ -1507,8 +1511,8 @@ export default function ZoeApp() {
         </div>
 
         <div style={{ color: C.ink3, fontSize: 13, textAlign: 'center', marginBottom: 12 }}>Outras trilhas que impulsionam você</div>
-        <div style={{ ...secao, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 4, padding: '17px 8px' }}>
-          {trilhas.map((t, i) => <button key={t.id} onClick={() => setAba(t.id)} style={{ border: 'none', borderLeft: i ? `1px solid ${C.line}` : 'none', background: 'transparent', fontFamily: 'inherit', padding: '0 7px', cursor: 'pointer' }}>
+        <div style={{ ...secao, display: 'flex', gap: 4, padding: '17px 8px', overflowX:'auto' }}>
+          {trilhas.map((t, i) => <button key={`${t.id}-${i}`} onClick={() => setAba(t.id)} style={{ minWidth:106,flex:1,border: 'none', borderLeft: i ? `1px solid ${C.line}` : 'none', background: 'transparent', fontFamily: 'inherit', padding: '0 7px', cursor: 'pointer' }}>
             <div style={{ width: 62, height: 62, margin: '0 auto 8px', borderRadius: '50%', display: 'grid', placeItems: 'center', color: t.cor, background: `conic-gradient(${t.cor} ${Math.max(3, Math.min(100, t.pct))}%,${t.suave} 0)` }}><div style={{ width: 48, height: 48, borderRadius: '50%', background: t.suave, display: 'grid', placeItems: 'center' }}><t.icone size={24} /></div></div>
             <div style={{ color: C.ink, fontSize: 13, fontWeight: 800 }}>{t.nome}</div>
             <div style={{ color: C.ink3, fontSize: 10.5, margin: '4px 0 8px', whiteSpace: 'nowrap' }}>{t.valor}</div>

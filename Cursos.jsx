@@ -3,6 +3,13 @@ import { ArrowLeft, BookOpen, Check, ChevronRight, ExternalLink, Link2, LoaderCi
 import { C, Card, Btn, Campo, Area, Barra, hoje } from './ui.jsx';
 
 const novaId = prefixo => `${prefixo}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+const DIAS_CURSO = [{n:'Seg',d:1},{n:'Ter',d:2},{n:'Qua',d:3},{n:'Qui',d:4},{n:'Sex',d:5},{n:'Sáb',d:6},{n:'Dom',d:0}];
+const proximasDatas = (quantidade, dias) => {
+  const permitidos = DIAS_CURSO.filter(x => dias.includes(x.n)).map(x => x.d);
+  const datas = [], cursor = new Date(); cursor.setHours(12,0,0,0);
+  for (let i=0; datas.length<quantidade && i<730; i++) { cursor.setDate(cursor.getDate()+1); if (permitidos.includes(cursor.getDay())) datas.push(cursor.toISOString().slice(0,10)); }
+  return datas;
+};
 
 function interpretarPrograma(texto, urlBase, minutos) {
   const linhas = texto.split('\n').map(x => x.trim()).filter(Boolean);
@@ -37,6 +44,10 @@ export default function Cursos({ d, up, aviso, voltar }) {
   const [ganhoCurso, setGanhoCurso] = useState('');
   const [obstaculoCurso, setObstaculoCurso] = useState('');
   const [acordoCurso, setAcordoCurso] = useState('5 minutos');
+  const [diasCurso, setDiasCurso] = useState(['Seg','Qua','Sex']);
+  const [horaCurso, setHoraCurso] = useState('19:00');
+  const [premiando, setPremiando] = useState(null);
+  const [recompensa, setRecompensa] = useState('');
   const curso = cursos.find(x => x.id === cursoId);
 
   const totais = useMemo(() => cursos.reduce((acc, c) => {
@@ -75,13 +86,18 @@ export default function Cursos({ d, up, aviso, voltar }) {
   const importarResultado = () => {
     if (!resultado?.aulas?.length) return;
     if (!ganhoCurso || !obstaculoCurso) return aviso('Escolha seu objetivo e o que costuma fazer você adiar');
+    if (!diasCurso.length) return aviso('Escolha ao menos um dia para estudar');
+    const cursoNovoId = novaId('curso');
+    const datas = proximasDatas(resultado.aulas.length, diasCurso);
+    const aulas = resultado.aulas.map((a, i) => ({ ...a, modulo: a.modulo || 'Comece por aqui', id: novaId('aula'), feito: false, data: null, agendadaPara: datas[i] }));
     const novo = {
-      id: novaId('curso'), nome: (nome || resultado.nome).trim(), url: resultado.url,
+      id: cursoNovoId, nome: (nome || resultado.nome).trim(), url: resultado.url,
       origem: resultado.origem, minutosDia: +minutos || 10, criadoEm: hoje(),
       compromisso: { ganho: ganhoCurso, obstaculo: obstaculoCurso, acordo: acordoCurso, criadoEm: hoje() },
-      aulas: resultado.aulas.map(a => ({ ...a, id: novaId('aula'), feito: false, data: null }))
+      agendamento: { dias: diasCurso, hora: horaCurso }, recompensas: {}, fixadoInicio: false, aulas
     };
-    up(s => ({ ...s, cursos: [...(s.cursos || []), novo] }));
+    const eventos = aulas.map(a => ({ id:novaId('evento-curso'),cursoId:cursoNovoId,aulaId:a.id,data:a.agendadaPara,hora:horaCurso,titulo:a.titulo,modulo:a.modulo,feito:false }));
+    up(s => ({ ...s, cursos: [...(s.cursos || []), novo], agendaCursos:[...(s.agendaCursos||[]),...eventos], alarmes:[...(s.alarmes||[]),{id:novaId('alarme-curso'),titulo:`Hora de avançar em ${novo.nome}`,hora:horaCurso,dias:DIAS_CURSO.filter(x=>diasCurso.includes(x.n)).map(x=>x.d),ativo:true}] }));
     setUrl(''); setNome(''); setResultado(null); setGanhoCurso(''); setObstaculoCurso(''); setAcordoCurso('5 minutos'); setCursoId(novo.id); setTela('curso');
     aviso(`${novo.aulas.length} aulas importadas · trilha criada`);
   };
@@ -110,12 +126,27 @@ export default function Cursos({ d, up, aviso, voltar }) {
 
   const concluirComReflexao = aulaId => {
     if (!compreensao || !insight.trim()) return aviso('Escolha sua compreensão e registre um insight curto');
+    const aulaAtual = curso.aulas.find(a=>a.id===aulaId);
+    const moduloAtual = aulaAtual?.modulo || 'Comece por aqui';
+    const fechaModulo = curso.aulas.filter(a=>(a.modulo||'Comece por aqui')===moduloAtual).every(a=>a.id===aulaId||a.feito);
     up(s => ({ ...s, cursos: (s.cursos || []).map(c => c.id !== curso.id ? c : {
       ...c, aulas: c.aulas.map(a => a.id === aulaId ? { ...a, feito: true, data: hoje(), avaliacao: { compreensao, insight: insight.trim(), acao: acao.trim(), data: hoje() } } : a)
-    }) }));
+    }), agendaCursos:(s.agendaCursos||[]).map(e=>e.aulaId===aulaId?{...e,feito:true,concluidoEm:hoje()}:e) }));
     setRefletindo(null); setCompreensao(0); setInsight(''); setAcao('');
-    aviso('Reflexão registrada · próxima aula liberada');
+    if(fechaModulo)setPremiando(moduloAtual);else aviso('Reflexão registrada · próxima aula liberada');
   };
+
+  const salvarRecompensa = () => {
+    if(!recompensa.trim()) return aviso('Escolha uma recompensa para a próxima fase');
+    up(s=>({...s,cursos:(s.cursos||[]).map(c=>c.id===curso.id?{...c,recompensas:{...(c.recompensas||{}),[premiando]:recompensa.trim()}}:c)}));
+    setPremiando(null); setRecompensa(''); aviso('Fase concluída · recompensa combinada');
+  };
+
+  const alternarFixado = id => up(s => {
+    const lista=s.cursos||[], alvo=lista.find(c=>c.id===id), total=lista.filter(c=>c.fixadoInicio).length;
+    if(!alvo.fixadoInicio&&total>=2){ aviso('Você pode fixar no máximo dois cursos no Início'); return s; }
+    return {...s,cursos:lista.map(c=>c.id===id?{...c,fixadoInicio:!c.fixadoInicio}:c)};
+  });
 
   if (tela === 'adicionar') return (
     <div style={{ padding: '18px 16px 120px', minHeight: '100vh', background: '#F7FAF9' }}>
@@ -128,7 +159,7 @@ export default function Cursos({ d, up, aviso, voltar }) {
         <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:9,marginTop:14 }}><div style={{ padding:12,borderRadius:14,background:'#FFF3F3',color:'#D23B31',fontSize:10.5,fontWeight:800,display:'flex',gap:7,alignItems:'center' }}><Youtube size={18}/>Playlist pública</div><div style={{ padding:12,borderRadius:14,background:C.aquaSuave,color:C.petroleo,fontSize:10.5,fontWeight:800,display:'flex',gap:7,alignItems:'center' }}><LogIn size={18}/>Curso com login</div></div>
         {erro && <div className="zoe-surge" style={{ marginTop:13,padding:12,borderRadius:13,background:'#FFF1F1',color:'#A43C3C',fontSize:11.5,lineHeight:1.45 }}>{erro}</div>}
       </Card>
-      {(resultado?.tipo === 'youtube' || resultado?.tipo === 'entregadigital') && <Card cls="zoe-surge" style={{ marginTop:14,border:'1px solid #E9E1F3' }}><div style={{ display:'flex',gap:11,alignItems:'center',marginBottom:13 }}><div style={{ width:42,height:42,borderRadius:14,background:'#FFEEEE',color:'#E62B24',display:'grid',placeItems:'center' }}><PlaySquare size={22}/></div><div style={{ flex:1 }}><div style={{ color:C.ink,fontSize:14,fontWeight:900 }}>{resultado.nome}</div><div style={{ color:C.ink3,fontSize:10.5,marginTop:3 }}>{resultado.aulas.length} vídeos encontrados · {resultado.aulas.reduce((n,a)=>n+a.minutos,0)} min</div></div></div><Campo label="Nome da trilha" value={nome} onChange={e=>setNome(e.target.value)}/><Campo label="Minutos disponíveis por dia" type="number" min="2" value={minutos} onChange={e=>setMinutos(e.target.value)}/><div style={{ maxHeight:180,overflow:'auto',borderTop:`1px solid ${C.line}`,margin:'2px 0 14px',paddingTop:8 }}>{resultado.aulas.slice(0,12).map((a,i)=><div key={a.url} style={{ display:'flex',gap:8,padding:'7px 2px',fontSize:10.5,color:C.ink2 }}><strong style={{ color:C.roxo }}>{i+1}</strong><span style={{ flex:1 }}>{a.titulo}</span><span style={{ color:C.ink3 }}>{a.minutos} min</span></div>)}{resultado.aulas.length>12&&<div style={{ textAlign:'center',fontSize:10,color:C.ink3,padding:7 }}>+ {resultado.aulas.length-12} aulas</div>}</div><div style={{ margin:'12px 0',padding:14,borderRadius:16,background:'#F5F0FF' }}><div style={{ color:C.ink,fontSize:13,fontWeight:900 }}>Seu acordo com este curso</div><div style={{ color:C.ink3,fontSize:10.5,lineHeight:1.4,margin:'4px 0 10px' }}>A ZOE usa isso quando aparecer vontade de adiar.</div><div style={{ color:C.ink2,fontSize:10.5,fontWeight:850,marginBottom:6 }}>O que você quer ganhar?</div><div style={{ display:'flex',flexWrap:'wrap',gap:6,marginBottom:11 }}>{['Mais energia','Evoluir na carreira','Melhorar meus hábitos','Cuidar da mente'].map(x=><button key={x} onClick={()=>setGanhoCurso(x)} style={{ border:ganhoCurso===x?'2px solid #8E2DE2':'1px solid #DDD5E8',background:ganhoCurso===x?'#EFE3FF':'#fff',color:C.ink,borderRadius:20,padding:'7px 9px',fontFamily:'inherit',fontSize:9.5,fontWeight:800 }}>{x}</button>)}</div><div style={{ color:C.ink2,fontSize:10.5,fontWeight:850,marginBottom:6 }}>O que costuma fazer você adiar?</div><div style={{ display:'flex',flexWrap:'wrap',gap:6,marginBottom:11 }}>{['Falta de tempo','Cansaço','Aula longa','Esqueço de começar'].map(x=><button key={x} onClick={()=>setObstaculoCurso(x)} style={{ border:obstaculoCurso===x?'2px solid #0A6963':'1px solid #D4E2E0',background:obstaculoCurso===x?'#DFF7F3':'#fff',color:C.ink,borderRadius:20,padding:'7px 9px',fontFamily:'inherit',fontSize:9.5,fontWeight:800 }}>{x}</button>)}</div><div style={{ color:C.ink2,fontSize:10.5,fontWeight:850,marginBottom:6 }}>Quando eu pensar em adiar, farei pelo menos:</div><div style={{ display:'flex',gap:6 }}>{['2 minutos','5 minutos','10 minutos'].map(x=><button key={x} onClick={()=>setAcordoCurso(x)} style={{ flex:1,border:acordoCurso===x?'2px solid #A7F20B':'1px solid #DDE5DD',background:acordoCurso===x?'#ECFFD0':'#fff',color:C.ink,borderRadius:12,padding:'8px 4px',fontFamily:'inherit',fontSize:9.5,fontWeight:850 }}>{x}</button>)}</div></div><Btn onClick={importarResultado} style={{ width:'100%',padding:15 }}><Sparkles size={17} style={{verticalAlign:'middle',marginRight:7}}/>Assumir acordo e criar trilha</Btn></Card>}
+      {(resultado?.tipo === 'youtube' || resultado?.tipo === 'entregadigital') && <Card cls="zoe-surge" style={{ marginTop:14,border:'1px solid #E9E1F3' }}><div style={{ display:'flex',gap:11,alignItems:'center',marginBottom:13 }}><div style={{ width:42,height:42,borderRadius:14,background:'#FFEEEE',color:'#E62B24',display:'grid',placeItems:'center' }}><PlaySquare size={22}/></div><div style={{ flex:1 }}><div style={{ color:C.ink,fontSize:14,fontWeight:900 }}>{resultado.nome}</div><div style={{ color:C.ink3,fontSize:10.5,marginTop:3 }}>{resultado.aulas.length} vídeos encontrados · {resultado.aulas.reduce((n,a)=>n+a.minutos,0)} min</div></div></div><Campo label="Nome da trilha" value={nome} onChange={e=>setNome(e.target.value)}/><Campo label="Minutos disponíveis por dia" type="number" min="2" value={minutos} onChange={e=>setMinutos(e.target.value)}/><div style={{ maxHeight:180,overflow:'auto',borderTop:`1px solid ${C.line}`,margin:'2px 0 14px',paddingTop:8 }}>{resultado.aulas.slice(0,12).map((a,i)=><div key={a.url} style={{ display:'flex',gap:8,padding:'7px 2px',fontSize:10.5,color:C.ink2 }}><strong style={{ color:C.roxo }}>{i+1}</strong><span style={{ flex:1 }}>{a.titulo}</span><span style={{ color:C.ink3 }}>{a.minutos} min</span></div>)}{resultado.aulas.length>12&&<div style={{ textAlign:'center',fontSize:10,color:C.ink3,padding:7 }}>+ {resultado.aulas.length-12} aulas</div>}</div><div style={{ margin:'12px 0',padding:14,borderRadius:16,background:'#F5F0FF' }}><div style={{ color:C.ink,fontSize:13,fontWeight:900 }}>Seu acordo com este curso</div><div style={{ color:C.ink3,fontSize:10.5,lineHeight:1.4,margin:'4px 0 10px' }}>A ZOE usa isso quando aparecer vontade de adiar.</div><div style={{ color:C.ink2,fontSize:10.5,fontWeight:850,marginBottom:6 }}>O que você quer ganhar?</div><div style={{ display:'flex',flexWrap:'wrap',gap:6,marginBottom:11 }}>{['Mais energia','Evoluir na carreira','Melhorar meus hábitos','Cuidar da mente'].map(x=><button key={x} onClick={()=>setGanhoCurso(x)} style={{ border:ganhoCurso===x?'2px solid #8E2DE2':'1px solid #DDD5E8',background:ganhoCurso===x?'#EFE3FF':'#fff',color:C.ink,borderRadius:20,padding:'7px 9px',fontFamily:'inherit',fontSize:9.5,fontWeight:800 }}>{x}</button>)}</div><div style={{ color:C.ink2,fontSize:10.5,fontWeight:850,marginBottom:6 }}>O que costuma fazer você adiar?</div><div style={{ display:'flex',flexWrap:'wrap',gap:6,marginBottom:11 }}>{['Falta de tempo','Cansaço','Aula longa','Esqueço de começar'].map(x=><button key={x} onClick={()=>setObstaculoCurso(x)} style={{ border:obstaculoCurso===x?'2px solid #0A6963':'1px solid #D4E2E0',background:obstaculoCurso===x?'#DFF7F3':'#fff',color:C.ink,borderRadius:20,padding:'7px 9px',fontFamily:'inherit',fontSize:9.5,fontWeight:800 }}>{x}</button>)}</div><div style={{ color:C.ink2,fontSize:10.5,fontWeight:850,marginBottom:6 }}>Quando eu pensar em adiar, farei pelo menos:</div><div style={{ display:'flex',gap:6 }}>{['2 minutos','5 minutos','10 minutos'].map(x=><button key={x} onClick={()=>setAcordoCurso(x)} style={{ flex:1,border:acordoCurso===x?'2px solid #A7F20B':'1px solid #DDE5DD',background:acordoCurso===x?'#ECFFD0':'#fff',color:C.ink,borderRadius:12,padding:'8px 4px',fontFamily:'inherit',fontSize:9.5,fontWeight:850 }}>{x}</button>)}</div><div style={{margin:'12px 0',padding:14,borderRadius:16,background:'#ECF8F6'}}><div style={{color:C.ink,fontSize:13,fontWeight:900}}>Quando isso entra na sua agenda?</div><div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:4,margin:'10px 0'}}>{DIAS_CURSO.map(dia=><button key={dia.n} onClick={()=>setDiasCurso(ds=>ds.includes(dia.n)?ds.filter(x=>x!==dia.n):[...ds,dia.n])} style={{height:35,border:0,borderRadius:9,background:diasCurso.includes(dia.n)?C.petroleo:'#fff',color:diasCurso.includes(dia.n)?'#fff':C.ink3,fontFamily:'inherit',fontSize:8.5,fontWeight:850}}>{dia.n.slice(0,1)}</button>)}</div><Campo label="Horário do lembrete" type="time" value={horaCurso} onChange={e=>setHoraCurso(e.target.value)}/></div></div><Btn onClick={importarResultado} style={{ width:'100%',padding:15 }}><Sparkles size={17} style={{verticalAlign:'middle',marginRight:7}}/>Assumir acordo e criar trilha</Btn></Card>}
       {resultado?.tipo === 'protegido' && <Card cls="zoe-surge" style={{ marginTop:14,border:'1px solid #D9EFEB' }}><div style={{ display:'flex',gap:11,alignItems:'center' }}><div style={{ width:44,height:44,borderRadius:15,background:C.aquaSuave,color:C.petroleo,display:'grid',placeItems:'center' }}><ShieldCheck size={22}/></div><div><div style={{ color:C.ink,fontSize:14,fontWeight:900 }}>Plataforma protegida</div><div style={{ color:C.ink3,fontSize:10.5,marginTop:3 }}>{resultado.plataforma}</div></div></div>{resultado.plataforma.endsWith('entregadigital.app.br') ? <><p style={{ color:C.ink2,fontSize:12,lineHeight:1.5,margin:'13px 0' }}>Entre com os mesmos dados que você usa no curso. A ZOE vai ler as aulas e montar sua trilha.</p><Campo label="E-mail do curso" type="email" autoComplete="username" value={emailCurso} onChange={e=>setEmailCurso(e.target.value)}/><Campo label="Senha do curso" type="password" autoComplete="current-password" value={senhaCurso} onChange={e=>setSenhaCurso(e.target.value)}/><Btn onClick={conectarCurso} disabled={conectando} style={{ width:'100%',padding:14 }}>{conectando ? <LoaderCircle className="zoe-gira" size={17} style={{verticalAlign:'middle',marginRight:7}}/> : <LogIn size={17} style={{verticalAlign:'middle',marginRight:7}}/>}{conectando?'Entrando e buscando aulas…':'Entrar e importar curso'}</Btn><div style={{ color:C.ink3,fontSize:10,lineHeight:1.45,marginTop:10 }}>Sua senha é usada somente nesta conexão e não é salva pela ZOE.</div></> : <><p style={{ color:C.ink2,fontSize:12,lineHeight:1.5,margin:'13px 0' }}>Esta plataforma ainda não possui um conector compatível.</p><Btn disabled style={{ width:'100%',padding:14 }}>Conector em preparação</Btn></>}</Card>}
       <details style={{ marginTop:15 }}><summary style={{ color:C.ink3,fontSize:11,fontWeight:800,cursor:'pointer' }}>Adicionar manualmente se a plataforma bloquear</summary><Card style={{ marginTop:9 }}><Campo label="Nome do curso" value={nome} onChange={e=>setNome(e.target.value)}/><Campo label="Minutos por dia" type="number" value={minutos} onChange={e=>setMinutos(e.target.value)}/><Area label="Uma aula por linha" value={programa} onChange={e=>setPrograma(e.target.value)} style={{minHeight:120}}/><Btn onClick={criar} style={{width:'100%'}}>Criar trilha manual</Btn></Card></details>
     </div>
@@ -138,6 +169,10 @@ export default function Cursos({ d, up, aviso, voltar }) {
     const feitas = curso.aulas.filter(a => a.feito).length;
     const atual = curso.aulas.findIndex(a => !a.feito);
     const pos = [48, 67, 58, 34, 26, 45, 69, 61];
+    const modulos = [...new Set(curso.aulas.map(a=>a.modulo||'Comece por aqui'))];
+    let deslocamento = 0;
+    const ys = curso.aulas.map((a,i)=>{ if(i>0&&(a.modulo||'Comece por aqui')!==(curso.aulas[i-1].modulo||'Comece por aqui')) deslocamento+=86; return i*128+deslocamento; });
+    const alturaTrilha = (ys.at(-1)||0)+170;
     return (
       <div style={{ paddingBottom: 120, minHeight: '100vh', background: 'linear-gradient(180deg,#F4EDFF 0,#F8FAF9 280px)' }}>
         <div style={{ padding: '18px 16px 12px' }}>
@@ -150,15 +185,18 @@ export default function Cursos({ d, up, aviso, voltar }) {
             <Barra v={feitas} max={curso.aulas.length} cor={C.lima} h={8}/>
           </Card>
         </div>
-        <div style={{ position: 'relative', height: curso.aulas.length * 128 + 30, margin: '10px 14px' }}>
-          <svg viewBox={`0 0 100 ${curso.aulas.length * 128 + 30}`} preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} aria-hidden="true">
-            <polyline points={curso.aulas.map((_, i) => `${pos[i % pos.length]},${i * 128 + 42}`).join(' ')} fill="none" stroke="#DDE3E3" strokeWidth="2.2" strokeDasharray="2 3" vectorEffect="non-scaling-stroke"/>
-            {curso.aulas.slice(0,-1).map((a,i) => a.feito && <line key={a.id} x1={pos[i%pos.length]} y1={i*128+42} x2={pos[(i+1)%pos.length]} y2={(i+1)*128+42} stroke="#8E2DE2" strokeWidth="3" vectorEffect="non-scaling-stroke"/>)}
+        <div style={{ position: 'relative', height: alturaTrilha, margin: '48px 14px 10px' }}>
+          <svg viewBox={`0 0 100 ${alturaTrilha}`} preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} aria-hidden="true">
+            <polyline points={curso.aulas.map((_, i) => `${pos[i % pos.length]},${ys[i] + 42}`).join(' ')} fill="none" stroke="#DDE3E3" strokeWidth="2.2" strokeDasharray="2 3" vectorEffect="non-scaling-stroke"/>
+            {curso.aulas.slice(0,-1).map((a,i) => a.feito && <line key={a.id} x1={pos[i%pos.length]} y1={ys[i]+42} x2={pos[(i+1)%pos.length]} y2={ys[i+1]+42} stroke="#8E2DE2" strokeWidth="3" vectorEffect="non-scaling-stroke"/>)}
           </svg>
           {curso.aulas.map((a, i) => {
             const liberada = i <= atual || atual === -1 || a.feito;
             const agora = i === atual;
-            return <div key={a.id} style={{ position: 'absolute', top: i * 128, left: `${pos[i%pos.length]}%`, transform: 'translateX(-50%)', width: 160, textAlign: 'center', opacity: liberada ? 1 : .48 }}>
+            const modulo = a.modulo||'Comece por aqui';
+            const inicioModulo = i===0 || modulo!==(curso.aulas[i-1].modulo||'Comece por aqui');
+            return <div key={a.id} style={{ position: 'absolute', top: ys[i], left: `${pos[i%pos.length]}%`, transform: 'translateX(-50%)', width: 160, textAlign: 'center', opacity: liberada ? 1 : .48 }}>
+              {inicioModulo&&<div style={{position:'absolute',top:-66,left:'50%',transform:'translateX(-50%)',width:280,padding:'10px 14px',borderRadius:16,background:liberada?'linear-gradient(135deg,#8E2DE2,#5D00FF)':'#D9DEDD',color:'#fff',boxShadow:'0 8px 20px rgba(76,32,134,.14)'}}><div style={{fontSize:8.5,fontWeight:900,letterSpacing:1}}>FASE {modulos.indexOf(modulo)+1}</div><div style={{fontSize:13,fontWeight:900,marginTop:2}}>{modulo}</div>{curso.recompensas?.[modulo]&&<div style={{fontSize:9.5,marginTop:3,opacity:.9}}>Recompensa: {curso.recompensas[modulo]}</div>}</div>}
               {agora && <span style={{ position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)', padding: '4px 10px', borderRadius: 9, background: C.lima, color: C.greenDark, fontSize: 9, fontWeight: 950, zIndex: 2 }}>PRÓXIMA</span>}
               <button disabled={!liberada} onClick={() => liberada && window.open(a.url || curso.url, '_blank', 'noopener,noreferrer')} style={{ width: agora ? 82 : 74, height: agora ? 82 : 74, borderRadius: '50%', border: agora ? '8px solid #fff' : '6px solid #fff', background: a.feito ? '#8E2DE2' : '#E1E6E5', color: a.feito ? '#fff' : '#A8B1B1', boxShadow: agora ? '0 0 0 5px rgba(142,45,226,.28),0 9px 0 rgba(120,132,132,.25)' : '0 7px 0 rgba(46,61,67,.16)', display: 'grid', placeItems: 'center', margin: 'auto', cursor: liberada ? 'pointer' : 'default' }}>
                 {a.feito ? <Check size={27}/> : liberada ? <ExternalLink size={23}/> : <Lock size={21}/>}</button>
@@ -171,6 +209,7 @@ export default function Cursos({ d, up, aviso, voltar }) {
           })}
         </div>
         {refletindo && <div className="zoe-surge" style={{ position:'fixed',inset:0,zIndex:80,background:'rgba(11,39,43,.55)',display:'flex',alignItems:'flex-end',justifyContent:'center' }}><div style={{ width:'100%',maxWidth:520,background:'#fff',borderRadius:'26px 26px 0 0',padding:'22px 18px 28px',boxShadow:'0 -18px 50px rgba(0,0,0,.18)' }}><div style={{ color:C.roxo,fontSize:10,fontWeight:950,letterSpacing:1 }}>CHECKPOINT ZOE</div><h2 style={{ color:C.ink,fontSize:20,margin:'5px 0' }}>O que ficou desta aula?</h2><p style={{ color:C.ink3,fontSize:11.5,lineHeight:1.45,margin:'0 0 15px' }}>Leva menos de um minuto e ajuda a transformar conteúdo em mudança.</p><div style={{ color:C.ink2,fontSize:11,fontWeight:850,marginBottom:7 }}>Quanto você compreendeu?</div><div style={{ display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:7,marginBottom:14 }}>{[1,2,3,4,5].map(n=><button key={n} onClick={()=>setCompreensao(n)} style={{ border:compreensao===n?`2px solid ${C.roxo}`:`1px solid ${C.line}`,background:compreensao===n?'#F0E4FF':'#fff',borderRadius:12,padding:10,color:C.ink,fontFamily:'inherit',fontWeight:900 }}>{n}</button>)}</div><Area label="Principal insight em uma frase" placeholder="Eu percebi que…" value={insight} onChange={e=>setInsight(e.target.value)} style={{minHeight:70}}/><Campo label="Uma ação prática (opcional)" placeholder="Nesta semana eu vou…" value={acao} onChange={e=>setAcao(e.target.value)}/><Btn onClick={()=>concluirComReflexao(refletindo)} style={{width:'100%',padding:14}}>Salvar e seguir para a próxima</Btn><button onClick={()=>{setRefletindo(null);setCompreensao(0);setInsight('');setAcao('')}} style={{width:'100%',border:0,background:'transparent',color:C.ink3,fontFamily:'inherit',fontWeight:800,padding:12}}>Voltar para a trilha</button></div></div>}
+        {premiando&&<div className="zoe-surge" style={{position:'fixed',inset:0,zIndex:85,background:'linear-gradient(160deg,#6E22C9,#0A6963)',display:'grid',placeItems:'center',padding:22}}><div style={{maxWidth:390,textAlign:'center',color:'#fff'}}><div style={{fontSize:54}}>🏆</div><div style={{fontSize:11,fontWeight:950,letterSpacing:1.3,marginTop:10}}>FASE CONCLUÍDA</div><h2 style={{fontSize:26,margin:'7px 0'}}>{premiando}</h2><p style={{fontSize:12.5,lineHeight:1.5,opacity:.85}}>Você cumpriu o combinado. Escolha agora uma recompensa real para marcar essa conquista.</p><Campo label="Minha recompensa" placeholder="Um café especial, um filme, um passeio…" value={recompensa} onChange={e=>setRecompensa(e.target.value)}/><Btn onClick={salvarRecompensa} style={{width:'100%',padding:15,background:C.lima,color:C.greenDark}}>Guardar recompensa e avançar</Btn></div></div>}
       </div>
     );
   }
@@ -182,7 +221,7 @@ export default function Cursos({ d, up, aviso, voltar }) {
       {cursos.length > 0 && <Card style={{ marginBottom: 15 }}><div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 8 }}><span style={{ color: C.ink2 }}>Progresso em cursos</span><strong style={{ color: C.roxo }}>{totais.feitas}/{totais.aulas}</strong></div><Barra v={totais.feitas} max={totais.aulas || 1} cor={C.roxo} h={7}/></Card>}
       {cursos.length === 0 ? <Card style={{ textAlign: 'center', padding: '34px 20px' }}><div style={{ width: 58, height: 58, borderRadius: 20, background: '#F0E5FF', color: C.roxo, display: 'grid', placeItems: 'center', margin: '0 auto 14px' }}><BookOpen size={27}/></div><strong style={{ color: C.ink }}>Transforme um curso em trilha</strong><p style={{ color: C.ink3, fontSize: 12, lineHeight: 1.55, margin: '8px 0 17px' }}>Adicione o curso que você já comprou. A ZOE organiza a sequência e leva você até a aula certa.</p><Btn onClick={() => setTela('adicionar')}>Adicionar meu primeiro curso</Btn></Card> : cursos.map(c => {
         const feitas = c.aulas.filter(a => a.feito).length;
-        return <Card key={c.id} onClick={() => { setCursoId(c.id); setTela('curso'); }} style={{ marginBottom: 12, cursor: 'pointer', border: `1px solid ${C.line}` }}><div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><div style={{ width: 46, height: 46, borderRadius: 15, background: '#F0E5FF', color: C.roxo, display: 'grid', placeItems: 'center' }}><Link2 size={21}/></div><div style={{ flex: 1, minWidth: 0 }}><div style={{ color: C.ink, fontWeight: 900, fontSize: 14 }}>{c.nome}</div><div style={{ color: C.ink3, fontSize: 10.5, margin: '4px 0 7px' }}>{feitas}/{c.aulas.length} etapas · {c.minutosDia} min/dia</div><Barra v={feitas} max={c.aulas.length} cor={C.roxo} h={5}/></div><ChevronRight size={18} color={C.ink3}/><button onClick={e => { e.stopPropagation(); up(s => ({ ...s, cursos: (s.cursos || []).filter(x => x.id !== c.id) })); aviso('Curso removido'); }} style={{ border: 0, background: 'transparent', color: C.ink3, padding: 5 }}><Trash2 size={16}/></button></div></Card>;
+        return <Card key={c.id} onClick={() => { setCursoId(c.id); setTela('curso'); }} style={{ marginBottom: 12, cursor: 'pointer', border: `1px solid ${C.line}` }}><div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><div style={{ width: 46, height: 46, borderRadius: 15, background: '#F0E5FF', color: C.roxo, display: 'grid', placeItems: 'center' }}><Link2 size={21}/></div><div style={{ flex: 1, minWidth: 0 }}><div style={{ color: C.ink, fontWeight: 900, fontSize: 14 }}>{c.nome}</div><div style={{ color: C.ink3, fontSize: 10.5, margin: '4px 0 7px' }}>{feitas}/{c.aulas.length} etapas · {c.minutosDia} min/dia</div><Barra v={feitas} max={c.aulas.length} cor={C.roxo} h={5}/></div><button onClick={e=>{e.stopPropagation();alternarFixado(c.id)}} title={c.fixadoInicio?'Remover do Início':'Fixar no Início'} style={{border:0,borderRadius:10,background:c.fixadoInicio?'#ECFFD0':'#F1F3F2',color:C.ink,padding:'7px 8px',fontFamily:'inherit',fontSize:9,fontWeight:850}}>{c.fixadoInicio?'FIXADO':'FIXAR'}</button><ChevronRight size={18} color={C.ink3}/><button onClick={e => { e.stopPropagation(); up(s => ({ ...s, cursos: (s.cursos || []).filter(x => x.id !== c.id) })); aviso('Curso removido'); }} style={{ border: 0, background: 'transparent', color: C.ink3, padding: 5 }}><Trash2 size={16}/></button></div></Card>;
       })}
     </div>
   );
