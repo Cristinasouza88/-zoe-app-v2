@@ -4,7 +4,7 @@
    confere/edita o resultado antes de salvar — esta function nunca grava
    nada, só devolve uma sugestão.
 
-   Requer a variável de ambiente ANTHROPIC_API_KEY configurada no Netlify
+   Requer a variável de ambiente ZOE_API_KEY configurada no Netlify
    (Site settings → Environment variables). Sem ela, retorna 500 com uma
    mensagem clara em vez de expor qualquer chave. */
 
