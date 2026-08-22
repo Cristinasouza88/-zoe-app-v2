@@ -22,6 +22,57 @@ const isoMinutos = valor => {
   return Math.max(1, Math.ceil((Number(m[1] || 0) * 3600 + Number(m[2] || 0) * 60 + Number(m[3] || 0)) / 60));
 };
 
+const textoDe = valor => valor?.simpleText || (valor?.runs || []).map(x => x.text || '').join('') || '';
+
+const tempoMinutos = valor => {
+  const partes = String(valor || '').split(':').map(Number);
+  if (!partes.length || partes.some(Number.isNaN)) return 10;
+  const segundos = partes.reverse().reduce((total, n, i) => total + n * (60 ** i), 0);
+  return Math.max(1, Math.ceil(segundos / 60));
+};
+
+const coletarVideos = (no, saida = []) => {
+  if (!no || typeof no !== 'object') return saida;
+  const video = no.playlistVideoRenderer;
+  if (video?.videoId) saida.push({
+    videoId: video.videoId,
+    titulo: textoDe(video.title) || `Vídeo ${saida.length + 1}`,
+    minutos: tempoMinutos(textoDe(video.lengthText)),
+    thumbnail: video.thumbnail?.thumbnails?.slice(-1)?.[0]?.url || null
+  });
+  for (const valor of Object.values(no)) coletarVideos(valor, saida);
+  return saida;
+};
+
+const youtubePublico = async url => {
+  const playlistId = playlistIdDe(url);
+  if (!playlistId) throw Object.assign(new Error('Cole o link completo de uma playlist do YouTube.'), { status: 400 });
+  const resp = await fetch(`https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId)}&hl=pt-BR`, {
+    headers: { 'user-agent': 'Mozilla/5.0 (compatible; ZoeCourseImporter/1.0)', 'accept-language': 'pt-BR,pt;q=0.9' }
+  });
+  const html = await resp.text();
+  if (!resp.ok) throw Object.assign(new Error('O YouTube não liberou a leitura desta playlist.'), { status: resp.status });
+  const inicio = html.indexOf('var ytInitialData = ');
+  const alternativo = html.indexOf('ytInitialData = ');
+  const pos = inicio >= 0 ? inicio + 'var ytInitialData = '.length : alternativo >= 0 ? alternativo + 'ytInitialData = '.length : -1;
+  if (pos < 0) throw Object.assign(new Error('Não consegui reconhecer os vídeos desta playlist.'), { status: 502 });
+  const fim = html.indexOf(';</script>', pos);
+  const dados = JSON.parse(html.slice(pos, fim));
+  const vistos = new Set();
+  const videos = coletarVideos(dados).filter(v => !vistos.has(v.videoId) && vistos.add(v.videoId));
+  if (!videos.length) throw Object.assign(new Error('A playlist está vazia, privada ou indisponível.'), { status: 404 });
+  const tituloMeta = html.match(/<meta property="og:title" content="([^"]+)"/i)?.[1];
+  return {
+    tipo: 'youtube', nome: tituloMeta || 'Playlist do YouTube', origem: 'YouTube', url,
+    aulas: videos.map(v => ({
+      titulo: v.titulo,
+      url: `https://www.youtube.com/watch?v=${v.videoId}&list=${playlistId}`,
+      minutos: v.minutos,
+      thumbnail: v.thumbnail
+    }))
+  };
+};
+
 const youtube = async (url, apiKey) => {
   const playlistId = playlistIdDe(url);
   if (!playlistId) throw Object.assign(new Error('Cole o link completo de uma playlist do YouTube.'), { status: 400 });
@@ -78,8 +129,7 @@ exports.handler = async event => {
 
   if (playlistIdDe(url)) {
     const apiKey = process.env.YOUTUBE_API_KEY;
-    if (!apiKey) return json(503, { erro: 'A conexão com o YouTube ainda precisa ser ativada pela administradora.', codigo: 'YOUTUBE_NAO_CONFIGURADO' });
-    try { return json(200, await youtube(url, apiKey)); }
+    try { return json(200, apiKey ? await youtube(url, apiKey) : await youtubePublico(url)); }
     catch (e) { return json(e.status || 500, { erro: e.message || 'Falha ao importar a playlist.' }); }
   }
 
