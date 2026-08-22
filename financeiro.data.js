@@ -4,7 +4,7 @@
 
 export const CATEGORIAS_DESPESA = [
   'Moradia', 'Alimentação', 'Transporte', 'Saúde', 'Lazer',
-  'Educação', 'Assinaturas', 'Investimentos', 'Cuidados pessoais', 'Outros'
+  'Educação', 'Assinaturas', 'Consórcio', 'Financiamento', 'Investimentos', 'Cuidados pessoais', 'Outros'
 ];
 
 export const CATEGORIAS_RECEITA = ['Salário', 'Freelance', 'Rendimentos', 'Reembolso', 'Outros'];

@@ -88,15 +88,15 @@ export default function Cursos({ d, up, aviso, voltar }) {
     if (!ganhoCurso || !obstaculoCurso) return aviso('Escolha seu objetivo e o que costuma fazer você adiar');
     if (!diasCurso.length) return aviso('Escolha ao menos um dia para estudar');
     const cursoNovoId = novaId('curso');
-    const datas = proximasDatas(resultado.aulas.length, diasCurso);
-    const aulas = resultado.aulas.map((a, i) => ({ ...a, modulo: a.modulo || 'Comece por aqui', id: novaId('aula'), feito: false, data: null, agendadaPara: datas[i] }));
+    const primeiraData = proximasDatas(1, diasCurso)[0];
+    const aulas = resultado.aulas.map((a, i) => ({ ...a, modulo: a.modulo || 'Comece por aqui', id: novaId('aula'), feito: false, data: null, agendadaPara: i===0?primeiraData:null }));
     const novo = {
       id: cursoNovoId, nome: (nome || resultado.nome).trim(), url: resultado.url,
       origem: resultado.origem, minutosDia: +minutos || 10, criadoEm: hoje(),
       compromisso: { ganho: ganhoCurso, obstaculo: obstaculoCurso, acordo: acordoCurso, criadoEm: hoje() },
       agendamento: { dias: diasCurso, hora: horaCurso }, recompensas: {}, fixadoInicio: false, aulas
     };
-    const eventos = aulas.map(a => ({ id:novaId('evento-curso'),cursoId:cursoNovoId,aulaId:a.id,data:a.agendadaPara,hora:horaCurso,titulo:a.titulo,modulo:a.modulo,feito:false }));
+    const eventos = aulas.length?[{ id:novaId('evento-curso'),cursoId:cursoNovoId,aulaId:aulas[0].id,data:primeiraData,hora:horaCurso,titulo:aulas[0].titulo,modulo:aulas[0].modulo,feito:false }]:[];
     up(s => ({ ...s, cursos: [...(s.cursos || []), novo], agendaCursos:[...(s.agendaCursos||[]),...eventos], alarmes:[...(s.alarmes||[]),{id:novaId('alarme-curso'),titulo:`Hora de avançar em ${novo.nome}`,hora:horaCurso,dias:DIAS_CURSO.filter(x=>diasCurso.includes(x.n)).map(x=>x.d),ativo:true}] }));
     setUrl(''); setNome(''); setResultado(null); setGanhoCurso(''); setObstaculoCurso(''); setAcordoCurso('5 minutos'); setCursoId(novo.id); setTela('curso');
     aviso(`${novo.aulas.length} aulas importadas · trilha criada`);
@@ -129,9 +129,13 @@ export default function Cursos({ d, up, aviso, voltar }) {
     const aulaAtual = curso.aulas.find(a=>a.id===aulaId);
     const moduloAtual = aulaAtual?.modulo || 'Comece por aqui';
     const fechaModulo = curso.aulas.filter(a=>(a.modulo||'Comece por aqui')===moduloAtual).every(a=>a.id===aulaId||a.feito);
-    up(s => ({ ...s, cursos: (s.cursos || []).map(c => c.id !== curso.id ? c : {
-      ...c, aulas: c.aulas.map(a => a.id === aulaId ? { ...a, feito: true, data: hoje(), avaliacao: { compreensao, insight: insight.trim(), acao: acao.trim(), data: hoje() } } : a)
-    }), agendaCursos:(s.agendaCursos||[]).map(e=>e.aulaId===aulaId?{...e,feito:true,concluidoEm:hoje()}:e) }));
+    up(s => {
+      const cursos=(s.cursos||[]).map(c => c.id !== curso.id ? c : {...c,aulas:c.aulas.map(a => a.id === aulaId ? { ...a, feito: true, data: hoje(), avaliacao: { compreensao, insight: insight.trim(), acao: acao.trim(), data: hoje() } } : a)});
+      let agendaCursos=(s.agendaCursos||[]).map(e=>e.aulaId===aulaId?{...e,feito:true,concluidoEm:hoje()}:e);
+      const proxima=curso.aulas.find((a,i)=>i>curso.aulas.findIndex(x=>x.id===aulaId)&&!a.feito);
+      if(proxima&&!agendaCursos.some(e=>e.aulaId===proxima.id)){const dataProxima=proximasDatas(1,curso.agendamento?.dias||['Seg','Qua','Sex'])[0];agendaCursos=[...agendaCursos,{id:novaId('evento-curso'),cursoId:curso.id,aulaId:proxima.id,data:dataProxima,hora:curso.agendamento?.hora||'19:00',titulo:proxima.titulo,modulo:proxima.modulo||'Comece por aqui',feito:false}]}
+      return {...s,cursos,agendaCursos};
+    });
     setRefletindo(null); setCompreensao(0); setInsight(''); setAcao('');
     if(fechaModulo)setPremiando(moduloAtual);else aviso('Reflexão registrada · próxima aula liberada');
   };

@@ -1,13 +1,13 @@
 import React, { useState, useMemo, useRef } from 'react';
 import {
   Wallet, TrendingUp, TrendingDown, FileClock, Plus, Search, Download,
-  Trash2, Mic, Camera, Sparkles, X, ChevronLeft, ChevronRight
+  Trash2, Mic, Camera, Sparkles, X, ChevronLeft, ChevronRight, Upload, HelpCircle, Landmark
 } from 'lucide-react';
 import { C, sobre, Card, Btn, Campo, Area, Barra, Sheet, GraficoLinha, hoje } from './ui.jsx';
 import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA, CONTAS_PADRAO, MESES_LBL, formatoMoeda } from './financeiro.data';
 import { parseTransacao, pedirSugestoes, reconhecimentoDisponivel, iniciarReconhecimentoVoz } from './ia.jsx';
 
-const vazio = { transacoes: [], contas: CONTAS_PADRAO, metas: [] };
+const vazio = { transacoes: [], contas: CONTAS_PADRAO, metas: [], dividas: [], pendenciasClassificacao: [], documentos: [] };
 const rascunhoVazio = () => ({ tipo: 'saida', valor: '', categoria: CATEGORIAS_DESPESA[0], conta: CONTAS_PADRAO[0], data: hoje(), descricao: '', pendente: false });
 
 export default function Financeiro({ d, up, aviso }) {
@@ -22,6 +22,7 @@ export default function Financeiro({ d, up, aviso }) {
   const [sugestoes, setSugestoes] = useState(null);
   const [carregandoSugestao, setCarregandoSugestao] = useState(false);
   const inputFotoRef = useRef(null);
+  const [pendenciaAberta,setPendenciaAberta]=useState(null);
 
   const atualizar = (fn) => up(s => ({ ...s, financeiro: fn({ ...vazio, ...s.financeiro }) }));
 
@@ -88,6 +89,7 @@ export default function Financeiro({ d, up, aviso }) {
   };
 
   const categoriasDoTipo = rascunho.tipo === 'entrada' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
+  const resolverPendencia = (p,categoria) => atualizar(fx=>({...fx,transacoes:[...fx.transacoes,{id:`class-${Date.now()}`,tipo:p.tipo==='entrada'?'entrada':'saida',valor:+p.valor||0,categoria,conta:p.conta||'Conta corrente',data:p.data||hoje(),descricao:p.descricao||p.arquivo,pendente:false,origemDocumento:p.arquivo}],pendenciasClassificacao:(fx.pendenciasClassificacao||[]).filter(x=>x.id!==p.id)}));
 
   const preencherComIA = (campos) => {
     setRascunho(r => ({
@@ -110,7 +112,7 @@ export default function Financeiro({ d, up, aviso }) {
         setProcessandoIA(true);
         const r = await parseTransacao({ texto });
         setProcessandoIA(false);
-        if (r.ok) preencherComIA(r.dados);
+        if (r.ok) preencherComIA(Array.isArray(r.dados?.transacoes)?r.dados.transacoes[0]||{}:r.dados);
         else { setRascunho(rr => ({ ...rr, descricao: texto })); aviso(r.erro); }
       },
       onErro: (e) => { setOuvindo(false); aviso('Não consegui ouvir — tente de novo.'); }
@@ -122,13 +124,19 @@ export default function Financeiro({ d, up, aviso }) {
     const file = ev.target.files && ev.target.files[0];
     ev.target.value = '';
     if (!file) return;
+    if(file.size>4.5*1024*1024)return aviso('Envie um arquivo de até 4,5 MB.');
     const reader = new FileReader();
     reader.onload = async () => {
       setProcessandoIA(true);
       const base64 = String(reader.result).split(',')[1];
       const r = await parseTransacao({ imagemBase64: base64, mimeType: file.type });
       setProcessandoIA(false);
-      if (r.ok) preencherComIA(r.dados);
+      if (r.ok&&Array.isArray(r.dados?.transacoes)) {
+        const certas=r.dados.transacoes.filter(t=>Number(t.confianca||0)>=0.75&&t.valor>0).map((t,i)=>({id:`doc-${Date.now()}-${i}`,tipo:t.tipo==='entrada'?'entrada':'saida',valor:+t.valor,categoria:t.categoria||'Outros',conta:t.conta||'Conta corrente',data:t.data||hoje(),descricao:t.descricao||file.name,pendente:false,origemDocumento:file.name}));
+        const duvidas=r.dados.transacoes.filter(t=>Number(t.confianca||0)<0.75||!t.categoria||t.categoria==='Outros').map((t,i)=>({id:`duvida-${Date.now()}-${i}`,...t,arquivo:file.name}));
+        atualizar(fx=>({...fx,transacoes:[...fx.transacoes,...certas],pendenciasClassificacao:[...(fx.pendenciasClassificacao||[]),...duvidas],dividas:r.dados.divida?[...(fx.dividas||[]),{id:`divida-${Date.now()}`,...r.dados.divida,origem:file.name}]:fx.dividas,documentos:[...(fx.documentos||[]),{id:`doc-${Date.now()}`,nome:file.name,data:hoje(),itens:certas.length}]}));
+        aviso(`${certas.length} lançamentos organizados${duvidas.length?` · ${duvidas.length} precisam da sua resposta`:''}`);
+      } else if (r.ok) preencherComIA(r.dados);
       else aviso(r.erro);
     };
     reader.readAsDataURL(file);
@@ -187,6 +195,10 @@ export default function Financeiro({ d, up, aviso }) {
           {ultimosMeses.map(m => <div key={m.lbl} style={{ flex: 1, textAlign: 'center', fontSize: 10, color: C.ink3 }}>{m.lbl}</div>)}
         </div>
       </Card>
+
+      {(fin.dividas||[]).length>0&&<><div style={{display:'flex',alignItems:'center',gap:7,margin:'4px 2px 10px',color:C.ink,fontWeight:850}}><Landmark size={18} color={C.roxo}/>Consórcios e financiamentos</div>{fin.dividas.map(divida=>{const total=+divida.valor_total||0,pago=+divida.valor_pago||0,resta=+divida.saldo_restante||(total-pago);return <Card key={divida.id} style={{marginBottom:10,border:'1px solid #E4D9F2'}}><div style={{display:'flex',justifyContent:'space-between',gap:10}}><div><div style={{fontSize:10,fontWeight:900,color:C.roxo,textTransform:'uppercase'}}>{divida.tipo||'Dívida'}</div><div style={{fontSize:14,fontWeight:850,color:C.ink,marginTop:3}}>{divida.nome||divida.instituicao||'Contrato identificado'}</div></div><div style={{textAlign:'right',fontSize:10,color:C.ink3}}>{divida.parcela_atual&&divida.total_parcelas?`${divida.parcela_atual}/${divida.total_parcelas} parcelas`:''}</div></div><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,margin:'12px 0 8px'}}><div style={{background:C.mint,borderRadius:12,padding:10}}><div style={{fontSize:9,color:C.ink3}}>Já pago</div><strong style={{fontSize:14,color:C.green}}>{formatoMoeda(pago)}</strong></div><div style={{background:'#FFF3F0',borderRadius:12,padding:10}}><div style={{fontSize:9,color:C.ink3}}>Ainda falta</div><strong style={{fontSize:14,color:C.coral}}>{formatoMoeda(resta)}</strong></div></div><Barra v={pago} max={total||Math.max(1,pago+resta)} cor={C.roxo} h={7}/></Card>})}</>}
+
+      {(fin.pendenciasClassificacao||[]).length>0&&<><div style={{display:'flex',alignItems:'center',gap:7,margin:'16px 2px 10px',color:C.ink,fontWeight:850}}><HelpCircle size={18} color={C.gold}/>A ZOE precisa da sua ajuda</div>{fin.pendenciasClassificacao.map(p=><Card key={p.id} style={{marginBottom:9,background:'#FFFBEE',border:'1px solid #F3DF9B'}}><div style={{fontSize:12.5,fontWeight:800,color:C.ink}}>Onde entra “{p.descricao||'este pagamento'}”?</div><div style={{fontSize:11,color:C.ink3,margin:'4px 0 10px'}}>{formatoMoeda(+p.valor||0)} · {p.arquivo}</div><div style={{display:'flex',flexWrap:'wrap',gap:5}}>{['Moradia','Transporte','Consórcio','Financiamento','Outros'].map(cat=><button key={cat} onClick={()=>resolverPendencia(p,cat)} style={{border:`1px solid ${C.line}`,background:'#fff',borderRadius:16,padding:'6px 8px',fontFamily:'inherit',fontSize:9.5,fontWeight:800,color:C.ink}}>{cat}</button>)}</div></Card>)}</>}
 
       <Card style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -255,8 +267,8 @@ export default function Financeiro({ d, up, aviso }) {
           <button onClick={usarFoto} disabled={processandoIA} style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 8px',
             borderRadius: 12, border: `1.5px solid ${C.line}`, background: '#fff', color: C.ink2, fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit'
-          }}><Camera size={16} />Foto do recibo</button>
-          <input ref={inputFotoRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={onFotoSelecionada} />
+          }}><Upload size={16} />PDF ou foto</button>
+          <input ref={inputFotoRef} type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={onFotoSelecionada} />
         </div>
         {processandoIA && <div style={{ fontSize: 12.5, color: C.ink3, marginBottom: 10 }}>Lendo com IA…</div>}
 

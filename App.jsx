@@ -1416,12 +1416,25 @@ export default function ZoeApp() {
     });
     const marcas = d.agenda[data] || {};
     const tarefas = agendaAtiva?.tarefas || [];
-    const eventosCursos = (d.agendaCursos || []).filter(e => e.data === data);
+    const eventosCursos = (d.agendaCursos || []).filter(e => {
+      if(e.data!==data)return false;
+      const curso=(d.cursos||[]).find(c=>c.id===e.cursoId); if(!curso)return false;
+      const indice=curso.aulas.findIndex(a=>a.id===e.aulaId), atual=curso.aulas.findIndex(a=>!a.feito);
+      return e.feito||indice===atual;
+    });
+    const reflexoesCursos=(d.cursos||[]).flatMap(c=>c.aulas).filter(a=>a.avaliacao).length;
+    const fasesConcluidas=(d.cursos||[]).reduce((total,c)=>total+Object.keys(c.recompensas||{}).length,0);
+    const conquistasAgenda=[
+      {titulo:'Pratique 3 dias seguidos',valor:Math.min(streak,3),meta:3,icone:Flame,cor:C.coral},
+      {titulo:'Conclua sua primeira fase',valor:Math.min(fasesConcluidas,1),meta:1,icone:Trophy,cor:C.gold},
+      {titulo:'Registre 5 reflexões',valor:Math.min(reflexoesCursos,5),meta:5,icone:Sparkles,cor:C.roxo}
+    ];
     const realizadas = tarefas.filter((_, i) => marcas[`${agendaAtiva?.id}-${i}`]).length;
     return (
       <div style={{ padding: '20px 16px 120px', minHeight: '100vh', background: '#F7FAF9' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}><CalendarDays size={24} color={C.green} /><h1 style={{ margin: 0, color: C.ink, fontSize: 24 }}>Minha agenda</h1></div>
         <p style={{ margin: '4px 0 18px 34px', color: C.ink3, fontSize: 12.5 }}>Agenda e missões organizadas pela ZOE</p>
+        <Card style={{marginBottom:14,background:'linear-gradient(135deg,#0A6963,#15977E)',color:'#fff',padding:16}}><div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center'}}><div><Flame size={21} color={C.lima}/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{streak}</div><div style={{fontSize:9,opacity:.78}}>dias de ofensiva</div></div><div style={{borderLeft:'1px solid rgba(255,255,255,.2)',borderRight:'1px solid rgba(255,255,255,.2)'}}><Trophy size={21} color="#FFD759"/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{fasesConcluidas}</div><div style={{fontSize:9,opacity:.78}}>fases vencidas</div></div><div><Sparkles size={21} color="#DDB4FF"/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{reflexoesCursos}</div><div style={{fontSize:9,opacity:.78}}>reflexões</div></div></div></Card>
         <Card style={{ marginBottom: 16, padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}><button onClick={() => { const x=new Date(base); x.setMonth(x.getMonth()-1); setData(x.toISOString().slice(0,10)); }} style={{ border:0,background:'transparent' }}><ChevronLeft size={20}/></button><strong style={{ color:C.ink, textTransform:'capitalize' }}>{base.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</strong><button onClick={() => { const x=new Date(base); x.setMonth(x.getMonth()+1); setData(x.toISOString().slice(0,10)); }} style={{ border:0,background:'transparent' }}><ChevronRight size={20}/></button></div>
           <div style={{ display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:4,marginBottom:5 }}>{['S','T','Q','Q','S','S','D'].map((x,i)=><div key={i} style={{ textAlign:'center',fontSize:9,fontWeight:800,color:C.ink3 }}>{x}</div>)}</div>
@@ -1442,6 +1455,7 @@ export default function ZoeApp() {
           </div>
         </Card>}
         {eventosCursos.length>0&&<><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'18px 2px 10px'}}><h2 style={{margin:0,fontSize:17,color:C.ink}}>Cursos na agenda</h2><span style={{fontSize:10,color:C.roxo,fontWeight:850}}>{eventosCursos.filter(e=>e.feito).length}/{eventosCursos.length}</span></div>{eventosCursos.map(e=><Card key={e.id} onClick={()=>setAba('cursos')} style={{marginBottom:9,border:`1.5px solid ${e.feito?C.green:'#E3D8F1'}`,background:e.feito?C.mint:'#FBF8FF',cursor:'pointer'}}><div style={{display:'flex',gap:11,alignItems:'center'}}><div style={{width:38,height:38,borderRadius:13,background:e.feito?C.green:C.roxo,color:'#fff',display:'grid',placeItems:'center'}}>{e.feito?<Check size={19}/>:<BookOpen size={18}/>}</div><div style={{flex:1}}><div style={{fontSize:9,fontWeight:900,color:C.roxo,letterSpacing:.6}}>{e.modulo||'CURSO'} · {e.hora}</div><div style={{fontSize:13,fontWeight:850,color:C.ink,marginTop:3,textDecoration:e.feito?'line-through':'none'}}>{e.titulo}</div></div><ChevronRight size={18} color={C.ink3}/></div></Card>)}</>}
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'20px 2px 10px'}}><h2 style={{margin:0,fontSize:17,color:C.ink}}>Conquistas</h2><span style={{fontSize:10,color:C.green,fontWeight:850}}>MISSÕES</span></div>{conquistasAgenda.map(c=><Card key={c.titulo} style={{marginBottom:9,padding:14}}><div style={{display:'flex',alignItems:'center',gap:11}}><div style={{width:42,height:42,borderRadius:14,background:`${c.cor}20`,color:c.cor,display:'grid',placeItems:'center'}}><c.icone size={21}/></div><div style={{flex:1}}><div style={{fontSize:13,fontWeight:850,color:C.ink}}>{c.titulo}</div><Barra v={c.valor} max={c.meta} cor={c.cor} h={7}/><div style={{textAlign:'right',fontSize:9.5,color:C.ink3,marginTop:3}}>{c.valor}/{c.meta}</div></div></div></Card>)}
         <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',margin:'20px 2px 12px' }}><h2 style={{ margin:0,fontSize:18,color:C.ink }}>Missões do mês</h2><span style={{ color:C.lilac,fontSize:11,fontWeight:800 }}>VER TODAS</span></div>
         {tarefas.length ? tarefas.map((t, i) => {
           const on = !!marcas[`${agendaAtiva.id}-${i}`];
