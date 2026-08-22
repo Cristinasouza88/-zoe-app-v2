@@ -58,6 +58,83 @@ const hashArquivo = async (file) => {
   return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
 };
 
+const separarLinhaCsv = (linha, delimitador) => {
+  const campos = [];
+  let atual = '';
+  let emAspas = false;
+  for (let i = 0; i < linha.length; i++) {
+    const ch = linha[i];
+    if (ch === '"') {
+      if (emAspas && linha[i + 1] === '"') { atual += '"'; i++; }
+      else emAspas = !emAspas;
+    } else if (ch === delimitador && !emAspas) {
+      campos.push(atual.trim()); atual = '';
+    } else atual += ch;
+  }
+  campos.push(atual.trim());
+  return campos;
+};
+
+const valorCsv = (valor = '') => {
+  const limpo = String(valor).replace(/R\$|\s/g, '');
+  if (!limpo) return 0;
+  const decimal = limpo.includes(',')
+    ? limpo.replace(/\./g, '').replace(',', '.')
+    : limpo.replace(/,(?=\d{3}(?:\D|$))/g, '');
+  const numero = Number(decimal.replace(/[^0-9.-]/g, ''));
+  return Number.isFinite(numero) ? numero : 0;
+};
+
+const dataCsv = (valor = '') => {
+  const texto = String(valor).trim();
+  const br = texto.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/);
+  if (br) {
+    const ano = br[3].length === 2 ? `20${br[3]}` : br[3];
+    return `${ano}-${br[2].padStart(2, '0')}-${br[1].padStart(2, '0')}`;
+  }
+  const iso = texto.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  return iso ? `${iso[1]}-${iso[2].padStart(2, '0')}-${iso[3].padStart(2, '0')}` : hoje();
+};
+
+const transacoesDeCsv = async (file) => {
+  const texto = (await file.text()).replace(/^\uFEFF/, '');
+  const linhas = texto.split(/\r?\n/).filter(l => l.trim());
+  if (linhas.length < 2) return [];
+  const candidatos = [',', ';', '\t'];
+  const delimitador = candidatos.sort((a, b) => separarLinhaCsv(linhas[0], b).length - separarLinhaCsv(linhas[0], a).length)[0];
+  const cabecalhos = separarLinhaCsv(linhas[0], delimitador).map(normalizarTexto);
+  const indice = (...nomes) => cabecalhos.findIndex(h => nomes.some(n => h === n || h.includes(n)));
+  const iData = indice('data', 'date', 'dt');
+  const iDescricao = indice('descricao', 'description', 'historico', 'estabelecimento', 'titulo', 'memo');
+  const iValor = indice('valor', 'amount', 'quantia');
+  const iDebito = indice('debito', 'saida', 'despesa');
+  const iCredito = indice('credito', 'entrada', 'receita');
+  const iTipo = indice('tipo', 'type', 'natureza');
+  const iCategoria = indice('categoria', 'category');
+  const iConta = indice('conta', 'account', 'banco', 'cartao');
+  if (iValor < 0 && iDebito < 0 && iCredito < 0) throw new Error('Não encontrei uma coluna de valor no CSV.');
+  return linhas.slice(1).map((linha, i) => {
+    const c = separarLinhaCsv(linha, delimitador);
+    const debito = iDebito >= 0 ? Math.abs(valorCsv(c[iDebito])) : 0;
+    const credito = iCredito >= 0 ? Math.abs(valorCsv(c[iCredito])) : 0;
+    const bruto = iValor >= 0 ? valorCsv(c[iValor]) : (credito || -debito);
+    const tipoTexto = iTipo >= 0 ? normalizarTexto(c[iTipo]) : '';
+    const tipo = credito > 0 || bruto > 0 || /entrada|credito|receita/.test(tipoTexto) ? 'entrada' : 'saida';
+    const valor = Math.abs(bruto || debito || credito);
+    if (!valor) return null;
+    return {
+      id: `csv-${Date.now()}-${i}`,
+      tipo, valor,
+      categoria: (iCategoria >= 0 && c[iCategoria]) || (tipo === 'entrada' ? CATEGORIAS_RECEITA[0] : 'Outros'),
+      conta: (iConta >= 0 && c[iConta]) || 'Conta corrente',
+      data: iData >= 0 ? dataCsv(c[iData]) : hoje(),
+      descricao: (iDescricao >= 0 && c[iDescricao]) || `Linha ${i + 2}`,
+      pendente: false,
+      origemDocumento: file.name,
+    };
+  }).filter(Boolean);
+};
+
 export default function Financeiro({ d, up, aviso }) {
   const fin = { ...vazio, ...d.financeiro };
   const transacoesUnicas = useMemo(() => semTransacoesDuplicadas(fin.transacoes), [fin.transacoes]);
@@ -134,6 +211,32 @@ export default function Financeiro({ d, up, aviso }) {
     if(file.size>4.5*1024*1024)return aviso('Envie um arquivo de até 4,5 MB.');
     const arquivoHash = await hashArquivo(file);
     if ((fin.documentos || []).some(doc => doc.hash === arquivoHash)) return aviso('Este documento já foi importado. Nenhum dado foi duplicado.');
+    const csv = /\.csv$/i.test(file.name) || /text\/csv|application\/csv|application\/vnd\.ms-excel/.test(file.type);
+    if (csv) {
+      setProcessandoIA(true);
+      try {
+        const extraidas = await transacoesDeCsv(file);
+        const chavesExistentes = new Set(transacoesUnicas.map(chaveTransacao));
+        const certas = extraidas.filter(t => {
+          const chave = chaveTransacao(t);
+          if (chavesExistentes.has(chave)) return false;
+          chavesExistentes.add(chave);
+          return true;
+        });
+        const ignoradas = extraidas.length - certas.length;
+        atualizar(fx => ({
+          ...fx,
+          transacoes: [...fx.transacoes, ...certas],
+          documentos: [...(fx.documentos || []), { id: `doc-${Date.now()}`, nome: file.name, data: hoje(), itens: certas.length, hash: arquivoHash }]
+        }));
+        aviso(`${certas.length} lançamentos importados do CSV${ignoradas ? ` · ${ignoradas} duplicados ignorados` : ''}`);
+      } catch (erro) {
+        aviso(erro?.message || 'Não consegui ler este CSV.');
+      } finally {
+        setProcessandoIA(false);
+      }
+      return;
+    }
     const reader = new FileReader();
     reader.onload = async () => {
       setProcessandoIA(true);
@@ -226,10 +329,10 @@ export default function Financeiro({ d, up, aviso }) {
       <Btn onClick={abrirNovo} style={{ width: '100%' }}><Plus size={16} style={{ verticalAlign: -3, marginRight: 6 }} />Novo lançamento</Btn>
 
       <Sheet aberto={sheetAberto} fechar={() => setSheetAberto(false)} titulo={modoEntrada==='manual'?'Lançamento manual':modoEntrada==='documento'?'Enviar documento':'Adicionar movimentações'}>
-        {!modoEntrada&&<div><p style={{fontSize:12.5,lineHeight:1.5,color:C.ink3,margin:'0 0 16px'}}>Escolha como deseja adicionar as informações financeiras.</p><button onClick={()=>setModoEntrada('manual')} style={{width:'100%',border:`1.5px solid ${C.line}`,background:'#fff',borderRadius:17,padding:16,display:'flex',alignItems:'center',gap:13,textAlign:'left',fontFamily:'inherit',marginBottom:10}}><span style={{width:44,height:44,borderRadius:14,background:C.mint,color:C.green,display:'grid',placeItems:'center'}}><PenLine size={21}/></span><span><strong style={{display:'block',fontSize:14,color:C.ink}}>Adicionar manualmente</strong><small style={{fontSize:10.5,color:C.ink3}}>Preencha valor, categoria e data</small></span></button><button onClick={()=>{setModoEntrada('documento');setTimeout(usarDocumento,80)}} style={{width:'100%',border:'1.5px solid #DDD5EB',background:'#F9F5FF',borderRadius:17,padding:16,display:'flex',alignItems:'center',gap:13,textAlign:'left',fontFamily:'inherit'}}><span style={{width:44,height:44,borderRadius:14,background:'#EDE1FF',color:C.roxo,display:'grid',placeItems:'center'}}><FileText size={22}/></span><span><strong style={{display:'block',fontSize:14,color:C.ink}}>Enviar documento</strong><small style={{fontSize:10.5,color:C.ink3}}>PDF, fatura, extrato, boleto ou foto</small></span></button></div>}
+        {!modoEntrada&&<div><p style={{fontSize:12.5,lineHeight:1.5,color:C.ink3,margin:'0 0 16px'}}>Escolha como deseja adicionar as informações financeiras.</p><button onClick={()=>setModoEntrada('manual')} style={{width:'100%',border:`1.5px solid ${C.line}`,background:'#fff',borderRadius:17,padding:16,display:'flex',alignItems:'center',gap:13,textAlign:'left',fontFamily:'inherit',marginBottom:10}}><span style={{width:44,height:44,borderRadius:14,background:C.mint,color:C.green,display:'grid',placeItems:'center'}}><PenLine size={21}/></span><span><strong style={{display:'block',fontSize:14,color:C.ink}}>Adicionar manualmente</strong><small style={{fontSize:10.5,color:C.ink3}}>Preencha valor, categoria e data</small></span></button><button onClick={()=>{setModoEntrada('documento');setTimeout(usarDocumento,80)}} style={{width:'100%',border:'1.5px solid #DDD5EB',background:'#F9F5FF',borderRadius:17,padding:16,display:'flex',alignItems:'center',gap:13,textAlign:'left',fontFamily:'inherit'}}><span style={{width:44,height:44,borderRadius:14,background:'#EDE1FF',color:C.roxo,display:'grid',placeItems:'center'}}><FileText size={22}/></span><span><strong style={{display:'block',fontSize:14,color:C.ink}}>Enviar documento</strong><small style={{fontSize:10.5,color:C.ink3}}>CSV, PDF, fatura, extrato, boleto ou foto</small></span></button></div>}
 
-        {modoEntrada==='documento'&&<div style={{textAlign:'center',padding:'4px 0 10px'}}><div style={{width:62,height:62,borderRadius:20,background:'#EDE1FF',color:C.roxo,display:'grid',placeItems:'center',margin:'0 auto 13px'}}><Upload size={27}/></div><strong style={{fontSize:16,color:C.ink}}>A ZOE organiza o documento inteiro</strong><p style={{fontSize:11.5,lineHeight:1.5,color:C.ink3,margin:'7px 0 16px'}}>Ela extrai todas as movimentações, separa por categorias e pergunta apenas o que não conseguir identificar.</p><Btn onClick={usarDocumento} disabled={processandoIA} style={{width:'100%',padding:14}}>{processandoIA?'Lendo e organizando…':'Escolher PDF ou imagem'}</Btn><button onClick={()=>setModoEntrada(null)} style={{border:0,background:'transparent',color:C.ink3,fontFamily:'inherit',fontWeight:750,padding:13}}>Voltar</button></div>}
-        <input ref={inputFotoRef} type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={onFotoSelecionada} />
+        {modoEntrada==='documento'&&<div style={{textAlign:'center',padding:'4px 0 10px'}}><div style={{width:62,height:62,borderRadius:20,background:'#EDE1FF',color:C.roxo,display:'grid',placeItems:'center',margin:'0 auto 13px'}}><Upload size={27}/></div><strong style={{fontSize:16,color:C.ink}}>A ZOE organiza o documento inteiro</strong><p style={{fontSize:11.5,lineHeight:1.5,color:C.ink3,margin:'7px 0 16px'}}>Ela aceita CSV, PDF ou imagem, organiza as movimentações e evita registros duplicados.</p><Btn onClick={usarDocumento} disabled={processandoIA} style={{width:'100%',padding:14}}>{processandoIA?'Lendo e organizando…':'Escolher CSV, PDF ou imagem'}</Btn><button onClick={()=>setModoEntrada(null)} style={{border:0,background:'transparent',color:C.ink3,fontFamily:'inherit',fontWeight:750,padding:13}}>Voltar</button></div>}
+        <input ref={inputFotoRef} type="file" accept=".csv,text/csv,application/csv,application/vnd.ms-excel,image/*,application/pdf" style={{ display: 'none' }} onChange={onFotoSelecionada} />
 
         {modoEntrada==='manual'&&<><button onClick={()=>setModoEntrada(null)} style={{border:0,background:'transparent',color:C.ink3,fontFamily:'inherit',fontWeight:750,padding:'0 0 13px'}}>← Voltar</button><div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
           {[['saida', 'Saída'], ['entrada', 'Entrada']].map(([tp, lbl]) => (
