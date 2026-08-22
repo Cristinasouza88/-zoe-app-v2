@@ -49,7 +49,9 @@ exports.handler = async (event) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-5',
+        // Haiku é mais adequado para extração estruturada e responde dentro
+        // da janela curta das Functions do Netlify.
+        model: 'claude-haiku-4-5-20251001',
         // Uma fatura completa pode gerar dezenas de lançamentos. O limite
         // anterior cortava o JSON antes do fechamento.
         max_tokens: 8000,
