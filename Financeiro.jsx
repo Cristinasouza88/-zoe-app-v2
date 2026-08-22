@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import {
   Wallet, TrendingUp, TrendingDown, FileClock, Plus, ShieldCheck,
-  ChevronLeft, ChevronRight, Upload, HelpCircle, Landmark, PenLine, FileText
+  ChevronLeft, ChevronRight, Upload, HelpCircle, Landmark, PenLine, FileText, Target, Sparkles
 } from 'lucide-react';
 import { C, sobre, Card, Btn, Campo, Area, Barra, Sheet, GraficoLinha, hoje } from './ui.jsx';
 import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA, CONTAS_PADRAO, MESES_LBL, formatoMoeda } from './financeiro.data';
@@ -192,6 +192,20 @@ export default function Financeiro({ d, up, aviso }) {
     const total = transacoesDoMes.filter(t => t.tipo === 'saida' && t.categoria === categoria).reduce((a, t) => a + t.valor, 0);
     return { categoria, total, percentual: despesa ? Math.round((total / despesa) * 100) : 0, cor: ['#0A6963','#43BE8C','#8E2DE2','#5B9CF6','#F0A23B','#EA6B67','#9A72C7','#4E9F83','#DD7BA5','#94A3A8'][i] };
   }).filter(x => x.total > 0).sort((a,b) => b.total-a.total), [transacoesDoMes, despesa]);
+  const leituraEstrategica = useMemo(() => {
+    const somar = categorias => transacoesDoMes.filter(t => t.tipo === 'saida' && categorias.includes(t.categoria)).reduce((a,t) => a + Number(t.valor || 0), 0);
+    const grupos = [
+      { nome: 'Custo de vida', categorias: ['Moradia','Alimentação','Transporte','Saúde','Educação','Cuidados pessoais'], cor: C.roxo },
+      { nome: 'Obrigações', categorias: ['Assinaturas'], cor: C.gold },
+      { nome: 'Patrimônio', categorias: ['Consórcio','Financiamento','Investimentos'], cor: C.green },
+      { nome: 'Consumo flexível', categorias: ['Lazer','Outros'], cor: C.coral },
+    ].map(g => ({ ...g, total: somar(g.categorias) }));
+    return grupos.map(g => ({ ...g, percentual: despesa ? Math.round(g.total / despesa * 100) : 0 }));
+  }, [transacoesDoMes, despesa]);
+  const metaLiquidez = Number(fin.metaLiquidez || 200000);
+  const progressoLiquidez = Math.max(0, Math.min(100, metaLiquidez ? Math.round(saldoAcumulado / metaLiquidez * 100) : 0));
+  const patrimonioMes = leituraEstrategica.find(g => g.nome === 'Patrimônio')?.total || 0;
+  const custoVidaMes = leituraEstrategica.find(g => g.nome === 'Custo de vida')?.total || 0;
 
   const mesAnterior = useMemo(() => {
     const [ano, mes] = mesRef.split('-').map(Number);
@@ -350,6 +364,22 @@ export default function Financeiro({ d, up, aviso }) {
         </div>
       </Card>
 
+      <div style={{margin:'22px 2px 10px'}}><div style={{fontSize:10,fontWeight:900,letterSpacing:1.2,textTransform:'uppercase',color:C.roxo}}>Visão estratégica</div><div style={{fontSize:19,fontWeight:900,color:C.ink,marginTop:3}}>Seu dinheiro por função</div><div style={{fontSize:11,color:C.ink3,marginTop:3}}>A ZOE separa consumo, obrigações e construção de patrimônio.</div></div>
+      <Card style={{marginBottom:12,background:'linear-gradient(135deg,#2E214E,#7657C9)',color:'#fff',border:0}}>
+        <div style={{fontSize:10,fontWeight:900,letterSpacing:1.1,textTransform:'uppercase',opacity:.72}}>Plano de caixa · {MESES_LBL[Number(mesRef.slice(5,7))-1]}</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:13}}>
+          <div><div style={{fontSize:10,opacity:.72}}>Entrada do mês</div><strong style={{fontSize:18}}>{formatoMoeda(receita)}</strong></div>
+          <div><div style={{fontSize:10,opacity:.72}}>Saída do mês</div><strong style={{fontSize:18}}>{formatoMoeda(despesa)}</strong></div>
+          <div><div style={{fontSize:10,opacity:.72}}>Custo de vida</div><strong style={{fontSize:18}}>{formatoMoeda(custoVidaMes)}</strong></div>
+          <div><div style={{fontSize:10,opacity:.72}}>Formação patrimonial</div><strong style={{fontSize:18,color:'#C8FF67'}}>{formatoMoeda(patrimonioMes)}</strong></div>
+        </div>
+      </Card>
+
+      <Card style={{marginBottom:16}}>
+        <div style={{fontSize:14,fontWeight:900,color:C.ink,marginBottom:12}}>Como suas saídas se dividem</div>
+        {leituraEstrategica.map(g=><div key={g.nome} style={{marginBottom:12}}><div style={{display:'flex',justifyContent:'space-between',gap:10,fontSize:11.5}}><span style={{display:'flex',alignItems:'center',gap:7,color:C.ink2}}><i style={{width:9,height:9,borderRadius:9,background:g.cor}}/>{g.nome}</span><strong style={{color:C.ink}}>{g.percentual}% · {formatoMoeda(g.total)}</strong></div><div style={{height:7,background:'#EFEDF3',borderRadius:10,overflow:'hidden',marginTop:6}}><i style={{display:'block',height:'100%',width:`${g.percentual}%`,background:g.cor,borderRadius:10}}/></div></div>)}
+      </Card>
+
       <Card style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: C.ink2, marginBottom: 10 }}>Entradas nos últimos 6 meses</div>
         <GraficoLinha dados={ultimosMeses.map(m => m.v)} cor={C.green} />
@@ -359,6 +389,17 @@ export default function Financeiro({ d, up, aviso }) {
       </Card>
 
       {(fin.dividas||[]).length>0&&<><div style={{display:'flex',alignItems:'center',gap:7,margin:'4px 2px 10px',color:C.ink,fontWeight:850}}><Landmark size={18} color={C.roxo}/>Consórcios e financiamentos</div>{fin.dividas.map(divida=>{const total=+divida.valor_total||0,pago=+divida.valor_pago||0,resta=+divida.saldo_restante||(total-pago);return <Card key={divida.id} style={{marginBottom:10,border:'1px solid #E4D9F2'}}><div style={{display:'flex',justifyContent:'space-between',gap:10}}><div><div style={{fontSize:10,fontWeight:900,color:C.roxo,textTransform:'uppercase'}}>{divida.tipo||'Dívida'}</div><div style={{fontSize:14,fontWeight:850,color:C.ink,marginTop:3}}>{divida.nome||divida.instituicao||'Contrato identificado'}</div></div><div style={{textAlign:'right',fontSize:10,color:C.ink3}}>{divida.parcela_atual&&divida.total_parcelas?`${divida.parcela_atual}/${divida.total_parcelas} parcelas`:''}</div></div><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,margin:'12px 0 8px'}}><div style={{background:C.mint,borderRadius:12,padding:10}}><div style={{fontSize:9,color:C.ink3}}>Já pago</div><strong style={{fontSize:14,color:C.green}}>{formatoMoeda(pago)}</strong></div><div style={{background:'#FFF3F0',borderRadius:12,padding:10}}><div style={{fontSize:9,color:C.ink3}}>Ainda falta</div><strong style={{fontSize:14,color:C.coral}}>{formatoMoeda(resta)}</strong></div></div><Barra v={pago} max={total||Math.max(1,pago+resta)} cor={C.roxo} h={7}/></Card>})}</>}
+
+      <div style={{display:'flex',alignItems:'center',gap:7,margin:'18px 2px 10px',color:C.ink,fontWeight:850}}><Target size={18} color={C.green}/>Liquidez e meta</div>
+      <Card style={{marginBottom:16}}>
+        <div style={{display:'flex',justifyContent:'space-between',gap:10,alignItems:'end'}}><div><div style={{fontSize:10.5,color:C.ink3}}>Saldo acumulado identificado</div><strong style={{fontSize:21,color:saldoAcumulado>=0?C.green:C.coral}}>{formatoMoeda(saldoAcumulado)}</strong></div><div style={{textAlign:'right'}}><div style={{fontSize:10.5,color:C.ink3}}>Meta de liquidez</div><strong style={{fontSize:15,color:C.ink}}>{formatoMoeda(metaLiquidez)}</strong></div></div>
+        <div style={{height:12,background:'#EEEAF3',borderRadius:20,overflow:'hidden',margin:'15px 0 7px'}}><i style={{display:'block',height:'100%',width:`${progressoLiquidez}%`,background:'linear-gradient(90deg,#7657C9,#B8F34A)',borderRadius:20}}/></div>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:10.5,color:C.ink3}}><span>{progressoLiquidez}% da meta</span><strong style={{color:C.ink}}>Faltam {formatoMoeda(Math.max(0,metaLiquidez-saldoAcumulado))}</strong></div>
+      </Card>
+
+      <Card style={{marginBottom:16,background:'#F5F1FC',border:'1px solid #E3D9F3'}}>
+        <div style={{display:'flex',gap:10,alignItems:'flex-start'}}><Sparkles size={19} color={C.roxo} style={{flexShrink:0}}/><div><strong style={{fontSize:13.5,color:C.ink}}>Leitura da ZOE</strong><div style={{fontSize:11,lineHeight:1.5,color:C.ink2,marginTop:4}}>{saldo<0?'As saídas superaram as entradas neste mês. O próximo passo é revisar o consumo flexível antes de comprometer patrimônio ou liquidez.':patrimonioMes>0?'O mês fechou positivo e parte das saídas foi direcionada à formação patrimonial. Preserve essa separação para não confundir investimento com consumo.':'O mês está positivo, mas não identifiquei formação patrimonial. Considere definir quanto da sobra deve permanecer líquido e quanto pode ser investido.'}</div></div></div>
+      </Card>
 
       {(fin.pendenciasClassificacao||[]).length>0&&<><div style={{display:'flex',alignItems:'center',gap:7,margin:'16px 2px 10px',color:C.ink,fontWeight:850}}><HelpCircle size={18} color={C.gold}/>A ZOE precisa da sua ajuda</div>{fin.pendenciasClassificacao.map(p=><Card key={p.id} style={{marginBottom:9,background:'#FFFBEE',border:'1px solid #F3DF9B'}}><div style={{fontSize:12.5,fontWeight:800,color:C.ink}}>Onde entra “{p.descricao||'este pagamento'}”?</div><div style={{fontSize:11,color:C.ink3,margin:'4px 0 10px'}}>{formatoMoeda(+p.valor||0)} · {p.arquivo}</div><div style={{display:'flex',flexWrap:'wrap',gap:5}}>{['Moradia','Transporte','Consórcio','Financiamento','Outros'].map(cat=><button key={cat} onClick={()=>resolverPendencia(p,cat)} style={{border:`1px solid ${C.line}`,background:'#fff',borderRadius:16,padding:'6px 8px',fontFamily:'inherit',fontSize:9.5,fontWeight:800,color:C.ink}}>{cat}</button>)}</div></Card>)}</>}
 
