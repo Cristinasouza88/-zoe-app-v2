@@ -40,6 +40,17 @@ const coletarVideos = (no, saida = []) => {
     minutos: tempoMinutos(textoDe(video.lengthText)),
     thumbnail: video.thumbnail?.thumbnails?.slice(-1)?.[0]?.url || null
   });
+  const lockup = no.lockupViewModel;
+  if (lockup?.contentId && lockup?.contentType === 'LOCKUP_CONTENT_TYPE_VIDEO') {
+    const badges = lockup.contentImage?.thumbnailViewModel?.overlays?.flatMap(x => x.thumbnailBottomOverlayViewModel?.badges || []) || [];
+    const duracao = badges.map(x => x.thumbnailBadgeViewModel?.text).find(Boolean);
+    saida.push({
+      videoId: lockup.contentId,
+      titulo: lockup.metadata?.lockupMetadataViewModel?.title?.content || `Vídeo ${saida.length + 1}`,
+      minutos: tempoMinutos(duracao),
+      thumbnail: lockup.contentImage?.thumbnailViewModel?.image?.sources?.slice(-1)?.[0]?.url || null
+    });
+  }
   for (const valor of Object.values(no)) coletarVideos(valor, saida);
   return saida;
 };
