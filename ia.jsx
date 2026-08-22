@@ -23,7 +23,7 @@ async function chamar(caminho, corpo) {
 
 /** texto (transcrição de voz) OU imagemBase64+mimeType (foto do recibo) → rascunho de lançamento */
 export function parseTransacao({ texto, imagemBase64, mimeType }) {
-  return chamar('parse-transaction', texto ? { tipo: 'voz', texto } : { tipo: 'imagem', imagemBase64, mimeType });
+  return chamar('parse-transaction', texto ? { tipo: 'voz', texto } : { tipo: mimeType === 'application/pdf' ? 'documento' : 'imagem', imagemBase64, mimeType });
 }
 
 /** resumo do histórico/metas → sugestões em texto do agente financeiro */
