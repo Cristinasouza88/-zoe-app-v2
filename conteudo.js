@@ -167,51 +167,40 @@ export const TRILHA = [
 
   /* ═══════════ FASE 0 ═══════════ */
   {
-    id: 'f0', bloco: 'Fundação', nome: 'Ponto de partida', cor: '#3ECF8E',
-    resumo: 'Antes de começar, você precisa saber de onde parte.',
+    id: 'f0', bloco: 'Fundação', nome: 'Primeira volta', cor: '#3ECF8E',
+    resumo: 'Perceber, conectar, escolher e testar uma mudança possível.',
     etapas: [
       {
-        id: 'f0-decisoes', tipo: 'ferramenta', ferramenta: 'decisoes',
-        titulo: 'Lista de decisões',
-        texto: ['Ação com data e horário. Uma decisão por pilar da vida.']
+        id: 'f0-checkin', tipo: 'ferramenta', ferramenta: 'checkinEmocional',
+        titulo: 'Como você chega hoje?'
       },
       {
-        id: 'f0-roda1', tipo: 'roda', rodaId: 1, titulo: 'Roda da vida · diagnóstico inicial',
-        texto: [
-          'A Roda da Vida é uma ferramenta para equilibrar diferentes áreas da vida.',
-          'Identifique as áreas que precisam de mais atenção preenchendo os anéis de acordo com sua satisfação em 12 setores, formando quatro áreas principais da experiência humana.',
-          'No final, avalie sua evolução ao longo do ano com outra Roda da Vida.'
-        ],
-        perguntas: [
-          'O que preciso melhorar na área profissional nesse ano?',
-          'O que preciso melhorar na área pessoal nesse ano?',
-          'O que preciso melhorar na área de relacionamento nesse ano?',
-          'O que preciso melhorar na área de qualidade de vida nesse ano?'
-        ]
+        id: 'f0-roda1', tipo: 'ferramenta', ferramenta: 'rodaInicial',
+        titulo: 'Sua Roda da Vida inicial'
       },
       {
-        id: 'f0-medidas', tipo: 'ferramenta', ferramenta: 'medidas', titulo: 'Medidas e metas',
-        texto: ['O cálculo do IMC é feito dividindo o peso da pessoa em quilogramas pela sua altura em metros elevada ao quadrado.', 'Meta: entre 18,5 e 24,9, peso normal.']
+        id: 'f0-prioridade', tipo: 'ferramenta', ferramenta: 'escolhaPrioridade',
+        titulo: 'Escolha sua alavanca'
       },
       {
-        id: 'f0-visao', tipo: 'ferramenta', ferramenta: 'visao', titulo: 'Visão extraordinária',
-        texto: ['Escreva a visão de cada pilar no presente, como se já fosse real. Este texto é o seu norte quando a rotina apertar.']
+        id: 'f0-matriz', tipo: 'ferramenta', ferramenta: 'matrizGanhosPerdas',
+        titulo: 'Matriz de ganhos e perdas'
       },
       {
-        id: 'f0-ritual', tipo: 'ritual', titulo: 'Ritual do acordar',
-        texto: ['Acordou? 05:00. Não pegue o celular.', 'Nove passos, doze minutos. É o que define o tom do dia inteiro.']
+        id: 'f0-mapa', tipo: 'ferramenta', ferramenta: 'mapaMental',
+        titulo: 'Mapa de influências'
       },
       {
-        id: 'f0-carac', tipo: 'ferramenta', ferramenta: 'caracteristicas', titulo: '30 características positivas',
-        texto: ['Escreva 30 características positivas suas. Depois leia em voz alta começando com eu sou.']
+        id: 'f0-experimento', tipo: 'ferramenta', ferramenta: 'experimentoSemana',
+        titulo: 'Experimento de 7 dias'
       },
       {
-        id: 'f0-40x', tipo: 'ferramenta', ferramenta: 'ativacao40', titulo: 'Ativação dos 40x',
-        texto: ['Você escreve 40 vezes a mesma frase todos os dias.']
+        id: 'f0-agenda', tipo: 'ferramenta', ferramenta: 'ativarAgenda',
+        titulo: 'Ative na agenda'
       },
       {
-        id: 'f0-100', tipo: 'ferramenta', ferramenta: 'desafio100', titulo: 'Desafio 100 dias',
-        texto: ['Defina a meta e a data de início. Marque cada dia cumprido.']
+        id: 'f0-checkpoint', tipo: 'ferramenta', ferramenta: 'checkpointRoda',
+        titulo: 'Roda de fechamento'
       }
     ]
   },
