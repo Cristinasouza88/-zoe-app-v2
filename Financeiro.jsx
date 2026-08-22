@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useRef } from 'react';
 import {
   Wallet, TrendingUp, TrendingDown, FileClock, Plus, Search, Download,
-  Trash2, Mic, Camera, Sparkles, X, ChevronLeft, ChevronRight, Upload, HelpCircle, Landmark
+  Trash2, ChevronLeft, ChevronRight, Upload, HelpCircle, Landmark, PenLine, FileText
 } from 'lucide-react';
 import { C, sobre, Card, Btn, Campo, Area, Barra, Sheet, GraficoLinha, hoje } from './ui.jsx';
 import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA, CONTAS_PADRAO, MESES_LBL, formatoMoeda } from './financeiro.data';
-import { parseTransacao, pedirSugestoes, reconhecimentoDisponivel, iniciarReconhecimentoVoz } from './ia.jsx';
+import { parseTransacao } from './ia.jsx';
 
 const vazio = { transacoes: [], contas: CONTAS_PADRAO, metas: [], dividas: [], pendenciasClassificacao: [], documentos: [] };
 const rascunhoVazio = () => ({ tipo: 'saida', valor: '', categoria: CATEGORIAS_DESPESA[0], conta: CONTAS_PADRAO[0], data: hoje(), descricao: '', pendente: false });
@@ -16,13 +16,10 @@ export default function Financeiro({ d, up, aviso }) {
   const [busca, setBusca] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [sheetAberto, setSheetAberto] = useState(false);
+  const [modoEntrada, setModoEntrada] = useState(null);
   const [rascunho, setRascunho] = useState(rascunhoVazio());
-  const [ouvindo, setOuvindo] = useState(false);
   const [processandoIA, setProcessandoIA] = useState(false);
-  const [sugestoes, setSugestoes] = useState(null);
-  const [carregandoSugestao, setCarregandoSugestao] = useState(false);
   const inputFotoRef = useRef(null);
-  const [pendenciaAberta,setPendenciaAberta]=useState(null);
 
   const atualizar = (fn) => up(s => ({ ...s, financeiro: fn({ ...vazio, ...s.financeiro }) }));
 
@@ -31,6 +28,10 @@ export default function Financeiro({ d, up, aviso }) {
   const despesa = transacoesDoMes.filter(t => t.tipo === 'saida').reduce((a, t) => a + t.valor, 0);
   const saldo = receita - despesa;
   const contasAPagar = transacoesDoMes.filter(t => t.tipo === 'saida' && t.pendente).reduce((a, t) => a + t.valor, 0);
+  const gastosPorCategoria = useMemo(() => CATEGORIAS_DESPESA.map((categoria, i) => {
+    const total = transacoesDoMes.filter(t => t.tipo === 'saida' && t.categoria === categoria).reduce((a, t) => a + t.valor, 0);
+    return { categoria, total, percentual: despesa ? Math.round((total / despesa) * 100) : 0, cor: ['#0A6963','#43BE8C','#8E2DE2','#5B9CF6','#F0A23B','#EA6B67','#9A72C7','#4E9F83','#DD7BA5','#94A3A8'][i] };
+  }).filter(x => x.total > 0).sort((a,b) => b.total-a.total), [transacoesDoMes, despesa]);
 
   const mesAnterior = useMemo(() => {
     const [ano, mes] = mesRef.split('-').map(Number);
@@ -65,7 +66,7 @@ export default function Financeiro({ d, up, aviso }) {
     setMesRef(`${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`);
   };
 
-  const abrirNovo = () => { setRascunho(rascunhoVazio()); setSheetAberto(true); };
+  const abrirNovo = () => { setRascunho(rascunhoVazio()); setModoEntrada(null); setSheetAberto(true); };
 
   const salvarLancamento = () => {
     const valor = parseFloat(String(rascunho.valor).replace(',', '.'));
@@ -91,35 +92,7 @@ export default function Financeiro({ d, up, aviso }) {
   const categoriasDoTipo = rascunho.tipo === 'entrada' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
   const resolverPendencia = (p,categoria) => atualizar(fx=>({...fx,transacoes:[...fx.transacoes,{id:`class-${Date.now()}`,tipo:p.tipo==='entrada'?'entrada':'saida',valor:+p.valor||0,categoria,conta:p.conta||'Conta corrente',data:p.data||hoje(),descricao:p.descricao||p.arquivo,pendente:false,origemDocumento:p.arquivo}],pendenciasClassificacao:(fx.pendenciasClassificacao||[]).filter(x=>x.id!==p.id)}));
 
-  const preencherComIA = (campos) => {
-    setRascunho(r => ({
-      ...r,
-      valor: campos.valor ?? r.valor,
-      tipo: campos.tipo === 'entrada' ? 'entrada' : campos.tipo === 'saida' ? 'saida' : r.tipo,
-      categoria: campos.categoria || r.categoria,
-      descricao: campos.descricao || r.descricao,
-      data: campos.data || r.data
-    }));
-    aviso('Rascunho preenchido pela IA — confira antes de salvar.');
-  };
-
-  const usarVoz = () => {
-    if (!reconhecimentoDisponivel()) return aviso('Seu navegador não suporta reconhecimento de voz.');
-    setOuvindo(true);
-    iniciarReconhecimentoVoz({
-      onResultado: async (texto) => {
-        setOuvindo(false);
-        setProcessandoIA(true);
-        const r = await parseTransacao({ texto });
-        setProcessandoIA(false);
-        if (r.ok) preencherComIA(Array.isArray(r.dados?.transacoes)?r.dados.transacoes[0]||{}:r.dados);
-        else { setRascunho(rr => ({ ...rr, descricao: texto })); aviso(r.erro); }
-      },
-      onErro: (e) => { setOuvindo(false); aviso('Não consegui ouvir — tente de novo.'); }
-    });
-  };
-
-  const usarFoto = () => inputFotoRef.current && inputFotoRef.current.click();
+  const usarDocumento = () => inputFotoRef.current && inputFotoRef.current.click();
   const onFotoSelecionada = async (ev) => {
     const file = ev.target.files && ev.target.files[0];
     ev.target.value = '';
@@ -136,21 +109,10 @@ export default function Financeiro({ d, up, aviso }) {
         const duvidas=r.dados.transacoes.filter(t=>Number(t.confianca||0)<0.75||!t.categoria||t.categoria==='Outros').map((t,i)=>({id:`duvida-${Date.now()}-${i}`,...t,arquivo:file.name}));
         atualizar(fx=>({...fx,transacoes:[...fx.transacoes,...certas],pendenciasClassificacao:[...(fx.pendenciasClassificacao||[]),...duvidas],dividas:r.dados.divida?[...(fx.dividas||[]),{id:`divida-${Date.now()}`,...r.dados.divida,origem:file.name}]:fx.dividas,documentos:[...(fx.documentos||[]),{id:`doc-${Date.now()}`,nome:file.name,data:hoje(),itens:certas.length}]}));
         aviso(`${certas.length} lançamentos organizados${duvidas.length?` · ${duvidas.length} precisam da sua resposta`:''}`);
-      } else if (r.ok) preencherComIA(r.dados);
+      } else if (r.ok) aviso('Não encontrei lançamentos suficientes neste documento.');
       else aviso(r.erro);
     };
     reader.readAsDataURL(file);
-  };
-
-  const buscarSugestoes = async () => {
-    setCarregandoSugestao(true);
-    const resumo = {
-      mes: mesRef, receita, despesa, saldo,
-      porCategoria: CATEGORIAS_DESPESA.map(c => ({ categoria: c, total: transacoesDoMes.filter(t => t.categoria === c).reduce((a, t) => a + t.valor, 0) })).filter(c => c.total > 0)
-    };
-    const r = await pedirSugestoes(resumo);
-    setCarregandoSugestao(false);
-    setSugestoes(r.ok ? r.dados.texto : r.erro);
   };
 
   return (
@@ -201,15 +163,12 @@ export default function Financeiro({ d, up, aviso }) {
       {(fin.pendenciasClassificacao||[]).length>0&&<><div style={{display:'flex',alignItems:'center',gap:7,margin:'16px 2px 10px',color:C.ink,fontWeight:850}}><HelpCircle size={18} color={C.gold}/>A ZOE precisa da sua ajuda</div>{fin.pendenciasClassificacao.map(p=><Card key={p.id} style={{marginBottom:9,background:'#FFFBEE',border:'1px solid #F3DF9B'}}><div style={{fontSize:12.5,fontWeight:800,color:C.ink}}>Onde entra “{p.descricao||'este pagamento'}”?</div><div style={{fontSize:11,color:C.ink3,margin:'4px 0 10px'}}>{formatoMoeda(+p.valor||0)} · {p.arquivo}</div><div style={{display:'flex',flexWrap:'wrap',gap:5}}>{['Moradia','Transporte','Consórcio','Financiamento','Outros'].map(cat=><button key={cat} onClick={()=>resolverPendencia(p,cat)} style={{border:`1px solid ${C.line}`,background:'#fff',borderRadius:16,padding:'6px 8px',fontFamily:'inherit',fontSize:9.5,fontWeight:800,color:C.ink}}>{cat}</button>)}</div></Card>)}</>}
 
       <Card style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: C.ink, display: 'flex', alignItems: 'center', gap: 6 }}><Sparkles size={16} color={C.lilac} /> Sugestões</div>
-          <button onClick={buscarSugestoes} disabled={carregandoSugestao} style={{ background: 'none', border: 'none', color: C.green, fontWeight: 700, fontSize: 12.5, cursor: 'pointer' }}>
-            {carregandoSugestao ? 'Pensando…' : 'Atualizar'}
-          </button>
-        </div>
-        <div style={{ fontSize: 13, color: C.ink2, whiteSpace: 'pre-wrap' }}>
-          {sugestoes || 'Toque em "Atualizar" para receber sugestões de economia e investimento com base nos seus lançamentos deste mês.'}
-        </div>
+        <div style={{fontSize:14,fontWeight:850,color:C.ink,marginBottom:4}}>Para onde foi seu dinheiro</div>
+        <div style={{fontSize:11,color:C.ink3,marginBottom:14}}>Percentual das despesas de {MESES_LBL[Number(mesRef.slice(5,7))-1]}</div>
+        {gastosPorCategoria.length===0?<div style={{textAlign:'center',padding:'18px 0',fontSize:12.5,color:C.ink3}}>Envie uma fatura ou faça um lançamento para ver a distribuição.</div>:<div style={{display:'grid',gridTemplateColumns:'112px 1fr',gap:15,alignItems:'center'}}>
+          <div style={{width:108,height:108,borderRadius:'50%',background:`conic-gradient(${gastosPorCategoria.map((x,i)=>{const antes=gastosPorCategoria.slice(0,i).reduce((n,y)=>n+y.percentual,0);return `${x.cor} ${antes}% ${antes+x.percentual}%`}).join(',')})`,display:'grid',placeItems:'center'}}><div style={{width:63,height:63,borderRadius:'50%',background:'#fff',display:'grid',placeItems:'center',textAlign:'center'}}><div><strong style={{display:'block',fontSize:15,color:C.ink}}>100%</strong><span style={{fontSize:8.5,color:C.ink3}}>dos gastos</span></div></div></div>
+          <div>{gastosPorCategoria.map(x=><div key={x.categoria} style={{marginBottom:9}}><div style={{display:'flex',alignItems:'center',gap:6,fontSize:10.5}}><span style={{width:8,height:8,borderRadius:8,background:x.cor}}/><strong style={{flex:1,color:C.ink}}>{x.categoria}</strong><span style={{fontWeight:900,color:C.ink}}>{x.percentual}%</span></div><div style={{fontSize:9.5,color:C.ink3,margin:'2px 0 0 14px'}}>{formatoMoeda(x.total)}</div></div>)}</div>
+        </div>}
       </Card>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
@@ -247,8 +206,13 @@ export default function Financeiro({ d, up, aviso }) {
 
       <Btn onClick={abrirNovo} style={{ width: '100%' }}><Plus size={16} style={{ verticalAlign: -3, marginRight: 6 }} />Novo lançamento</Btn>
 
-      <Sheet aberto={sheetAberto} fechar={() => setSheetAberto(false)} titulo="Novo lançamento">
-        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+      <Sheet aberto={sheetAberto} fechar={() => setSheetAberto(false)} titulo={modoEntrada==='manual'?'Lançamento manual':modoEntrada==='documento'?'Enviar documento':'Adicionar movimentações'}>
+        {!modoEntrada&&<div><p style={{fontSize:12.5,lineHeight:1.5,color:C.ink3,margin:'0 0 16px'}}>Escolha como deseja adicionar as informações financeiras.</p><button onClick={()=>setModoEntrada('manual')} style={{width:'100%',border:`1.5px solid ${C.line}`,background:'#fff',borderRadius:17,padding:16,display:'flex',alignItems:'center',gap:13,textAlign:'left',fontFamily:'inherit',marginBottom:10}}><span style={{width:44,height:44,borderRadius:14,background:C.mint,color:C.green,display:'grid',placeItems:'center'}}><PenLine size={21}/></span><span><strong style={{display:'block',fontSize:14,color:C.ink}}>Adicionar manualmente</strong><small style={{fontSize:10.5,color:C.ink3}}>Preencha valor, categoria e data</small></span></button><button onClick={()=>{setModoEntrada('documento');setTimeout(usarDocumento,80)}} style={{width:'100%',border:'1.5px solid #DDD5EB',background:'#F9F5FF',borderRadius:17,padding:16,display:'flex',alignItems:'center',gap:13,textAlign:'left',fontFamily:'inherit'}}><span style={{width:44,height:44,borderRadius:14,background:'#EDE1FF',color:C.roxo,display:'grid',placeItems:'center'}}><FileText size={22}/></span><span><strong style={{display:'block',fontSize:14,color:C.ink}}>Enviar documento</strong><small style={{fontSize:10.5,color:C.ink3}}>PDF, fatura, extrato, boleto ou foto</small></span></button></div>}
+
+        {modoEntrada==='documento'&&<div style={{textAlign:'center',padding:'4px 0 10px'}}><div style={{width:62,height:62,borderRadius:20,background:'#EDE1FF',color:C.roxo,display:'grid',placeItems:'center',margin:'0 auto 13px'}}><Upload size={27}/></div><strong style={{fontSize:16,color:C.ink}}>A ZOE organiza o documento inteiro</strong><p style={{fontSize:11.5,lineHeight:1.5,color:C.ink3,margin:'7px 0 16px'}}>Ela extrai todas as movimentações, separa por categorias e pergunta apenas o que não conseguir identificar.</p><Btn onClick={usarDocumento} disabled={processandoIA} style={{width:'100%',padding:14}}>{processandoIA?'Lendo e organizando…':'Escolher PDF ou imagem'}</Btn><button onClick={()=>setModoEntrada(null)} style={{border:0,background:'transparent',color:C.ink3,fontFamily:'inherit',fontWeight:750,padding:13}}>Voltar</button></div>}
+        <input ref={inputFotoRef} type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={onFotoSelecionada} />
+
+        {modoEntrada==='manual'&&<><button onClick={()=>setModoEntrada(null)} style={{border:0,background:'transparent',color:C.ink3,fontFamily:'inherit',fontWeight:750,padding:'0 0 13px'}}>← Voltar</button><div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
           {[['saida', 'Saída'], ['entrada', 'Entrada']].map(([tp, lbl]) => (
             <button key={tp} onClick={() => setRascunho(r => ({ ...r, tipo: tp, categoria: (tp === 'entrada' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA)[0] }))} style={{
               flex: 1, padding: '10px 8px', borderRadius: 12, border: `1.5px solid ${rascunho.tipo === tp ? C.green : C.line}`,
@@ -257,21 +221,6 @@ export default function Financeiro({ d, up, aviso }) {
             }}>{lbl}</button>
           ))}
         </div>
-
-        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-          <button onClick={usarVoz} disabled={ouvindo || processandoIA} style={{
-            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 8px',
-            borderRadius: 12, border: `1.5px solid ${C.line}`, background: ouvindo ? C.coral : '#fff', color: ouvindo ? '#fff' : C.ink2,
-            fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit'
-          }}><Mic size={16} />{ouvindo ? 'Ouvindo…' : 'Falar'}</button>
-          <button onClick={usarFoto} disabled={processandoIA} style={{
-            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 8px',
-            borderRadius: 12, border: `1.5px solid ${C.line}`, background: '#fff', color: C.ink2, fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit'
-          }}><Upload size={16} />PDF ou foto</button>
-          <input ref={inputFotoRef} type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={onFotoSelecionada} />
-        </div>
-        {processandoIA && <div style={{ fontSize: 12.5, color: C.ink3, marginBottom: 10 }}>Lendo com IA…</div>}
-
         <Campo label="Valor (R$)" type="number" inputMode="decimal" placeholder="0,00" value={rascunho.valor} onChange={e => setRascunho(r => ({ ...r, valor: e.target.value }))} />
         <div style={{ marginBottom: 12 }}>
           <label style={{ fontSize: 12, fontWeight: 700, color: C.ink2, display: 'block', marginBottom: 6 }}>Categoria</label>
@@ -295,7 +244,7 @@ export default function Financeiro({ d, up, aviso }) {
             Ainda não paguei (conta a pagar)
           </label>
         )}
-        <Btn onClick={salvarLancamento} style={{ width: '100%' }}>Salvar lançamento</Btn>
+        <Btn onClick={salvarLancamento} style={{ width: '100%' }}>Salvar lançamento</Btn></>}
       </Sheet>
     </div>
   );
