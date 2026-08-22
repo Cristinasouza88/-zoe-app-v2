@@ -11,6 +11,7 @@ import Financeiro from './Financeiro.jsx';
 import Ingles from './Ingles.jsx';
 import Conquistas from './Conquistas.jsx';
 import Cursos from './Cursos.jsx';
+import JornadaSistemica from './JornadaSistemica.jsx';
 import { FASES as FASES_INGLES } from './ingles.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 import { supabase } from './supabase.js';
@@ -305,7 +306,8 @@ const inicial = {
   rodas: {},         // { 1: {Saúde:7,...} }
   desafio100: {}, ativacao40: { frase: '', marcas: {} }, caracteristicas: [],
   visao: {}, medidas: [], biblioteca: [], ritual: {}, jejum: null, alarmes: [],
-  metasSOL: [], redes: [], cartas: {}, gratidoes: [], fotos: [], cursos: []
+  metasSOL: [], redes: [], cartas: {}, gratidoes: [], fotos: [], cursos: [],
+  jornada: { checkins: [], mapaNos: [], planoSemana: null }
 };
 
 /* ══════════ APP ══════════ */
@@ -490,6 +492,23 @@ export default function ZoeApp() {
   const concluirEtapa = (id) => {
     const era = feito(id);
     const etapa = sequencia.find(x => x.id === id);
+    if (!era) {
+      const completosRoda = (numero) => RODA_SETORES.every(setor => Number(d.rodas?.[numero]?.[setor]) >= 1);
+      const regras = {
+        checkinEmocional: [!!d.jornada?.emocaoAtual, 'Escolha como você está chegando hoje.'],
+        rodaInicial: [completosRoda(1), 'Avalie todas as áreas da sua Roda da Vida.'],
+        escolhaPrioridade: [!!campo('zoe-prioridade') && campo('zoe-prioridade-porque').trim().length >= 8, 'Escolha uma área e conte por que ela importa agora.'],
+        matrizGanhosPerdas: [[
+          'matriz-ganho-mudar', 'matriz-perda-mudar', 'matriz-ganho-nao', 'matriz-perda-nao'
+        ].every(k => campo(k).trim().length >= 3), 'Preencha os quatro lados da matriz antes de seguir.'],
+        mapaMental: [(d.jornada?.mapaNos || []).length >= 2, 'Adicione pelo menos duas influências ao seu mapa.'],
+        experimentoSemana: [campo('exp-acao').trim().length >= 5 && campo('exp-contexto').trim().length >= 5, 'Defina a ação e quando ela acontecerá.'],
+        ativarAgenda: [!!d.jornada?.planoSemana?.ativo, 'Ative o experimento na agenda antes de seguir.'],
+        checkpointRoda: [completosRoda(2), 'Avalie todas as áreas da roda de fechamento.']
+      };
+      const regra = regras[etapa?.ferramenta];
+      if (regra && !regra[0]) return aviso(regra[1]);
+    }
     up(s => ({ ...s, etapas: { ...s.etapas, [id]: era ? { feito: false } : { feito: true, data: hoje(), concluidaEm: new Date().toISOString() } } }));
     if (era) return aviso('Conclusão desfeita.');
     const ultimaDaSessao = etapa.bloco.etapas[etapa.bloco.etapas.length - 1]?.id === id;
@@ -646,6 +665,9 @@ export default function ZoeApp() {
 
   /* ══════════ FERRAMENTAS DENTRO DA ETAPA ══════════ */
   const Ferramenta = ({ id, etapa }) => {
+    if (['checkinEmocional', 'rodaInicial', 'escolhaPrioridade', 'matrizGanhosPerdas', 'mapaMental', 'experimentoSemana', 'ativarAgenda', 'checkpointRoda'].includes(id)) {
+      return <JornadaSistemica id={id} d={d} up={up} campo={campo} setCampo={setCampo} aviso={aviso} avatar={avatarImagem} />;
+    }
     switch (id) {
 
       case 'decisoes': return (
@@ -1382,6 +1404,9 @@ export default function ZoeApp() {
   /* ══════════ AGENDA ══════════ */
   const Agenda = () => {
     const base = new Date(data + 'T12:00');
+    const planoZoe = d.jornada?.planoSemana;
+    const nomeDia = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][base.getDay()];
+    const planoNesteDia = planoZoe?.ativo && planoZoe.dias?.includes(nomeDia);
     const inicioMes = new Date(base.getFullYear(), base.getMonth(), 1, 12);
     const inicioGrade = new Date(inicioMes);
     inicioGrade.setDate(1 - ((inicioMes.getDay() + 6) % 7));
@@ -1403,12 +1428,18 @@ export default function ZoeApp() {
             {dias.map(x => { const temMissao=Object.values(d.agenda[x.iso]||{}).some(Boolean); return <button key={x.iso} onClick={() => setData(x.iso)} style={{ position:'relative',border: 0, borderRadius: 11, aspectRatio:'1', background: data === x.iso ? C.green : x.iso===hoje()?C.mint:'transparent', color: data === x.iso ? '#fff' : x.atual?C.ink:C.ink3, opacity:x.atual?1:.4, fontFamily: 'inherit', fontWeight:700 }}><span>{x.n}</span>{temMissao&&<span style={{ position:'absolute',bottom:4,left:'50%',transform:'translateX(-50%)',width:4,height:4,borderRadius:9,background:data===x.iso?'#fff':C.lilac }}/>}</button>})}
           </div>
           </Card>
-          <Card style={{ marginBottom: 14, background: C.petroleo, color: '#fff' }}>
+        <Card style={{ marginBottom: 14, background: C.petroleo, color: '#fff' }}>
           <div style={{ fontSize: 11, opacity: .7 }}>Plano do dia</div>
           <div style={{ fontSize: 19, fontWeight: 800, margin: '3px 0 10px' }}>{agendaAtiva?.bloco?.nome || 'Sua semana'}</div>
           <Barra v={realizadas} max={Math.max(1, tarefas.length)} cor={C.lima} h={8} />
           <div style={{ fontSize: 11, opacity: .75, marginTop: 7 }}>{realizadas} de {tarefas.length} tarefas realizadas</div>
         </Card>
+        {planoNesteDia && <Card cls="zoe-surge" onClick={() => up(s => ({ ...s, agenda: { ...s.agenda, [data]: { ...(s.agenda[data] || {}), 'zoe-experimento': !(s.agenda[data] || {})['zoe-experimento'] } } }))} style={{ marginBottom: 14, border: `2px solid ${marcas['zoe-experimento'] ? C.green : C.roxo}`, background: marcas['zoe-experimento'] ? C.mint : '#FBF7FF', cursor: 'pointer' }}>
+          <div style={{ display:'flex',gap:11,alignItems:'center' }}>
+            <div style={{ width:38,height:38,borderRadius:13,background:marcas['zoe-experimento']?C.green:C.roxo,color:'#fff',display:'grid',placeItems:'center' }}>{marcas['zoe-experimento']?<Check size={20}/>:<Sparkles size={19}/>}</div>
+            <div style={{ flex:1,minWidth:0 }}><div style={{ color:C.ink,fontSize:10,fontWeight:900,letterSpacing:.7 }}>EXPERIMENTO ZOE</div><div style={{ color:C.ink,fontSize:13.5,fontWeight:850,marginTop:3,textDecoration:marcas['zoe-experimento']?'line-through':'none' }}>{planoZoe.acao}</div><div style={{ color:C.ink3,fontSize:10.5,marginTop:4 }}>{planoZoe.hora} · {planoZoe.duracao} min</div></div>
+          </div>
+        </Card>}
         <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',margin:'20px 2px 12px' }}><h2 style={{ margin:0,fontSize:18,color:C.ink }}>Missões do mês</h2><span style={{ color:C.lilac,fontSize:11,fontWeight:800 }}>VER TODAS</span></div>
         {tarefas.length ? tarefas.map((t, i) => {
           const on = !!marcas[`${agendaAtiva.id}-${i}`];

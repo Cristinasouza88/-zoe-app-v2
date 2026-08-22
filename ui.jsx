@@ -53,11 +53,14 @@ export const CSS = `
 @keyframes zoePonto{0%{opacity:0;transform:scale(0)}100%{opacity:1;transform:scale(1)}}
 @keyframes zoeTracar{to{stroke-dashoffset:0}}
 @keyframes zoePontoLogo{0%{opacity:0;transform:scale(0) translateY(7px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes zoeCelebra{0%{opacity:0;transform:translateY(20px) scale(.82) rotate(-3deg)}55%{transform:translateY(-5px) scale(1.05) rotate(2deg)}100%{opacity:1;transform:none}}
+@keyframes zoePulso{0%,100%{box-shadow:0 0 0 0 rgba(168,255,0,0)}50%{box-shadow:0 0 0 12px rgba(168,255,0,.16)}}
 .zoe-surge{animation:zoeSurge .42s cubic-bezier(.22,1,.36,1) both}
 .zoe-barra{transform-origin:bottom;animation:zoeBarra .6s cubic-bezier(.22,1,.36,1) both}
 .zoe-fade{animation:zoeFade .5s ease both}
+.zoe-celebra{animation:zoeCelebra .72s cubic-bezier(.22,1.25,.36,1) both,zoePulso 1.8s ease .75s 2}
 @media (prefers-reduced-motion:reduce){
-  .zoe-surge,.zoe-barra,.zoe-fade{animation:none!important}
+  .zoe-surge,.zoe-barra,.zoe-fade,.zoe-celebra{animation:none!important}
   .zoe-barra{transform:none!important}
 }
 `;
