@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import {
-  Wallet, TrendingUp, TrendingDown, FileClock, Plus, Search, Download,
-  Trash2, ChevronLeft, ChevronRight, Upload, HelpCircle, Landmark, PenLine, FileText
+  Wallet, TrendingUp, TrendingDown, FileClock, Plus, ShieldCheck,
+  ChevronLeft, ChevronRight, Upload, HelpCircle, Landmark, PenLine, FileText
 } from 'lucide-react';
 import { C, sobre, Card, Btn, Campo, Area, Barra, Sheet, GraficoLinha, hoje } from './ui.jsx';
 import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA, CONTAS_PADRAO, MESES_LBL, formatoMoeda } from './financeiro.data';
@@ -10,20 +10,70 @@ import { parseTransacao } from './ia.jsx';
 const vazio = { transacoes: [], contas: CONTAS_PADRAO, metas: [], dividas: [], pendenciasClassificacao: [], documentos: [] };
 const rascunhoVazio = () => ({ tipo: 'saida', valor: '', categoria: CATEGORIAS_DESPESA[0], conta: CONTAS_PADRAO[0], data: hoje(), descricao: '', pendente: false });
 
+const normalizarTexto = (valor = '') => String(valor)
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+// A chave ignora o ID local, pois o mesmo lançamento pode vir de dois
+// extratos/arquivos diferentes. Assim, reimportar um documento não duplica o dado.
+const chaveTransacao = (t = {}) => [
+  t.data || '',
+  Number(t.valor || 0).toFixed(2),
+  t.tipo || '',
+  normalizarTexto(t.conta || t.instituicao || ''),
+  normalizarTexto(t.descricao || ''),
+].join('|');
+
+const semTransacoesDuplicadas = (transacoes = []) => {
+  const vistas = new Set();
+  return transacoes.filter(t => {
+    const chave = chaveTransacao(t);
+    if (vistas.has(chave)) return false;
+    vistas.add(chave);
+    return true;
+  });
+};
+
+const semDividasDuplicadas = (dividas = []) => {
+  const vistas = new Set();
+  return dividas.filter(d => {
+    const chave = [d.tipo, d.nome, d.instituicao, d.valor_total, d.saldo_restante]
+      .map(normalizarTexto).join('|');
+    if (vistas.has(chave)) return false;
+    vistas.add(chave);
+    return true;
+  });
+};
+
+const normalizarFinanceiro = (fin = {}) => ({
+  ...fin,
+  transacoes: semTransacoesDuplicadas(fin.transacoes || []),
+  dividas: semDividasDuplicadas(fin.dividas || []),
+});
+
+const hashArquivo = async (file) => {
+  if (!globalThis.crypto?.subtle) return `${file.name}|${file.size}|${file.lastModified}`;
+  const bytes = await file.arrayBuffer();
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
 export default function Financeiro({ d, up, aviso }) {
   const fin = { ...vazio, ...d.financeiro };
+  const transacoesUnicas = useMemo(() => semTransacoesDuplicadas(fin.transacoes), [fin.transacoes]);
   const [mesRef, setMesRef] = useState(() => hoje().slice(0, 7));
-  const [busca, setBusca] = useState('');
-  const [filtroTipo, setFiltroTipo] = useState('todos');
   const [sheetAberto, setSheetAberto] = useState(false);
   const [modoEntrada, setModoEntrada] = useState(null);
   const [rascunho, setRascunho] = useState(rascunhoVazio());
   const [processandoIA, setProcessandoIA] = useState(false);
   const inputFotoRef = useRef(null);
 
-  const atualizar = (fn) => up(s => ({ ...s, financeiro: fn({ ...vazio, ...s.financeiro }) }));
+  const atualizar = (fn) => up(s => ({
+    ...s,
+    financeiro: normalizarFinanceiro(fn({ ...vazio, ...s.financeiro }))
+  }));
 
-  const transacoesDoMes = useMemo(() => fin.transacoes.filter(t => t.data.startsWith(mesRef)), [fin.transacoes, mesRef]);
+  const transacoesDoMes = useMemo(() => transacoesUnicas.filter(t => (t.data || '').startsWith(mesRef)), [transacoesUnicas, mesRef]);
   const receita = transacoesDoMes.filter(t => t.tipo === 'entrada').reduce((a, t) => a + t.valor, 0);
   const despesa = transacoesDoMes.filter(t => t.tipo === 'saida').reduce((a, t) => a + t.valor, 0);
   const saldo = receita - despesa;
@@ -38,7 +88,7 @@ export default function Financeiro({ d, up, aviso }) {
     const d2 = new Date(ano, mes - 2, 1);
     return `${d2.getFullYear()}-${String(d2.getMonth() + 1).padStart(2, '0')}`;
   }, [mesRef]);
-  const transacoesMesAnterior = fin.transacoes.filter(t => t.data.startsWith(mesAnterior));
+  const transacoesMesAnterior = transacoesUnicas.filter(t => (t.data || '').startsWith(mesAnterior));
   const receitaAnterior = transacoesMesAnterior.filter(t => t.tipo === 'entrada').reduce((a, t) => a + t.valor, 0);
   const despesaAnterior = transacoesMesAnterior.filter(t => t.tipo === 'saida').reduce((a, t) => a + t.valor, 0);
   const variacao = (atual, anterior) => anterior > 0 ? Math.round(((atual - anterior) / anterior) * 100) : (atual > 0 ? 100 : 0);
@@ -49,16 +99,11 @@ export default function Financeiro({ d, up, aviso }) {
     for (let i = 5; i >= 0; i--) {
       const dt = new Date(ano, mes - 1 - i, 1);
       const chave = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
-      const total = fin.transacoes.filter(t => t.data.startsWith(chave) && t.tipo === 'entrada').reduce((a, t) => a + t.valor, 0);
+      const total = transacoesUnicas.filter(t => (t.data || '').startsWith(chave) && t.tipo === 'entrada').reduce((a, t) => a + t.valor, 0);
       arr.push({ lbl: MESES_LBL[dt.getMonth()], v: total });
     }
     return arr;
-  }, [fin.transacoes, mesRef]);
-
-  const listaFiltrada = useMemo(() => transacoesDoMes
-    .filter(t => filtroTipo === 'todos' || t.tipo === filtroTipo)
-    .filter(t => !busca.trim() || (t.descricao + t.categoria).toLowerCase().includes(busca.toLowerCase()))
-    .sort((a, b) => b.data.localeCompare(a.data)), [transacoesDoMes, filtroTipo, busca]);
+  }, [transacoesUnicas, mesRef]);
 
   const trocarMes = (delta) => {
     const [ano, mes] = mesRef.split('-').map(Number);
@@ -72,21 +117,10 @@ export default function Financeiro({ d, up, aviso }) {
     const valor = parseFloat(String(rascunho.valor).replace(',', '.'));
     if (!valor || valor <= 0) return aviso('Informe um valor válido.');
     const nova = { id: `t${Date.now()}`, ...rascunho, valor };
+    if (transacoesUnicas.some(t => chaveTransacao(t) === chaveTransacao(nova))) return aviso('Este lançamento já está registrado.');
     atualizar(fx => ({ ...fx, transacoes: [...fx.transacoes, nova] }));
     setSheetAberto(false);
     aviso('Lançamento salvo.');
-  };
-
-  const excluir = (id) => atualizar(fx => ({ ...fx, transacoes: fx.transacoes.filter(t => t.id !== id) }));
-
-  const exportarCSV = () => {
-    const linhas = [['Data', 'Descrição', 'Tipo', 'Categoria', 'Conta', 'Valor'].join(';')];
-    listaFiltrada.forEach(t => linhas.push([t.data, t.descricao, t.tipo, t.categoria, t.conta, t.valor.toFixed(2)].join(';')));
-    const blob = new Blob([linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `financeiro-${mesRef}.csv`; a.click();
-    URL.revokeObjectURL(url);
   };
 
   const categoriasDoTipo = rascunho.tipo === 'entrada' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
@@ -98,6 +132,8 @@ export default function Financeiro({ d, up, aviso }) {
     ev.target.value = '';
     if (!file) return;
     if(file.size>4.5*1024*1024)return aviso('Envie um arquivo de até 4,5 MB.');
+    const arquivoHash = await hashArquivo(file);
+    if ((fin.documentos || []).some(doc => doc.hash === arquivoHash)) return aviso('Este documento já foi importado. Nenhum dado foi duplicado.');
     const reader = new FileReader();
     reader.onload = async () => {
       setProcessandoIA(true);
@@ -105,10 +141,18 @@ export default function Financeiro({ d, up, aviso }) {
       const r = await parseTransacao({ imagemBase64: base64, mimeType: file.type });
       setProcessandoIA(false);
       if (r.ok&&Array.isArray(r.dados?.transacoes)) {
-        const certas=r.dados.transacoes.filter(t=>Number(t.confianca||0)>=0.75&&t.valor>0).map((t,i)=>({id:`doc-${Date.now()}-${i}`,tipo:t.tipo==='entrada'?'entrada':'saida',valor:+t.valor,categoria:t.categoria||'Outros',conta:t.conta||'Conta corrente',data:t.data||hoje(),descricao:t.descricao||file.name,pendente:false,origemDocumento:file.name}));
+        const extraidas=r.dados.transacoes.filter(t=>Number(t.confianca||0)>=0.75&&t.valor>0).map((t,i)=>({id:`doc-${Date.now()}-${i}`,tipo:t.tipo==='entrada'?'entrada':'saida',valor:+t.valor,categoria:t.categoria||'Outros',conta:t.conta||'Conta corrente',data:t.data||hoje(),descricao:t.descricao||file.name,pendente:false,origemDocumento:file.name}));
+        const chavesExistentes = new Set(transacoesUnicas.map(chaveTransacao));
+        const certas = extraidas.filter(t => {
+          const chave = chaveTransacao(t);
+          if (chavesExistentes.has(chave)) return false;
+          chavesExistentes.add(chave);
+          return true;
+        });
+        const ignoradas = extraidas.length - certas.length;
         const duvidas=r.dados.transacoes.filter(t=>Number(t.confianca||0)<0.75||!t.categoria||t.categoria==='Outros').map((t,i)=>({id:`duvida-${Date.now()}-${i}`,...t,arquivo:file.name}));
-        atualizar(fx=>({...fx,transacoes:[...fx.transacoes,...certas],pendenciasClassificacao:[...(fx.pendenciasClassificacao||[]),...duvidas],dividas:r.dados.divida?[...(fx.dividas||[]),{id:`divida-${Date.now()}`,...r.dados.divida,origem:file.name}]:fx.dividas,documentos:[...(fx.documentos||[]),{id:`doc-${Date.now()}`,nome:file.name,data:hoje(),itens:certas.length}]}));
-        aviso(`${certas.length} lançamentos organizados${duvidas.length?` · ${duvidas.length} precisam da sua resposta`:''}`);
+        atualizar(fx=>({...fx,transacoes:[...fx.transacoes,...certas],pendenciasClassificacao:[...(fx.pendenciasClassificacao||[]),...duvidas],dividas:r.dados.divida?[...(fx.dividas||[]),{id:`divida-${Date.now()}`,...r.dados.divida,origem:file.name}]:fx.dividas,documentos:[...(fx.documentos||[]),{id:`doc-${Date.now()}`,nome:file.name,data:hoje(),itens:certas.length,hash:arquivoHash}]}));
+        aviso(`${certas.length} lançamentos organizados${ignoradas?` · ${ignoradas} duplicados ignorados`:''}${duvidas.length?` · ${duvidas.length} precisam da sua resposta`:''}`);
       } else if (r.ok) aviso('Não encontrei lançamentos suficientes neste documento.');
       else aviso(r.erro);
     };
@@ -171,37 +215,12 @@ export default function Financeiro({ d, up, aviso }) {
         </div>}
       </Card>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: '#FAFCFB', border: `1.5px solid ${C.line}`, borderRadius: 12, padding: '9px 12px' }}>
-          <Search size={16} color={C.ink3} />
-          <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar lançamento…" style={{ border: 'none', outline: 'none', background: 'none', fontSize: 14, flex: 1, fontFamily: 'inherit', color: C.ink }} />
+      <Card style={{ marginBottom: 16, background: '#F5FAF8', border: `1px solid ${C.line}` }}>
+        <div style={{display:'flex',alignItems:'center',gap:11}}>
+          <span style={{width:40,height:40,borderRadius:13,background:C.mint,color:C.green,display:'grid',placeItems:'center',flexShrink:0}}><ShieldCheck size={20}/></span>
+          <div><strong style={{display:'block',fontSize:13.5,color:C.ink}}>Seus extratos permanecem privados</strong><span style={{fontSize:10.8,lineHeight:1.45,color:C.ink3}}>A ZOE usa os lançamentos somente para calcular os resumos acima. Descrições, estabelecimentos e a lista detalhada não são exibidos nesta tela.</span></div>
         </div>
-        <button onClick={exportarCSV} style={{ width: 42, height: 42, borderRadius: 12, border: `1.5px solid ${C.line}`, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.ink2 }}><Download size={18} /></button>
-      </div>
-      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-        {['todos', 'entrada', 'saida'].map(tp => (
-          <button key={tp} onClick={() => setFiltroTipo(tp)} style={{
-            padding: '6px 12px', borderRadius: 99, border: `1.5px solid ${filtroTipo === tp ? C.green : C.line}`,
-            background: filtroTipo === tp ? C.green : 'transparent', color: filtroTipo === tp ? '#fff' : C.ink2,
-            fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit'
-          }}>{tp === 'todos' ? 'Todos' : tp === 'entrada' ? 'Entradas' : 'Saídas'}</button>
-        ))}
-      </div>
-
-      <Card style={{ marginBottom: 16 }}>
-        {listaFiltrada.length === 0 && <div style={{ textAlign: 'center', padding: '20px 0', color: C.ink3, fontSize: 13.5 }}>Nenhum lançamento neste mês.</div>}
-        {listaFiltrada.map(t => (
-          <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: `1px dashed ${C.line}` }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.descricao || t.categoria}</div>
-              <div style={{ fontSize: 11.5, color: C.ink3 }}>{t.data.split('-').reverse().join('/')} · {t.categoria} · {t.conta}{t.pendente ? ' · pendente' : ''}</div>
-            </div>
-            <div style={{ fontWeight: 800, fontSize: 14, color: t.tipo === 'entrada' ? C.green : C.coral, flexShrink: 0 }}>
-              {t.tipo === 'entrada' ? '+' : '-'}{formatoMoeda(t.valor)}
-            </div>
-            <button onClick={() => excluir(t.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.ink3, flexShrink: 0 }}><Trash2 size={15} /></button>
-          </div>
-        ))}
+        <div style={{marginTop:11,paddingTop:10,borderTop:`1px solid ${C.line}`,fontSize:10.5,color:C.ink3}}>{transacoesDoMes.length} lançamentos únicos considerados neste mês</div>
       </Card>
 
       <Btn onClick={abrirNovo} style={{ width: '100%' }}><Plus size={16} style={{ verticalAlign: -3, marginRight: 6 }} />Novo lançamento</Btn>
