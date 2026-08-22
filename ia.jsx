@@ -13,8 +13,13 @@ async function chamar(caminho, corpo) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(corpo)
     });
-    if (!r.ok) return { ok: false, erro: `Backend respondeu ${r.status}` };
-    const dados = await r.json();
+    const dados = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      const mensagem = String(dados.erro || dados.message || `Não foi possível processar o documento (${r.status})`)
+        .replace(/^Anthropic API:\s*\d+\s*/i, '')
+        .replace(/\{"type":"error","error":\{"type":"[^"]+","message":"([^"]+)"\}[^}]*\}.*/i, '$1');
+      return { ok: false, erro: mensagem };
+    }
     return { ok: true, dados };
   } catch (e) {
     return { ok: false, erro: 'Backend de IA indisponível (verifique se ANTHROPIC_API_KEY está configurada no Netlify).' };
