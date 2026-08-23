@@ -8,8 +8,9 @@ import financeiroReset from './vite.financeiro.reset.js';
 import financeiroImpostos from './vite.financeiro.impostos.js';
 import financeiroReceitas from './vite.financeiro.receitas.js';
 import financeiroPagamentoFatura from './vite.financeiro.pagamento-fatura.js';
+import financeiroReceitaClick from './vite.financeiro.receita-click.js';
 
 export default defineConfig({
-  plugins: [financeiroFluxoDireto(), financeiroCategoriasDetalhe(), financeiroUxFinal(), financeiroPatch(), financeiroReset(), financeiroImpostos(), financeiroReceitas(), financeiroPagamentoFatura(), react()],
+  plugins: [financeiroFluxoDireto(), financeiroCategoriasDetalhe(), financeiroUxFinal(), financeiroPatch(), financeiroReset(), financeiroImpostos(), financeiroReceitaClick(), financeiroReceitas(), financeiroPagamentoFatura(), react()],
   base: './'
 });
