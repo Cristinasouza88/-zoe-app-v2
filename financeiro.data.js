@@ -31,7 +31,7 @@ export const CATEGORIAS_DESPESA = [
   'Moradia', 'Mercado', 'Alimentação', 'Transporte', 'Saúde e Cuidados',
   'Saúde e Fitness', 'Educação e Carreira', 'Assinaturas e Serviços', 'Compras',
   'Lazer e Cultura', 'Presentes', 'Viagens', 'Seguros e Proteções', 'Impostos', 'Impostos e Taxas',
-  'Consórcio', 'Financiamento', 'Investimentos', 'Cuidados pessoais', 'Doações', 'Outros'
+  'Consórcio', 'Financiamento', 'Investimentos', 'Pagamento de fatura', 'Cuidados pessoais', 'Doações', 'Outros'
 ];
 
 export const CATEGORIAS_RECEITA = [
