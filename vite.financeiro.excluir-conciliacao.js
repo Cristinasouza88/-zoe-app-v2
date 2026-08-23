@@ -1,7 +1,7 @@
 export default function financeiroExcluirConciliacao(){
   return {
     name:'zoe-financeiro-excluir-conciliacao',
-    enforce:'post',
+    enforce:'pre',
     transform(code,id){
       if(!id.endsWith('/FinanceiroPlus.jsx')&&!id.endsWith('FinanceiroPlus.jsx')) return null;
       let out=code;
