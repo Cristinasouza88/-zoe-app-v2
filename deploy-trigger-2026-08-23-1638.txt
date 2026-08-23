@@ -1,0 +1,2 @@
+Force Netlify deploy after financial reconciliation updates.
+Triggered at 2026-08-23 16:38 -03:00.
