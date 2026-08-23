@@ -3,28 +3,51 @@ export default function financeiroAuto(){
     name:'zoe-financeiro-auto-classificacao',
     transform(code,id){
       if(!id.endsWith('/FinanceiroPlus.jsx')&&!id.endsWith('FinanceiroPlus.jsx')) return null;
-      let out=code;
 
-      const marker=" const[tela,setTela]=useState('resumo'),[mesRef,setMesRef]=useState(hoje().slice(0,7)),[sheet,setSheet]=useState(null)";
-      if(!out.includes(marker)) throw new Error('Auto financeiro: estado principal não encontrado');
-      out=out.replace(marker," const[tela,setTela]=useState('resumo'),[mesRef,setMesRef]=useState(hoje().slice(0,7)),[sheet,setSheet]=useState(null),[categoriaAberta,setCategoriaAberta]=useState(null)");
-
+      const stateMarker='[sheet,setSheet]=useState(null)';
       const beforePrepare=' async function preparar(file)';
-      if(!out.includes(beforePrepare)) throw new Error('Auto financeiro: preparar não encontrado');
-      const helpers=` const subcategoriaAuto=t=>{const d=norm(t?.descricao||'');const c=t?.categoria||'';const mapas={\n  'Compras':[['Roupas',/zara|renner|riachuelo|cea|c&a|shein|roupa|moda|calcado|tenis|sapato/],['Casa',/tok stok|leroy|telhanorte|casa|decor|moveis|utilidades/],['Eletrônicos',/apple|samsung|eletron|magalu|fast shop|kabum/],['Marketplace',/amazon|mercado livre|shopee/],['Beleza',/sephora|boticario|natura|beauty|cosmet/],['Presentes',/presente|gift/]],\n  'Alimentação':[['Delivery',/ifood|rappi|delivery/],['Restaurante',/restaurante|outback|madero|burger|pizza|sushi|grill/],['Café e Padaria',/cafe|coffee|padaria|starbucks/],['Fast-food',/mcdonald|mc donald|burger king|subway/]],\n  'Educação e Carreira':[['Curso',/curso|hotmart|udemy|alura|eslen/],['Inglês',/ingles|english/],['Livros',/livro|kindle/],['Faculdade',/faculdade|universidade|espm/]],\n  'Transporte':[['Aplicativos',/uber|99 /],['Combustível',/posto|combust|shell|ipiranga/],['Pedágio',/pedagio/],['Estacionamento',/estacion/],['Manutenção',/oficina|pneu|mecanica|revisao/]],\n  'Saúde e Cuidados':[['Farmácia',/farmacia|drogaria|drogasil|droga raia/],['Consulta',/consulta|medic|clinica/],['Exames',/laborat|exame/]],\n  'Viagens':[['Hospedagem',/hotel|airbnb|booking/],['Passagem',/latam|azul|gol linhas|passagem/],['Passeios',/tour|passeio|ingresso/]],\n  'Moradia':[['Aluguel',/aluguel/],['Condomínio',/condominio/],['Energia',/enel|energia/],['Água',/sabesp|agua/],['Internet',/internet|vivo fibra|claro net/]],\n  'Impostos':[['DARF',/darf/],['DAS / Simples Nacional',/das |simples nacional/],['IRPF / IRPJ',/irpf|irpj/],['INSS',/inss/],['ISS',/iss /],['IPTU',/iptu/]]\n};return mapas[c]?.find(([,rx])=>rx.test(d))?.[0]||t?.subcategoria||'Outros'};\n const marcarSubcategoria=t=>({...t,subcategoria:t?.subcategoria&&t.subcategoria!=='Outros'?t.subcategoria:subcategoriaAuto(t)});\n const lancamentoAutoOk=t=>!t?.revisar&&!t?.duplicado&&!t?.possivelDuplicado&&!t?.possivelPagamentoFatura&&t?.categoria&&t.categoria!=='Outros';\n const gravarAutomaticos=(itens,arquivo)=>{if(!itens?.length)return;atualiza(f=>{const existentes=new Set((f.transacoes||[]).map(chave));const novas=itens.map(marcarSubcategoria).filter(t=>{const k=chave(t);if(existentes.has(k))return false;existentes.add(k);return true});if(!novas.length)return f;return{...f,transacoes:[...(f.transacoes||[]),...novas],documentos:[...(f.documentos||[]),{id:uid('doc-auto'),nome:arquivo,mes:'auto',itens:novas.length,data:hoje(),automatico:true}],importacoesConciliadas:[...(f.importacoesConciliadas||[]),{arquivo,mes:'auto',itens:novas.length,data:hoje(),automatico:true}]}})};\n const alterarLancamento=(id,categoria,subcategoria)=>atualiza(f=>({...f,transacoes:(f.transacoes||[]).map(t=>t.id===id?regras({...t,categoria:categoria||t.categoria,subcategoria:subcategoria??t.subcategoria,confianca:'CONFIRMADO_MANUAL',revisar:false}):t)}));\n`;
+      const trecho="const meses=agrupa(itens);if(!meses.length)throw Error('Nenhum lançamento válido.');const draft={arquivo:file.name,meses,indice:0,etapa:'meses'};importacaoMemoria=draft;setImp(draft);await salvarConciliacaoPendente(draft);atualiza(f=>({...f,importacaoPendente:null}));setTela('importacao')";
+      const catRow="<div key={c} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:`1px solid ${C.line}`}}><span>{c}</span><b>{formatoMoeda(v)}</b></div>";
+      const returnMarker="return <div style={{padding:'18px 16px 96px',maxWidth:560,margin:'0 auto'}}>{body}<Sheet";
+
+      // Preflight: se outra transformação mudou a estrutura, não derruba o build.
+      // O plugin só roda quando todos os pontos necessários estão presentes.
+      const faltando=[];
+      if(!code.includes(stateMarker))faltando.push('estado');
+      if(!code.includes(beforePrepare))faltando.push('preparar');
+      if(!code.includes(trecho))faltando.push('importacao');
+      if(!code.includes(catRow))faltando.push('categorias');
+      if(!code.includes(returnMarker))faltando.push('retorno');
+      if(faltando.length){
+        console.warn('[zoe-financeiro-auto-classificacao] pontos de injeção ausentes: '+faltando.join(', ')+' — plugin ignorado sem interromper o build.');
+        return null;
+      }
+
+      let out=code;
+      out=out.replace(stateMarker,stateMarker+",[categoriaAberta,setCategoriaAberta]=useState(null)");
+
+      const helpers=` const subcategoriaAuto=t=>{const d=norm(t?.descricao||'');const c=t?.categoria||'';const mapas={
+  'Compras':[['Roupas',/zara|renner|riachuelo|cea|c&a|shein|roupa|moda|calcado|tenis|sapato/],['Casa',/tok stok|leroy|telhanorte|casa|decor|moveis|utilidades/],['Eletrônicos',/apple|samsung|eletron|magalu|fast shop|kabum/],['Marketplace',/amazon|mercado livre|shopee/],['Beleza',/sephora|boticario|natura|beauty|cosmet/],['Presentes',/presente|gift/]],
+  'Alimentação':[['Delivery',/ifood|rappi|delivery/],['Restaurante',/restaurante|outback|madero|burger|pizza|sushi|grill/],['Café e Padaria',/cafe|coffee|padaria|starbucks/],['Fast-food',/mcdonald|mc donald|burger king|subway/]],
+  'Educação e Carreira':[['Curso',/curso|hotmart|udemy|alura|eslen/],['Inglês',/ingles|english/],['Livros',/livro|kindle/],['Faculdade',/faculdade|universidade|espm/]],
+  'Transporte':[['Aplicativos',/uber|99 /],['Combustível',/posto|combust|shell|ipiranga/],['Pedágio',/pedagio/],['Estacionamento',/estacion/],['Manutenção',/oficina|pneu|mecanica|revisao/]],
+  'Saúde e Cuidados':[['Farmácia',/farmacia|drogaria|drogasil|droga raia/],['Consulta',/consulta|medic|clinica/],['Exames',/laborat|exame/]],
+  'Viagens':[['Hospedagem',/hotel|airbnb|booking/],['Passagem',/latam|azul|gol linhas|passagem/],['Passeios',/tour|passeio|ingresso/]],
+  'Moradia':[['Aluguel',/aluguel/],['Condomínio',/condominio/],['Energia',/enel|energia/],['Água',/sabesp|agua/],['Internet',/internet|vivo fibra|claro net/]],
+  'Impostos':[['DARF',/darf/],['DAS / Simples Nacional',/das |simples nacional/],['IRPF / IRPJ',/irpf|irpj/],['INSS',/inss/],['ISS',/iss /],['IPTU',/iptu/]]
+};return mapas[c]?.find(([,rx])=>rx.test(d))?.[0]||t?.subcategoria||'Outros'};
+ const marcarSubcategoria=t=>({...t,subcategoria:t?.subcategoria&&t.subcategoria!=='Outros'?t.subcategoria:subcategoriaAuto(t)});
+ const lancamentoAutoOk=t=>!t?.revisar&&!t?.duplicado&&!t?.possivelDuplicado&&!t?.possivelPagamentoFatura&&t?.categoria&&t.categoria!=='Outros';
+ const gravarAutomaticos=(itens,arquivo)=>{if(!itens?.length)return;atualiza(f=>{const existentes=new Set((f.transacoes||[]).map(chave));const novas=itens.map(marcarSubcategoria).filter(t=>{const k=chave(t);if(existentes.has(k))return false;existentes.add(k);return true});if(!novas.length)return f;return{...f,transacoes:[...(f.transacoes||[]),...novas],documentos:[...(f.documentos||[]),{id:uid('doc-auto'),nome:arquivo,mes:'auto',itens:novas.length,data:hoje(),automatico:true}],importacoesConciliadas:[...(f.importacoesConciliadas||[]),{arquivo,mes:'auto',itens:novas.length,data:hoje(),automatico:true}]}})};
+ const alterarLancamento=(id,categoria,subcategoria)=>atualiza(f=>({...f,transacoes:(f.transacoes||[]).map(t=>t.id===id?regras({...t,categoria:categoria||t.categoria,subcategoria:subcategoria??t.subcategoria,confianca:'CONFIRMADO_MANUAL',revisar:false}):t)}));
+`;
       out=out.replace(beforePrepare,helpers+beforePrepare);
 
-      const trecho='const meses=agrupa(itens);if(!meses.length)throw Error(\'Nenhum lançamento válido.\');const draft={arquivo:file.name,meses,indice:0,etapa:\'meses\'};importacaoMemoria=draft;setImp(draft);await salvarConciliacaoPendente(draft);atualiza(f=>({...f,importacaoPendente:null}));setTela(\'importacao\')';
-      if(!out.includes(trecho)) throw new Error('Auto financeiro: trecho final da importação não encontrado');
       const novo=`const automaticos=itens.filter(lancamentoAutoOk);const pendentes=itens.filter(t=>!t.duplicado&&!lancamentoAutoOk(t));gravarAutomaticos(automaticos,file.name);const meses=agrupa(pendentes);if(!meses.length){importacaoMemoria=null;setImp(null);await limparConciliacaoPendente();setTela('resumo');aviso(automaticos.length?\`A ZOE classificou e lançou automaticamente ${'${'}automaticos.length} lançamento(s). Não ficou nenhuma pendência.\`:'Nenhum lançamento novo para conciliar.');return}const draft={arquivo:file.name,meses,indice:0,etapa:'meses',automaticos:automaticos.length};importacaoMemoria=draft;setImp(draft);await salvarConciliacaoPendente(draft);atualiza(f=>({...f,importacaoPendente:null}));setTela('importacao');aviso(automaticos.length?\`${'${'}automaticos.length} lançamento(s) já foram classificados automaticamente. Ficaram ${'${'}pendentes.length} para sua revisão.\`:'Apenas os lançamentos incertos foram enviados para conciliação.')`;
       out=out.replace(trecho,novo);
 
-      const catRow="<div key={c} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:`1px solid ${C.line}`}}><span>{c}</span><b>{formatoMoeda(v)}</b></div>";
-      if(!out.includes(catRow)) throw new Error('Auto financeiro: linha de categoria não encontrada');
-      out=out.replace(catRow,"<div key={c} onClick={()=>setCategoriaAberta(c)} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:`1px solid ${C.line}`,cursor:'pointer'}}><span><b style={{fontSize:13}}>{c}</b><span style={{fontSize:11,color:C.ink3,display:'block',marginTop:2}}>{doMes.filter(t=>t.categoria===c&&!t.ignorarResumo).length} lançamento(s) • toque para ver</span></span><span style={{display:'flex',alignItems:'center',gap:8}}><b>{formatoMoeda(v)}</b><ChevronRight size={16} color={C.ink3}/></span></div>");
+      out=out.replace(catRow,"<div key={c} onClick={()=>setCategoriaAberta(c)} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:'1px solid '+C.line,cursor:'pointer'}}><span><b style={{fontSize:13}}>{c}</b><span style={{fontSize:11,color:C.ink3,display:'block',marginTop:2}}>{doMes.filter(t=>t.categoria===c&&!t.ignorarResumo).length} lançamento(s) • toque para ver</span></span><span style={{display:'flex',alignItems:'center',gap:8}}><b>{formatoMoeda(v)}</b><ChevronRight size={16} color={C.ink3}/></span></div>");
 
-      const returnMarker="return <div style={{padding:'18px 16px 96px',maxWidth:560,margin:'0 auto'}}>{body}<Sheet";
-      if(!out.includes(returnMarker)) throw new Error('Auto financeiro: retorno principal não encontrado');
       const detalhe=`return <div style={{padding:'18px 16px 96px',maxWidth:560,margin:'0 auto'}}>{body}{categoriaAberta&&<Sheet aberto={!!categoriaAberta} fechar={()=>setCategoriaAberta(null)} titulo={categoriaAberta}><div style={{fontSize:12,color:C.ink3,marginBottom:10}}>Itens classificados automaticamente aparecem com ✓. Toque nos campos para corrigir categoria ou detalhar a subcategoria.</div>{doMes.filter(t=>t.categoria===categoriaAberta&&!t.ignorarResumo).map(t=><Card key={t.id} style={{marginBottom:8}}><div style={{display:'flex',justifyContent:'space-between',gap:10}}><div style={{minWidth:0}}><b style={{fontSize:13}}>{t.descricao}</b><div style={{fontSize:10,color:C.ink3,marginTop:2}}>{fmtData(t.data)} • {t.conta}</div></div><div style={{textAlign:'right'}}><b style={{whiteSpace:'nowrap'}}>{formatoMoeda(t.valor)}</b><div style={{fontSize:11,color:'#15803D',fontWeight:800,marginTop:3}}>✓ certo</div></div></div><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:10}}><select value={t.categoria||'Outros'} onChange={e=>alterarLancamento(t.id,e.target.value,t.subcategoria)} style={{width:'100%',padding:9,borderRadius:10,border:'1px solid '+C.line}}>{CATEGORIAS_DESPESA.map(x=><option key={x}>{x}</option>)}</select><input value={t.subcategoria||subcategoriaAuto(t)||''} onChange={e=>alterarLancamento(t.id,t.categoria,e.target.value)} placeholder="Subcategoria" style={{width:'100%',padding:9,borderRadius:10,border:'1px solid '+C.line,boxSizing:'border-box'}}/></div></Card>)}</Sheet>}<Sheet`;
       out=out.replace(returnMarker,detalhe);
 
