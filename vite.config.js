@@ -6,8 +6,9 @@ import financeiroImpostos from './vite.financeiro.impostos.js';
 import financeiroReceitas from './vite.financeiro.receitas.js';
 import financeiroPagamentoFatura from './vite.financeiro.pagamento-fatura.js';
 import financeiroAuto from './vite.financeiro.auto.js';
+import financeiroExcluirConciliacao from './vite.financeiro.excluir-conciliacao.js';
 
 export default defineConfig({
-  plugins: [financeiroPatch(), financeiroReset(), financeiroImpostos(), financeiroReceitas(), financeiroPagamentoFatura(), financeiroAuto(), react()],
+  plugins: [financeiroPatch(), financeiroReset(), financeiroImpostos(), financeiroReceitas(), financeiroPagamentoFatura(), financeiroAuto(), financeiroExcluirConciliacao(), react()],
   base: './'
 });
