@@ -1,494 +1,314 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   Wallet, TrendingUp, TrendingDown, FileClock, Plus, ShieldCheck,
-  ChevronLeft, ChevronRight, Upload, HelpCircle, Landmark, PenLine, FileText, Target, Sparkles
+  ChevronLeft, ChevronRight, Upload, HelpCircle, Landmark, PenLine, FileText,
+  Target, Sparkles, PiggyBank, CheckCircle2, AlertTriangle, ArrowRightLeft,
+  CreditCard, RotateCcw
 } from 'lucide-react';
-import { C, sobre, Card, Btn, Campo, Area, Barra, Sheet, GraficoLinha, hoje } from './ui.jsx';
-import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA, CONTAS_PADRAO, MESES_LBL, formatoMoeda } from './financeiro.data';
+import { C, Card, Btn, Campo, Area, Barra, Sheet, hoje } from './ui.jsx';
+import {
+  CATEGORIAS_DESPESA, CATEGORIAS_RECEITA, CONTAS_PADRAO, MESES_LBL,
+  formatoMoeda, FINANCEIRO_REFERENCIA
+} from './financeiro.data';
 import { parseTransacao, classificarDescricoesCsv } from './ia.jsx';
 
-const vazio = { transacoes: [], contas: CONTAS_PADRAO, metas: [], dividas: [], pendenciasClassificacao: [], documentos: [] };
-const rascunhoVazio = () => ({ tipo: 'saida', valor: '', categoria: CATEGORIAS_DESPESA[0], conta: CONTAS_PADRAO[0], data: hoje(), descricao: '', pendente: false });
-
-const normalizarTexto = (valor = '') => String(valor)
-  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-
-// A chave ignora o ID local, pois o mesmo lançamento pode vir de dois
-// extratos/arquivos diferentes. Assim, reimportar um documento não duplica o dado.
-const chaveTransacao = (t = {}) => [
-  t.data || '',
-  Number(t.valor || 0).toFixed(2),
-  t.tipo || '',
-  normalizarTexto(t.conta || t.instituicao || ''),
-  normalizarTexto(t.descricao || ''),
-].join('|');
-
-const semTransacoesDuplicadas = (transacoes = []) => {
-  const vistas = new Set();
-  return transacoes.filter(t => {
-    const chave = chaveTransacao(t);
-    if (vistas.has(chave)) return false;
-    vistas.add(chave);
-    return true;
-  });
+const vazio = {
+  transacoes: [], contas: CONTAS_PADRAO, metas: [], dividas: [], investimentos: [],
+  pendenciasClassificacao: [], documentos: [], importacoesConciliadas: []
 };
 
-const semDividasDuplicadas = (dividas = []) => {
-  const vistas = new Set();
-  return dividas.filter(d => {
-    const chave = [d.tipo, d.nome, d.instituicao, d.valor_total, d.saldo_restante]
-      .map(normalizarTexto).join('|');
-    if (vistas.has(chave)) return false;
-    vistas.add(chave);
-    return true;
-  });
+const normalizarTexto = (v='') => String(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  .toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+
+const valorCsv = (v='') => {
+  const s=String(v).replace(/R\$|\s/g,'');
+  if(!s)return 0;
+  const n=Number((s.includes(',')?s.replace(/\./g,'').replace(',','.') : s).replace(/[^0-9.-]/g,''));
+  return Number.isFinite(n)?n:0;
 };
 
-const normalizarFinanceiro = (fin = {}) => ({
-  ...fin,
-  transacoes: semTransacoesDuplicadas(fin.transacoes || []),
-  dividas: semDividasDuplicadas(fin.dividas || []),
-});
-
-const hashArquivo = async (file) => {
-  if (!globalThis.crypto?.subtle) return `${file.name}|${file.size}|${file.lastModified}`;
-  const bytes = await file.arrayBuffer();
-  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
-};
-
-const separarLinhaCsv = (linha, delimitador) => {
-  const campos = [];
-  let atual = '';
-  let emAspas = false;
-  for (let i = 0; i < linha.length; i++) {
-    const ch = linha[i];
-    if (ch === '"') {
-      if (emAspas && linha[i + 1] === '"') { atual += '"'; i++; }
-      else emAspas = !emAspas;
-    } else if (ch === delimitador && !emAspas) {
-      campos.push(atual.trim()); atual = '';
-    } else atual += ch;
-  }
-  campos.push(atual.trim());
-  return campos;
-};
-
-const valorCsv = (valor = '') => {
-  const limpo = String(valor).replace(/R\$|\s/g, '');
-  if (!limpo) return 0;
-  const decimal = limpo.includes(',')
-    ? limpo.replace(/\./g, '').replace(',', '.')
-    : limpo.replace(/,(?=\d{3}(?:\D|$))/g, '');
-  const numero = Number(decimal.replace(/[^0-9.-]/g, ''));
-  return Number.isFinite(numero) ? numero : 0;
-};
-
-const dataCsv = (valor = '') => {
-  const texto = String(valor).trim();
-  const br = texto.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/);
-  if (br) {
-    const ano = br[3].length === 2 ? `20${br[3]}` : br[3];
-    return `${ano}-${br[2].padStart(2, '0')}-${br[1].padStart(2, '0')}`;
-  }
-  const iso = texto.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-  if (iso) return `${iso[1]}-${iso[2].padStart(2, '0')}-${iso[3].padStart(2, '0')}`;
-  const excel = Number(texto.replace(',', '.'));
-  if (Number.isFinite(excel) && excel > 25000 && excel < 80000) {
-    const dt = new Date(Date.UTC(1899, 11, 30) + excel * 86400000);
-    return dt.toISOString().slice(0, 10);
-  }
+const dataCsv = (v='') => {
+  const s=String(v).trim();
+  const br=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/);
+  if(br){const a=br[3].length===2?`20${br[3]}`:br[3];return `${a}-${br[2].padStart(2,'0')}-${br[1].padStart(2,'0')}`;}
+  const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(iso)return `${iso[1]}-${iso[2].padStart(2,'0')}-${iso[3].padStart(2,'0')}`;
+  const excel=Number(s.replace(',','.'));
+  if(Number.isFinite(excel)&&excel>25000&&excel<80000){const dt=new Date(Date.UTC(1899,11,30)+excel*86400000);return dt.toISOString().slice(0,10);}
   return '';
 };
 
-const categoriaPorDescricao = (descricao, tipo) => {
-  if (tipo === 'entrada') return /salario|pro labore|pagamento empresa|folha/.test(descricao) ? 'Salário' : /reembolso|estorno/.test(descricao) ? 'Reembolso' : 'Outros';
-  const regras = [
-    ['Moradia', /aluguel|condominio|energia|eletric|sabesp|agua|gas|internet|iptu/],
-    ['Alimentação', /mercado|supermerc|restaurante|ifood|padaria|acougue|hortifruti|caf[eé]|burger|pizza/],
-    ['Transporte', /uber|99 |posto|combust|estacion|pedagio|sem parar|oficina|pneu/],
-    ['Saúde', /farmacia|drogaria|hospital|clinica|medic|laborat|odont|academia/],
-    ['Educação', /escola|faculdade|curso|livro|udemy|hotmart/],
-    ['Assinaturas', /netflix|spotify|apple\.com|google one|amazon prime|assinatura/],
-    ['Consórcio', /consorcio/], ['Financiamento', /financiamento|parcela veiculo|credito imobiliario/],
-    ['Investimentos', /investimento|aplicacao|tesouro|cdb|corretora/],
-    ['Cuidados pessoais', /salao|cabeleire|manicure|cosmetic|estetica/],
-    ['Lazer', /cinema|teatro|viagem|hotel|ingresso|parque/],
+const separarLinha = (linha, delim) => {
+  const out=[]; let atual=''; let aspas=false;
+  for(let i=0;i<linha.length;i++){
+    const ch=linha[i];
+    if(ch==='"'){ if(aspas&&linha[i+1]==='"'){atual+='"';i++;} else aspas=!aspas; }
+    else if(ch===delim&&!aspas){out.push(atual.trim());atual='';}
+    else atual+=ch;
+  }
+  out.push(atual.trim()); return out;
+};
+
+const chaveTransacao = (t={}) => [
+  t.data||'', Number(t.valor||0).toFixed(2), t.tipo||'',
+  normalizarTexto(t.conta||t.instituicao||''), normalizarTexto(t.descricao||'')
+].join('|');
+
+const categoriaLocal = (descricao, tipo) => {
+  const d=normalizarTexto(descricao);
+  if(tipo==='entrada'){
+    if(/raio de sol marketing/.test(d)) return 'Salário PJ';
+    if(/wish|intermares|reserva paulista|thermas da mata/.test(d)) return 'Receita de Trabalho';
+    if(/reembolso|estorno/.test(d)) return 'Reembolso';
+    if(/rendimento|juros|cdb|remuneracao/.test(d)) return 'Rendimentos';
+    return 'Outros';
+  }
+  const regras=[
+    ['Moradia',/aluguel|condominio|sabesp|enel|energia|iptu|habitacao caixa/],
+    ['Mercado',/mercado|supermerc|pao de acucar|mini extra|carrefour|pirueta/],
+    ['Alimentação',/ifood|restaurante|padaria|sukiya|jin jin|food to save|cafe|pizza|burger/],
+    ['Transporte',/uber|99 |posto|combust|estacion|pedagio|sem parar|detran/],
+    ['Saúde e Cuidados',/farmacia|drogaria|hospital|clinica|laborat|medic|odonto/],
+    ['Saúde e Fitness',/academia|gym|treino|htm eslenrd/],
+    ['Educação e Carreira',/espm|curso|faculdade|udemy|hotmart|livro/],
+    ['Assinaturas e Serviços',/adobe|semrush|netflix|spotify|apple com|google one|assinatura|duo gourmet/],
+    ['Compras',/shein|shopee|amazon|glambox|moda mundial|prego tambore/],
+    ['Viagens',/decolar|hotel|airbnb|booking|azul|latam|gol linhas/],
+    ['Seguros e Proteções',/seguro|infini/],
+    ['Impostos e Taxas',/simples nacional|secretaria do tesouro|imposto|taxa/],
+    ['Consórcio',/consorcio|klubi|servopa/],
+    ['Financiamento',/financiamento|habitacao caixa/],
   ];
-  return regras.find(([, regra]) => regra.test(descricao))?.[0] || 'Outros';
+  return regras.find(([,r])=>r.test(d))?.[0]||'Outros';
+};
+
+const aplicarRegras = (t) => {
+  const desc=normalizarTexto(t.descricao);
+  const tipo=t.tipo==='entrada'?'entrada':'saida';
+  let natureza='MOVIMENTO'; let categoria=t.categoria||categoriaLocal(desc,tipo);
+  let ignorarResumo=false, impactoReceita=0, impactoDespesa=0, confianca='INFERIDO';
+
+  if(/reserva por gastos rendimento|dinheiro reservado rendimento|dinheiro retirado rendimento/.test(desc)){
+    natureza='TRANSFERENCIA_INTERNA'; categoria='Investimentos'; ignorarResumo=true; confianca='CONFIRMADO';
+  } else if(/pagamento.*fatura|fatura.*pagamento|pagamento cartao|debito automatico.*cartao/.test(desc)){
+    natureza='PAGAMENTO_FATURA'; categoria='Assinaturas e Serviços'; ignorarResumo=true; confianca='INFERIDO';
+  } else if(/estorno|reembolso|devolucao/.test(desc) && tipo==='entrada'){
+    natureza='ESTORNO_REEMBOLSO'; categoria='Reembolso'; impactoDespesa=-Math.abs(Number(t.valor||0)); confianca='INFERIDO';
+  } else if(tipo==='entrada' && /raio de sol marketing/.test(desc)){
+    natureza='RECEITA_TRABALHO'; categoria='Salário PJ'; impactoReceita=Math.abs(Number(t.valor||0)); confianca='CONFIRMADO';
+  } else if(tipo==='entrada'){
+    natureza='RECEITA'; impactoReceita=Math.abs(Number(t.valor||0));
+  } else {
+    natureza='DESPESA'; impactoDespesa=Math.abs(Number(t.valor||0));
+  }
+
+  const revisar = categoria==='Outros' || (!desc && !ignorarResumo);
+  if(revisar) confianca='A_REVISAR';
+  return {
+    ...t, tipo, categoria, natureza, ignorarResumo, impactoReceita, impactoDespesa,
+    competenciaAnalitica:(t.data||'').slice(0,7), confianca, revisar,
+    subcategoria:t.subcategoria||'', contraparte:t.contraparte||''
+  };
 };
 
 const transacoesDeCsv = async (file) => {
-  const texto = (await file.text()).replace(/^\uFEFF/, '');
-  const linhas = texto.split(/\r?\n/).filter(l => l.trim());
-  if (linhas.length < 2) return [];
-  const candidatos = [',', ';', '\t'];
-  const amostra = linhas.slice(0, 15);
-  const delimitador = candidatos.sort((a, b) => {
-    const colunasA = Math.max(...amostra.map(l => separarLinhaCsv(l, a).length));
-    const colunasB = Math.max(...amostra.map(l => separarLinhaCsv(l, b).length));
-    return colunasB - colunasA;
-  })[0];
-  const linhaCabecalho = linhas.findIndex((linha, pos) => pos < 15 && /data|date|valor|amount|debito|credito|descri|historico/i.test(normalizarTexto(linha)));
-  if (linhaCabecalho < 0) throw new Error('Não encontrei o cabeçalho com data e valor neste CSV.');
-  const cabecalhos = separarLinhaCsv(linhas[linhaCabecalho], delimitador).map(normalizarTexto);
-  const indice = (...nomes) => cabecalhos.findIndex(h => nomes.some(n => h === n || h.includes(n)));
-  const iData = indice('data', 'date', 'dt');
-  const iDescricao = indice('descricao', 'description', 'historico', 'estabelecimento', 'titulo', 'memo');
-  const iValor = indice('valor', 'amount', 'quantia');
-  const iDebito = indice('debito', 'saida', 'despesa');
-  const iCredito = indice('credito', 'entrada', 'receita');
-  const iTipo = indice('tipo', 'type', 'natureza');
-  const iCategoria = indice('categoria', 'category');
-  const iConta = indice('conta', 'account', 'banco', 'cartao');
-  if (iValor < 0 && iDebito < 0 && iCredito < 0) throw new Error('Não encontrei uma coluna de valor no CSV.');
-  const transacoes = linhas.slice(linhaCabecalho + 1).map((linha, i) => {
-    const c = separarLinhaCsv(linha, delimitador);
-    const debito = iDebito >= 0 ? Math.abs(valorCsv(c[iDebito])) : 0;
-    const credito = iCredito >= 0 ? Math.abs(valorCsv(c[iCredito])) : 0;
-    const bruto = iValor >= 0 ? valorCsv(c[iValor]) : (credito || -debito);
-    const tipoTexto = iTipo >= 0 ? normalizarTexto(c[iTipo]) : '';
-    const tipo = credito > 0 || bruto > 0 || /entrada|credito|receita/.test(tipoTexto) ? 'entrada' : 'saida';
-    const valor = Math.abs(bruto || debito || credito);
-    if (!valor) return null;
-    return {
-      id: `csv-${Date.now()}-${i}`,
-      tipo, valor,
-      categoria: (iCategoria >= 0 && c[iCategoria]) || (tipo === 'entrada' ? CATEGORIAS_RECEITA[0] : 'Outros'),
-      conta: (iConta >= 0 && c[iConta]) || 'Conta corrente',
-      data: iData >= 0 ? dataCsv(c[iData]) : '',
-      descricao: (iDescricao >= 0 && c[iDescricao]) || `Linha ${i + 2}`,
-      pendente: false,
-      origemDocumento: file.name,
-    };
+  const txt=(await file.text()).replace(/^\uFEFF/,'');
+  const linhas=txt.split(/\r?\n/).filter(x=>x.trim());
+  if(linhas.length<2) throw new Error('CSV vazio ou sem linhas suficientes.');
+  const candidatos=[',',';','\t'];
+  const amostra=linhas.slice(0,15);
+  const delim=candidatos.sort((a,b)=>Math.max(...amostra.map(l=>separarLinha(l,b).length))-Math.max(...amostra.map(l=>separarLinha(l,a).length)))[0];
+  const idxCab=linhas.findIndex((l,i)=>i<15&&/data|date|valor|amount|debito|credito|descri|historico/i.test(normalizarTexto(l)));
+  if(idxCab<0) throw new Error('Não encontrei cabeçalho com data e valor.');
+  const h=separarLinha(linhas[idxCab],delim).map(normalizarTexto);
+  const ix=(...n)=>h.findIndex(x=>n.some(y=>x===y||x.includes(y)));
+  const iData=ix('data','date','dt'), iDesc=ix('descricao','description','historico','estabelecimento','titulo','memo');
+  const iValor=ix('valor','amount','quantia'), iDeb=ix('debito','saida','despesa'), iCred=ix('credito','entrada','receita');
+  const iTipo=ix('tipo','type','natureza'), iCat=ix('categoria','category'), iConta=ix('conta','account','banco','cartao');
+  if(iValor<0&&iDeb<0&&iCred<0) throw new Error('Não encontrei coluna de valor.');
+  const out=linhas.slice(idxCab+1).map((linha,i)=>{
+    const c=separarLinha(linha,delim); const deb=iDeb>=0?Math.abs(valorCsv(c[iDeb])):0; const cred=iCred>=0?Math.abs(valorCsv(c[iCred])):0;
+    const bruto=iValor>=0?valorCsv(c[iValor]):(cred||-deb); const tp=iTipo>=0?normalizarTexto(c[iTipo]):'';
+    const tipo=cred>0||bruto>0||/entrada|credito|receita/.test(tp)?'entrada':'saida'; const valor=Math.abs(bruto||deb||cred);
+    if(!valor)return null;
+    return {id:`imp-${Date.now()}-${i}`,tipo,valor,data:iData>=0?dataCsv(c[iData]):'',descricao:iDesc>=0?c[iDesc]||'Sem descrição':'Sem descrição',categoria:iCat>=0?c[iCat]||'Outros':'Outros',conta:iConta>=0?c[iConta]||'Conta corrente':'Conta corrente',origemDocumento:file.name,pendente:false};
   }).filter(Boolean);
-  const semData = transacoes.filter(t => !t.data).length;
-  if (iData < 0 || semData > Math.max(2, Math.floor(transacoes.length * 0.05))) {
-    throw new Error('As datas deste CSV não foram reconhecidas. Nenhum lançamento foi salvo.');
-  }
-  return transacoes.filter(t => t.data);
+  if(out.some(t=>!t.data)) throw new Error('Há datas que não foram reconhecidas. Nada foi importado.');
+  return out;
 };
 
+const agruparMeses = (transacoes=[]) => Object.entries(transacoes.reduce((acc,t)=>{
+  const mes=(t.data||'').slice(0,7)||'sem-mes'; (acc[mes] ||= []).push(t); return acc;
+},{})).sort(([a],[b])=>a.localeCompare(b)).map(([mes,itens])=>({mes,itens}));
+
 export default function Financeiro({ d, up, aviso }) {
-  const fin = { ...vazio, ...d.financeiro };
-  const transacoesUnicas = useMemo(() => semTransacoesDuplicadas(fin.transacoes), [fin.transacoes]);
-  const [mesRef, setMesRef] = useState(() => hoje().slice(0, 7));
-  const [sheetAberto, setSheetAberto] = useState(false);
-  const [modoEntrada, setModoEntrada] = useState(null);
-  const [rascunho, setRascunho] = useState(rascunhoVazio());
-  const [processandoIA, setProcessandoIA] = useState(false);
-  const inputFotoRef = useRef(null);
-  const limpezaExecutada = useRef(false);
+  const fin={...vazio,...d.financeiro};
+  const [mesRef,setMesRef]=useState(()=>hoje().slice(0,7));
+  const [sheet,setSheet]=useState(null);
+  const [rascunho,setRascunho]=useState({tipo:'saida',valor:'',categoria:'Outros',conta:CONTAS_PADRAO[0],data:hoje(),descricao:'',pendente:false});
+  const [processando,setProcessando]=useState(false);
+  const [importacao,setImportacao]=useState(null);
+  const inputRef=useRef(null);
 
-  const atualizar = (fn) => up(s => ({
-    ...s,
-    financeiro: normalizarFinanceiro(fn({ ...vazio, ...s.financeiro }))
-  }));
+  const atualizar=fn=>up(s=>({...s,financeiro:fn({...vazio,...s.financeiro})}));
+  const transacoes=useMemo(()=>{
+    const seen=new Set(); return (fin.transacoes||[]).filter(t=>{const k=chaveTransacao(t);if(seen.has(k))return false;seen.add(k);return true;});
+  },[fin.transacoes]);
 
-  useEffect(() => {
-    if (limpezaExecutada.current) return;
-    limpezaExecutada.current = true;
-    const documentosCsv = (fin.documentos || []).filter(doc => /\.csv$/i.test(doc.nome || ''));
-    const suspeitos = documentosCsv.filter(doc => {
-      const itens = (fin.transacoes || []).filter(t => t.origemDocumento === doc.nome);
-      if (itens.length < 20) return false;
-      const datas = itens.reduce((acc, t) => { acc[t.data || 'sem-data'] = (acc[t.data || 'sem-data'] || 0) + 1; return acc; }, {});
-      return Math.max(...Object.values(datas)) / itens.length >= 0.9;
-    });
-    if (!suspeitos.length) return;
-    const nomes = new Set(suspeitos.map(doc => doc.nome));
-    atualizar(fx => ({
-      ...fx,
-      transacoes: (fx.transacoes || []).filter(t => !nomes.has(t.origemDocumento)),
-      pendenciasClassificacao: (fx.pendenciasClassificacao || []).filter(p => !nomes.has(p.arquivo)),
-      documentos: (fx.documentos || []).filter(doc => !nomes.has(doc.nome)),
-    }));
-    aviso('A importação com datas concentradas incorretamente foi removida. Reenvie o CSV para a leitura mês a mês.');
-  }, []);
+  const doMes=useMemo(()=>transacoes.filter(t=>(t.competenciaAnalitica||(t.data||'').slice(0,7))===mesRef),[transacoes,mesRef]);
+  const receita=doMes.reduce((a,t)=>a+Number(t.impactoReceita ?? (!t.ignorarResumo&&t.tipo==='entrada'?t.valor:0)),0);
+  const despesaBruta=doMes.reduce((a,t)=>a+Number(t.impactoDespesa ?? (!t.ignorarResumo&&t.tipo==='saida'?t.valor:0)),0);
+  const despesa=Math.max(0,despesaBruta);
+  const saldo=receita-despesa;
+  const contasAPagar=doMes.filter(t=>t.tipo==='saida'&&t.pendente).reduce((a,t)=>a+Number(t.valor||0),0);
+  const liquidezAtual=Number(fin.liquidezAtual ?? FINANCEIRO_REFERENCIA.liquidezAtual);
+  const metaLiquidez=Number(fin.metaLiquidez ?? FINANCEIRO_REFERENCIA.metaLiquidez);
+  const progresso=Math.max(0,Math.min(100,Math.round(liquidezAtual/metaLiquidez*100)));
 
-  const transacoesDoMes = useMemo(() => transacoesUnicas.filter(t => (t.data || '').startsWith(mesRef)), [transacoesUnicas, mesRef]);
-  const receita = transacoesDoMes.filter(t => t.tipo === 'entrada').reduce((a, t) => a + t.valor, 0);
-  const despesa = transacoesDoMes.filter(t => t.tipo === 'saida').reduce((a, t) => a + t.valor, 0);
-  const saldo = receita - despesa;
-  const saldoAcumulado = transacoesUnicas
-    .filter(t => (t.data || '').slice(0, 7) <= mesRef)
-    .reduce((total, t) => total + (t.tipo === 'entrada' ? Number(t.valor || 0) : -Number(t.valor || 0)), 0);
-  const contasAPagar = transacoesDoMes.filter(t => t.tipo === 'saida' && t.pendente).reduce((a, t) => a + t.valor, 0);
-  const gastosPorCategoria = useMemo(() => CATEGORIAS_DESPESA.map((categoria, i) => {
-    const total = transacoesDoMes.filter(t => t.tipo === 'saida' && t.categoria === categoria).reduce((a, t) => a + t.valor, 0);
-    return { categoria, total, percentual: despesa ? Math.round((total / despesa) * 100) : 0, cor: ['#0A6963','#43BE8C','#8E2DE2','#5B9CF6','#F0A23B','#EA6B67','#9A72C7','#4E9F83','#DD7BA5','#94A3A8'][i] };
-  }).filter(x => x.total > 0).sort((a,b) => b.total-a.total), [transacoesDoMes, despesa]);
-  const leituraEstrategica = useMemo(() => {
-    const somar = categorias => transacoesDoMes.filter(t => t.tipo === 'saida' && categorias.includes(t.categoria)).reduce((a,t) => a + Number(t.valor || 0), 0);
-    const grupos = [
-      { nome: 'Custo de vida', categorias: ['Moradia','Alimentação','Transporte','Saúde','Educação','Cuidados pessoais'], cor: C.roxo },
-      { nome: 'Obrigações', categorias: ['Assinaturas'], cor: C.gold },
-      { nome: 'Patrimônio', categorias: ['Consórcio','Financiamento','Investimentos'], cor: C.green },
-      { nome: 'Consumo flexível', categorias: ['Lazer','Outros'], cor: C.coral },
-    ].map(g => ({ ...g, total: somar(g.categorias) }));
-    return grupos.map(g => ({ ...g, percentual: despesa ? Math.round(g.total / despesa * 100) : 0 }));
-  }, [transacoesDoMes, despesa]);
-  const metaLiquidez = Number(fin.metaLiquidez || 200000);
-  const progressoLiquidez = Math.max(0, Math.min(100, metaLiquidez ? Math.round(saldoAcumulado / metaLiquidez * 100) : 0));
-  const patrimonioMes = leituraEstrategica.find(g => g.nome === 'Patrimônio')?.total || 0;
-  const custoVidaMes = leituraEstrategica.find(g => g.nome === 'Custo de vida')?.total || 0;
+  const categorias=useMemo(()=>CATEGORIAS_DESPESA.map(c=>({categoria:c,total:doMes.filter(t=>t.categoria===c).reduce((a,t)=>a+Math.max(0,Number(t.impactoDespesa ?? (t.tipo==='saida'&&!t.ignorarResumo?t.valor:0))),0)})).filter(x=>x.total>0).sort((a,b)=>b.total-a.total),[doMes]);
 
-  const mesAnterior = useMemo(() => {
-    const [ano, mes] = mesRef.split('-').map(Number);
-    const d2 = new Date(ano, mes - 2, 1);
-    return `${d2.getFullYear()}-${String(d2.getMonth() + 1).padStart(2, '0')}`;
-  }, [mesRef]);
-  const transacoesMesAnterior = transacoesUnicas.filter(t => (t.data || '').startsWith(mesAnterior));
-  const receitaAnterior = transacoesMesAnterior.filter(t => t.tipo === 'entrada').reduce((a, t) => a + t.valor, 0);
-  const despesaAnterior = transacoesMesAnterior.filter(t => t.tipo === 'saida').reduce((a, t) => a + t.valor, 0);
-  const variacao = (atual, anterior) => anterior > 0 ? Math.round(((atual - anterior) / anterior) * 100) : (atual > 0 ? 100 : 0);
+  const trocarMes=dlt=>{const [a,m]=mesRef.split('-').map(Number);const x=new Date(a,m-1+dlt,1);setMesRef(`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}`);};
 
-  const ultimosMeses = useMemo(() => {
-    const arr = [];
-    const [ano, mes] = mesRef.split('-').map(Number);
-    for (let i = 5; i >= 0; i--) {
-      const dt = new Date(ano, mes - 1 - i, 1);
-      const chave = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
-      const total = transacoesUnicas.filter(t => (t.data || '').startsWith(chave) && t.tipo === 'entrada').reduce((a, t) => a + t.valor, 0);
-      arr.push({ lbl: MESES_LBL[dt.getMonth()], v: total });
-    }
-    return arr;
-  }, [transacoesUnicas, mesRef]);
-
-  const trocarMes = (delta) => {
-    const [ano, mes] = mesRef.split('-').map(Number);
-    const dt = new Date(ano, mes - 1 + delta, 1);
-    setMesRef(`${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`);
+  const classificarComIA = async (lista) => {
+    const alvos=[...new Set(lista.filter(t=>t.categoria==='Outros').map(t=>normalizarTexto(t.descricao)).filter(Boolean))].slice(0,200);
+    if(!alvos.length)return lista;
+    try{
+      const r=await classificarDescricoesCsv(alvos);
+      if(!r.ok||!Array.isArray(r.dados?.categorias))return lista;
+      const mapa=new Map(r.dados.categorias.filter(x=>Number(x.confianca||0)>=.7).map(x=>[alvos[x.id],x.categoria]));
+      return lista.map(t=>{const cat=mapa.get(normalizarTexto(t.descricao));return cat?aplicarRegras({...t,categoria:cat,confianca:'INFERIDO'}):t;});
+    }catch{return lista;}
   };
 
-  const abrirNovo = () => { setRascunho(rascunhoVazio()); setModoEntrada(null); setSheetAberto(true); };
-
-  const salvarLancamento = () => {
-    const valor = parseFloat(String(rascunho.valor).replace(',', '.'));
-    if (!valor || valor <= 0) return aviso('Informe um valor válido.');
-    const nova = { id: `t${Date.now()}`, ...rascunho, valor };
-    if (transacoesUnicas.some(t => chaveTransacao(t) === chaveTransacao(nova))) return aviso('Este lançamento já está registrado.');
-    atualizar(fx => ({ ...fx, transacoes: [...fx.transacoes, nova] }));
-    setSheetAberto(false);
-    aviso('Lançamento salvo.');
-  };
-
-  const categoriasDoTipo = rascunho.tipo === 'entrada' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
-  const resolverPendencia = (p,categoria) => atualizar(fx=>({...fx,transacoes:[...fx.transacoes,{id:`class-${Date.now()}`,tipo:p.tipo==='entrada'?'entrada':'saida',valor:+p.valor||0,categoria,conta:p.conta||'Conta corrente',data:p.data||hoje(),descricao:p.descricao||p.arquivo,pendente:false,origemDocumento:p.arquivo}],pendenciasClassificacao:(fx.pendenciasClassificacao||[]).filter(x=>x.id!==p.id)}));
-
-  const usarDocumento = () => inputFotoRef.current && inputFotoRef.current.click();
-  const onFotoSelecionada = async (ev) => {
-    const file = ev.target.files && ev.target.files[0];
-    ev.target.value = '';
-    if (!file) return;
-    if(file.size>4.5*1024*1024)return aviso('Envie um arquivo de até 4,5 MB.');
-    const arquivoHash = await hashArquivo(file);
-    const documentoAnterior = (fin.documentos || []).find(doc => doc.hash === arquivoHash);
-    const csv = /\.csv$/i.test(file.name) || /text\/csv|application\/csv|application\/vnd\.ms-excel/.test(file.type);
-    if (csv) {
-      setProcessandoIA(true);
-      try {
-        let extraidas = await transacoesDeCsv(file);
-        const descricoes = [...new Set(extraidas.filter(t => t.categoria === 'Outros').map(t => normalizarTexto(t.descricao)).filter(Boolean))].slice(0, 200);
-        let categoriasIA = new Map();
-        if (descricoes.length) {
-          const classificacao = await classificarDescricoesCsv(descricoes);
-          if (classificacao.ok && Array.isArray(classificacao.dados?.categorias)) {
-            categoriasIA = new Map(classificacao.dados.categorias.filter(x => x.confianca >= 0.7).map(x => [descricoes[x.id], x.categoria]));
-          }
-        }
-        extraidas = extraidas.map(t => ({ ...t, categoria: t.categoria !== 'Outros' ? t.categoria : (categoriasIA.get(normalizarTexto(t.descricao)) || categoriaPorDescricao(normalizarTexto(t.descricao), t.tipo)) }));
-        const anterioresDoArquivo = new Set(transacoesUnicas.filter(t => t.origemDocumento === file.name).map(chaveTransacao));
-        const baseSemArquivo = documentoAnterior ? transacoesUnicas.filter(t => t.origemDocumento !== file.name) : transacoesUnicas;
-        const chavesExistentes = new Set(baseSemArquivo.map(chaveTransacao));
-        const certas = extraidas.filter(t => {
-          const chave = chaveTransacao(t);
-          if (chavesExistentes.has(chave)) return false;
-          chavesExistentes.add(chave);
-          return true;
-        });
-        const ignoradas = extraidas.length - certas.length;
-        atualizar(fx => ({
-          ...fx,
-          transacoes: [...(documentoAnterior ? fx.transacoes.filter(t => t.origemDocumento !== file.name) : fx.transacoes), ...certas],
-          documentos: [...(fx.documentos || []).filter(doc => doc.hash !== arquivoHash), { id: `doc-${Date.now()}`, nome: file.name, data: hoje(), itens: certas.length, hash: arquivoHash }]
-        }));
-        const meses = [...new Set(certas.map(t => t.data.slice(0, 7)))].sort();
-        aviso(`${certas.length} lançamentos organizados em ${meses.length} mês(es)${documentoAnterior ? ' · importação anterior corrigida' : ''}${ignoradas ? ` · ${ignoradas} duplicados ignorados` : ''}`);
-      } catch (erro) {
-        aviso(erro?.message || 'Não consegui ler este CSV.');
-      } finally {
-        setProcessandoIA(false);
+  const prepararImportacao = async (file) => {
+    setProcessando(true);
+    try{
+      let extraidas;
+      const csv=/\.csv$/i.test(file.name)||/text\/csv|application\/csv|application\/vnd\.ms-excel/.test(file.type);
+      if(csv) extraidas=await transacoesDeCsv(file);
+      else {
+        const base64=await new Promise((res,rej)=>{const rd=new FileReader();rd.onerror=rej;rd.onload=()=>res(String(rd.result).split(',')[1]);rd.readAsDataURL(file);});
+        const r=await parseTransacao({imagemBase64:base64,mimeType:file.type});
+        if(!r.ok||!Array.isArray(r.dados?.transacoes)) throw new Error(r.erro||'Não encontrei movimentações neste documento.');
+        extraidas=r.dados.transacoes.filter(t=>Number(t.valor||0)>0).map((t,i)=>({id:`doc-${Date.now()}-${i}`,tipo:t.tipo==='entrada'?'entrada':'saida',valor:Number(t.valor),data:t.data||'',descricao:t.descricao||file.name,categoria:t.categoria||'Outros',conta:t.conta||'Conta corrente',origemDocumento:file.name,pendente:false}));
+        if(extraidas.some(t=>!t.data)) throw new Error('O documento tem lançamentos sem data. Corrija ou envie um extrato mensal mais claro.');
       }
-      return;
-    }
-    if (documentoAnterior) return aviso('Este documento já foi importado. Nenhum dado foi duplicado.');
-    const reader = new FileReader();
-    reader.onload = async () => {
-      setProcessandoIA(true);
-      const base64 = String(reader.result).split(',')[1];
-      const r = await parseTransacao({ imagemBase64: base64, mimeType: file.type });
-      setProcessandoIA(false);
-      if (r.ok&&Array.isArray(r.dados?.transacoes)) {
-        const extraidas=r.dados.transacoes.filter(t=>Number(t.confianca||0)>=0.75&&t.valor>0).map((t,i)=>({id:`doc-${Date.now()}-${i}`,tipo:t.tipo==='entrada'?'entrada':'saida',valor:+t.valor,categoria:t.categoria||'Outros',conta:t.conta||'Conta corrente',data:t.data||hoje(),descricao:t.descricao||file.name,pendente:false,origemDocumento:file.name}));
-        const chavesExistentes = new Set(transacoesUnicas.map(chaveTransacao));
-        const certas = extraidas.filter(t => {
-          const chave = chaveTransacao(t);
-          if (chavesExistentes.has(chave)) return false;
-          chavesExistentes.add(chave);
-          return true;
-        });
-        const ignoradas = extraidas.length - certas.length;
-        const duvidas=r.dados.transacoes.filter(t=>Number(t.confianca||0)<0.75||!t.categoria||t.categoria==='Outros').map((t,i)=>({id:`duvida-${Date.now()}-${i}`,...t,arquivo:file.name}));
-        atualizar(fx=>({...fx,transacoes:[...fx.transacoes,...certas],pendenciasClassificacao:[...(fx.pendenciasClassificacao||[]),...duvidas],dividas:r.dados.divida?[...(fx.dividas||[]),{id:`divida-${Date.now()}`,...r.dados.divida,origem:file.name}]:fx.dividas,documentos:[...(fx.documentos||[]),{id:`doc-${Date.now()}`,nome:file.name,data:hoje(),itens:certas.length,hash:arquivoHash}]}));
-        aviso(`${certas.length} lançamentos organizados${ignoradas?` · ${ignoradas} duplicados ignorados`:''}${duvidas.length?` · ${duvidas.length} precisam da sua resposta`:''}`);
-      } else if (r.ok) aviso('Não encontrei lançamentos suficientes neste documento.');
-      else aviso(r.erro);
-    };
-    reader.readAsDataURL(file);
+      let tratadas=extraidas.map(aplicarRegras);
+      tratadas=await classificarComIA(tratadas);
+      const existentes=new Set(transacoes.map(chaveTransacao)); const dentro=new Set();
+      tratadas=tratadas.map(t=>{const k=chaveTransacao(t);const duplicado=existentes.has(k)||dentro.has(k);dentro.add(k);return {...t,duplicado,revisar:t.revisar&&!duplicado};});
+      const meses=agruparMeses(tratadas);
+      if(!meses.length) throw new Error('Nenhuma movimentação válida encontrada.');
+      setImportacao({arquivo:file.name,meses,indice:0}); setSheet('conciliacao');
+    }catch(e){aviso(e?.message||'Não consegui preparar a conciliação.');}
+    finally{setProcessando(false);}
   };
 
-  return (
-    <div style={{ padding: '20px 16px 100px', maxWidth: 520, margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-        <Wallet size={22} color={C.green} />
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: 0 }}>Financeiro</h1>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 18px' }}>
-        <button onClick={() => trocarMes(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.ink2 }}><ChevronLeft size={20} /></button>
-        <span style={{ fontSize: 14, fontWeight: 700, color: C.ink2 }}>{MESES_LBL[Number(mesRef.slice(5, 7)) - 1]} de {mesRef.slice(0, 4)}</span>
-        <button onClick={() => trocarMes(1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.ink2 }}><ChevronRight size={20} /></button>
-      </div>
+  const selecionarArquivo=e=>{const f=e.target.files?.[0];e.target.value='';if(!f)return;if(f.size>4.5*1024*1024)return aviso('Envie um arquivo de até 4,5 MB.');prepararImportacao(f);};
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-        <Card cls="zoe-surge" style={{ background: C.mint }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: C.ink2 }}><TrendingUp size={14} /> Receita</div>
-          <div style={{ fontSize: 19, fontWeight: 800, color: C.ink, marginTop: 4 }}>{formatoMoeda(receita)}</div>
-          <div style={{ fontSize: 11, color: variacao(receita, receitaAnterior) >= 0 ? C.green : C.coral, marginTop: 2 }}>{variacao(receita, receitaAnterior) >= 0 ? '↑' : '↓'} {Math.abs(variacao(receita, receitaAnterior))}% vs mês anterior</div>
-        </Card>
-        <Card cls="zoe-surge" delay={30} style={{ background: C.limaSuave }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: C.ink2 }}><TrendingDown size={14} /> Despesas</div>
-          <div style={{ fontSize: 19, fontWeight: 800, color: C.ink, marginTop: 4 }}>{formatoMoeda(despesa)}</div>
-          <div style={{ fontSize: 11, color: variacao(despesa, despesaAnterior) <= 0 ? C.green : C.coral, marginTop: 2 }}>{variacao(despesa, despesaAnterior) >= 0 ? '↑' : '↓'} {Math.abs(variacao(despesa, despesaAnterior))}% vs mês anterior</div>
-        </Card>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-        <Card>
-          <div style={{ fontSize: 12, fontWeight: 700, color: C.ink2 }}>Saldo do mês</div>
-          <div style={{ fontSize: 19, fontWeight: 800, color: saldo >= 0 ? C.green : C.coral, marginTop: 4 }}>{formatoMoeda(saldo)}</div>
-        </Card>
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: C.ink2 }}><FileClock size={14} /> Contas a pagar</div>
-          <div style={{ fontSize: 19, fontWeight: 800, color: C.ink, marginTop: 4 }}>{formatoMoeda(contasAPagar)}</div>
-        </Card>
-      </div>
+  const mesAtual=importacao?.meses?.[importacao.indice];
+  const pendentesMes=mesAtual?.itens?.filter(t=>t.revisar&&!t.duplicado)||[];
+  const resumoConciliacao=useMemo(()=>{
+    if(!mesAtual)return {validos:0,duplicados:0,internas:0,faturas:0,estornos:0};
+    return {
+      validos:mesAtual.itens.filter(t=>!t.duplicado).length,
+      duplicados:mesAtual.itens.filter(t=>t.duplicado).length,
+      internas:mesAtual.itens.filter(t=>t.natureza==='TRANSFERENCIA_INTERNA').length,
+      faturas:mesAtual.itens.filter(t=>t.natureza==='PAGAMENTO_FATURA').length,
+      estornos:mesAtual.itens.filter(t=>t.natureza==='ESTORNO_REEMBOLSO').length
+    };
+  },[mesAtual]);
 
-      <Card style={{ marginBottom: 16, background: saldoAcumulado >= 0 ? '#F2FBF7' : '#FFF4F1', border: `1px solid ${saldoAcumulado >= 0 ? '#CDEDE0' : '#F4D4CC'}` }}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}}>
-          <div><div style={{fontSize:12,fontWeight:800,color:C.ink2}}>Saldo acumulado</div><div style={{fontSize:10.5,color:C.ink3,marginTop:3}}>Entradas menos saídas até {MESES_LBL[Number(mesRef.slice(5,7))-1]} de {mesRef.slice(0,4)}</div></div>
-          <strong style={{fontSize:20,color:saldoAcumulado>=0?C.green:C.coral,whiteSpace:'nowrap'}}>{formatoMoeda(saldoAcumulado)}</strong>
-        </div>
-      </Card>
+  const resolver=(id,categoria,natureza) => setImportacao(old=>({...old,meses:old.meses.map((m,mi)=>mi!==old.indice?m:{...m,itens:m.itens.map(t=>t.id!==id?t:aplicarRegras({...t,categoria,natureza:natureza||t.natureza,revisar:false,confianca:'CONFIRMADO_MANUAL'}))})}));
 
-      <div style={{margin:'22px 2px 10px'}}><div style={{fontSize:10,fontWeight:900,letterSpacing:1.2,textTransform:'uppercase',color:C.roxo}}>Visão estratégica</div><div style={{fontSize:19,fontWeight:900,color:C.ink,marginTop:3}}>Seu dinheiro por função</div><div style={{fontSize:11,color:C.ink3,marginTop:3}}>A ZOE separa consumo, obrigações e construção de patrimônio.</div></div>
-      <Card style={{marginBottom:12,background:'linear-gradient(135deg,#2E214E,#7657C9)',color:'#fff',border:0}}>
-        <div style={{fontSize:10,fontWeight:900,letterSpacing:1.1,textTransform:'uppercase',opacity:.72}}>Plano de caixa · {MESES_LBL[Number(mesRef.slice(5,7))-1]}</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:13}}>
-          <div><div style={{fontSize:10,opacity:.72}}>Entrada do mês</div><strong style={{fontSize:18}}>{formatoMoeda(receita)}</strong></div>
-          <div><div style={{fontSize:10,opacity:.72}}>Saída do mês</div><strong style={{fontSize:18}}>{formatoMoeda(despesa)}</strong></div>
-          <div><div style={{fontSize:10,opacity:.72}}>Custo de vida</div><strong style={{fontSize:18}}>{formatoMoeda(custoVidaMes)}</strong></div>
-          <div><div style={{fontSize:10,opacity:.72}}>Formação patrimonial</div><strong style={{fontSize:18,color:'#C8FF67'}}>{formatoMoeda(patrimonioMes)}</strong></div>
-        </div>
-      </Card>
+  const confirmarMes=()=>{
+    if(!mesAtual)return;
+    if(pendentesMes.length)return aviso(`Resolva ${pendentesMes.length} item(ns) antes de confirmar.`);
+    const novas=mesAtual.itens.filter(t=>!t.duplicado);
+    atualizar(fx=>({...fx,transacoes:[...(fx.transacoes||[]),...novas],documentos:[...(fx.documentos||[]),{id:`doc-${Date.now()}`,nome:importacao.arquivo,mes:mesAtual.mes,itens:novas.length,conciliado:true,data:hoje()}],importacoesConciliadas:[...(fx.importacoesConciliadas||[]),{arquivo:importacao.arquivo,mes:mesAtual.mes,itens:novas.length,data:hoje()}]}));
+    if(importacao.indice<importacao.meses.length-1){setImportacao(x=>({...x,indice:x.indice+1}));aviso(`${mesAtual.mes} conciliado. Agora revise o próximo mês.`);}
+    else {setImportacao(null);setSheet(null);aviso('Importação conciliada e salva sem duplicar movimentações.');}
+  };
 
-      <Card style={{marginBottom:16}}>
-        <div style={{fontSize:14,fontWeight:900,color:C.ink,marginBottom:12}}>Como suas saídas se dividem</div>
-        {leituraEstrategica.map(g=><div key={g.nome} style={{marginBottom:12}}><div style={{display:'flex',justifyContent:'space-between',gap:10,fontSize:11.5}}><span style={{display:'flex',alignItems:'center',gap:7,color:C.ink2}}><i style={{width:9,height:9,borderRadius:9,background:g.cor}}/>{g.nome}</span><strong style={{color:C.ink}}>{g.percentual}% · {formatoMoeda(g.total)}</strong></div><div style={{height:7,background:'#EFEDF3',borderRadius:10,overflow:'hidden',marginTop:6}}><i style={{display:'block',height:'100%',width:`${g.percentual}%`,background:g.cor,borderRadius:10}}/></div></div>)}
-      </Card>
+  const salvarManual=async()=>{
+    const valor=Number(String(rascunho.valor).replace(',','.')); if(!valor)return aviso('Informe um valor válido.');
+    let t=aplicarRegras({id:`manual-${Date.now()}`,...rascunho,valor,origemDocumento:'Lançamento manual'});
+    if(t.categoria==='Outros'&&t.descricao){const [classificada]=await classificarComIA([t]);t=classificada||t;}
+    if(t.revisar){setImportacao({arquivo:'Lançamento manual',meses:[{mes:t.data.slice(0,7),itens:[t]}],indice:0});setSheet('conciliacao');return;}
+    if(transacoes.some(x=>chaveTransacao(x)===chaveTransacao(t)))return aviso('Este lançamento já existe.');
+    atualizar(fx=>({...fx,transacoes:[...(fx.transacoes||[]),t]}));setSheet(null);aviso('Lançamento salvo e classificado.');
+  };
 
-      <Card style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: C.ink2, marginBottom: 10 }}>Entradas nos últimos 6 meses</div>
-        <GraficoLinha dados={ultimosMeses.map(m => m.v)} cor={C.green} />
-        <div style={{ display: 'flex', marginTop: 6 }}>
-          {ultimosMeses.map(m => <div key={m.lbl} style={{ flex: 1, textAlign: 'center', fontSize: 10, color: C.ink3 }}>{m.lbl}</div>)}
-        </div>
-      </Card>
-
-      {(fin.dividas||[]).length>0&&<><div style={{display:'flex',alignItems:'center',gap:7,margin:'4px 2px 10px',color:C.ink,fontWeight:850}}><Landmark size={18} color={C.roxo}/>Consórcios e financiamentos</div>{fin.dividas.map(divida=>{const total=+divida.valor_total||0,pago=+divida.valor_pago||0,resta=+divida.saldo_restante||(total-pago);return <Card key={divida.id} style={{marginBottom:10,border:'1px solid #E4D9F2'}}><div style={{display:'flex',justifyContent:'space-between',gap:10}}><div><div style={{fontSize:10,fontWeight:900,color:C.roxo,textTransform:'uppercase'}}>{divida.tipo||'Dívida'}</div><div style={{fontSize:14,fontWeight:850,color:C.ink,marginTop:3}}>{divida.nome||divida.instituicao||'Contrato identificado'}</div></div><div style={{textAlign:'right',fontSize:10,color:C.ink3}}>{divida.parcela_atual&&divida.total_parcelas?`${divida.parcela_atual}/${divida.total_parcelas} parcelas`:''}</div></div><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,margin:'12px 0 8px'}}><div style={{background:C.mint,borderRadius:12,padding:10}}><div style={{fontSize:9,color:C.ink3}}>Já pago</div><strong style={{fontSize:14,color:C.green}}>{formatoMoeda(pago)}</strong></div><div style={{background:'#FFF3F0',borderRadius:12,padding:10}}><div style={{fontSize:9,color:C.ink3}}>Ainda falta</div><strong style={{fontSize:14,color:C.coral}}>{formatoMoeda(resta)}</strong></div></div><Barra v={pago} max={total||Math.max(1,pago+resta)} cor={C.roxo} h={7}/></Card>})}</>}
-
-      <div style={{display:'flex',alignItems:'center',gap:7,margin:'18px 2px 10px',color:C.ink,fontWeight:850}}><Target size={18} color={C.green}/>Liquidez e meta</div>
-      <Card style={{marginBottom:16}}>
-        <div style={{display:'flex',justifyContent:'space-between',gap:10,alignItems:'end'}}><div><div style={{fontSize:10.5,color:C.ink3}}>Saldo acumulado identificado</div><strong style={{fontSize:21,color:saldoAcumulado>=0?C.green:C.coral}}>{formatoMoeda(saldoAcumulado)}</strong></div><div style={{textAlign:'right'}}><div style={{fontSize:10.5,color:C.ink3}}>Meta de liquidez</div><strong style={{fontSize:15,color:C.ink}}>{formatoMoeda(metaLiquidez)}</strong></div></div>
-        <div style={{height:12,background:'#EEEAF3',borderRadius:20,overflow:'hidden',margin:'15px 0 7px'}}><i style={{display:'block',height:'100%',width:`${progressoLiquidez}%`,background:'linear-gradient(90deg,#7657C9,#B8F34A)',borderRadius:20}}/></div>
-        <div style={{display:'flex',justifyContent:'space-between',fontSize:10.5,color:C.ink3}}><span>{progressoLiquidez}% da meta</span><strong style={{color:C.ink}}>Faltam {formatoMoeda(Math.max(0,metaLiquidez-saldoAcumulado))}</strong></div>
-      </Card>
-
-      <Card style={{marginBottom:16,background:'#F5F1FC',border:'1px solid #E3D9F3'}}>
-        <div style={{display:'flex',gap:10,alignItems:'flex-start'}}><Sparkles size={19} color={C.roxo} style={{flexShrink:0}}/><div><strong style={{fontSize:13.5,color:C.ink}}>Leitura da ZOE</strong><div style={{fontSize:11,lineHeight:1.5,color:C.ink2,marginTop:4}}>{saldo<0?'As saídas superaram as entradas neste mês. O próximo passo é revisar o consumo flexível antes de comprometer patrimônio ou liquidez.':patrimonioMes>0?'O mês fechou positivo e parte das saídas foi direcionada à formação patrimonial. Preserve essa separação para não confundir investimento com consumo.':'O mês está positivo, mas não identifiquei formação patrimonial. Considere definir quanto da sobra deve permanecer líquido e quanto pode ser investido.'}</div></div></div>
-      </Card>
-
-      {(fin.pendenciasClassificacao||[]).length>0&&<><div style={{display:'flex',alignItems:'center',gap:7,margin:'16px 2px 10px',color:C.ink,fontWeight:850}}><HelpCircle size={18} color={C.gold}/>A ZOE precisa da sua ajuda</div>{fin.pendenciasClassificacao.map(p=><Card key={p.id} style={{marginBottom:9,background:'#FFFBEE',border:'1px solid #F3DF9B'}}><div style={{fontSize:12.5,fontWeight:800,color:C.ink}}>Onde entra “{p.descricao||'este pagamento'}”?</div><div style={{fontSize:11,color:C.ink3,margin:'4px 0 10px'}}>{formatoMoeda(+p.valor||0)} · {p.arquivo}</div><div style={{display:'flex',flexWrap:'wrap',gap:5}}>{['Moradia','Transporte','Consórcio','Financiamento','Outros'].map(cat=><button key={cat} onClick={()=>resolverPendencia(p,cat)} style={{border:`1px solid ${C.line}`,background:'#fff',borderRadius:16,padding:'6px 8px',fontFamily:'inherit',fontSize:9.5,fontWeight:800,color:C.ink}}>{cat}</button>)}</div></Card>)}</>}
-
-      <Card style={{ marginBottom: 16 }}>
-        <div style={{fontSize:14,fontWeight:850,color:C.ink,marginBottom:4}}>Para onde foi seu dinheiro</div>
-        <div style={{fontSize:11,color:C.ink3,marginBottom:14}}>Percentual das despesas de {MESES_LBL[Number(mesRef.slice(5,7))-1]}</div>
-        {gastosPorCategoria.length===0?<div style={{textAlign:'center',padding:'18px 0',fontSize:12.5,color:C.ink3}}>Envie uma fatura ou faça um lançamento para ver a distribuição.</div>:<div style={{display:'grid',gridTemplateColumns:'112px 1fr',gap:15,alignItems:'center'}}>
-          <div style={{width:108,height:108,borderRadius:'50%',background:`conic-gradient(${gastosPorCategoria.map((x,i)=>{const antes=gastosPorCategoria.slice(0,i).reduce((n,y)=>n+y.percentual,0);return `${x.cor} ${antes}% ${antes+x.percentual}%`}).join(',')})`,display:'grid',placeItems:'center'}}><div style={{width:63,height:63,borderRadius:'50%',background:'#fff',display:'grid',placeItems:'center',textAlign:'center'}}><div><strong style={{display:'block',fontSize:15,color:C.ink}}>100%</strong><span style={{fontSize:8.5,color:C.ink3}}>dos gastos</span></div></div></div>
-          <div>{gastosPorCategoria.map(x=><div key={x.categoria} style={{marginBottom:9}}><div style={{display:'flex',alignItems:'center',gap:6,fontSize:10.5}}><span style={{width:8,height:8,borderRadius:8,background:x.cor}}/><strong style={{flex:1,color:C.ink}}>{x.categoria}</strong><span style={{fontWeight:900,color:C.ink}}>{x.percentual}%</span></div><div style={{fontSize:9.5,color:C.ink3,margin:'2px 0 0 14px'}}>{formatoMoeda(x.total)}</div></div>)}</div>
-        </div>}
-      </Card>
-
-      <Card style={{ marginBottom: 16, background: '#F5FAF8', border: `1px solid ${C.line}` }}>
-        <div style={{display:'flex',alignItems:'center',gap:11}}>
-          <span style={{width:40,height:40,borderRadius:13,background:C.mint,color:C.green,display:'grid',placeItems:'center',flexShrink:0}}><ShieldCheck size={20}/></span>
-          <div><strong style={{display:'block',fontSize:13.5,color:C.ink}}>Seus extratos permanecem privados</strong><span style={{fontSize:10.8,lineHeight:1.45,color:C.ink3}}>A ZOE usa os lançamentos somente para calcular os resumos acima. Descrições, estabelecimentos e a lista detalhada não são exibidos nesta tela.</span></div>
-        </div>
-        <div style={{marginTop:11,paddingTop:10,borderTop:`1px solid ${C.line}`,fontSize:10.5,color:C.ink3}}>{transacoesDoMes.length} lançamentos únicos considerados neste mês</div>
-      </Card>
-
-      <Btn onClick={abrirNovo} style={{ width: '100%' }}><Plus size={16} style={{ verticalAlign: -3, marginRight: 6 }} />Novo lançamento</Btn>
-
-      <Sheet aberto={sheetAberto} fechar={() => setSheetAberto(false)} titulo={modoEntrada==='manual'?'Lançamento manual':modoEntrada==='documento'?'Enviar documento':'Adicionar movimentações'}>
-        {!modoEntrada&&<div><p style={{fontSize:12.5,lineHeight:1.5,color:C.ink3,margin:'0 0 16px'}}>Escolha como deseja adicionar as informações financeiras.</p><button onClick={()=>setModoEntrada('manual')} style={{width:'100%',border:`1.5px solid ${C.line}`,background:'#fff',borderRadius:17,padding:16,display:'flex',alignItems:'center',gap:13,textAlign:'left',fontFamily:'inherit',marginBottom:10}}><span style={{width:44,height:44,borderRadius:14,background:C.mint,color:C.green,display:'grid',placeItems:'center'}}><PenLine size={21}/></span><span><strong style={{display:'block',fontSize:14,color:C.ink}}>Adicionar manualmente</strong><small style={{fontSize:10.5,color:C.ink3}}>Preencha valor, categoria e data</small></span></button><button onClick={()=>{setModoEntrada('documento');setTimeout(usarDocumento,80)}} style={{width:'100%',border:'1.5px solid #DDD5EB',background:'#F9F5FF',borderRadius:17,padding:16,display:'flex',alignItems:'center',gap:13,textAlign:'left',fontFamily:'inherit'}}><span style={{width:44,height:44,borderRadius:14,background:'#EDE1FF',color:C.roxo,display:'grid',placeItems:'center'}}><FileText size={22}/></span><span><strong style={{display:'block',fontSize:14,color:C.ink}}>Enviar documento</strong><small style={{fontSize:10.5,color:C.ink3}}>CSV, PDF, fatura, extrato, boleto ou foto</small></span></button></div>}
-
-        {modoEntrada==='documento'&&<div style={{textAlign:'center',padding:'4px 0 10px'}}><div style={{width:62,height:62,borderRadius:20,background:'#EDE1FF',color:C.roxo,display:'grid',placeItems:'center',margin:'0 auto 13px'}}><Upload size={27}/></div><strong style={{fontSize:16,color:C.ink}}>A ZOE organiza o documento inteiro</strong><p style={{fontSize:11.5,lineHeight:1.5,color:C.ink3,margin:'7px 0 16px'}}>Ela aceita CSV, PDF ou imagem, organiza as movimentações e evita registros duplicados.</p><Btn onClick={usarDocumento} disabled={processandoIA} style={{width:'100%',padding:14}}>{processandoIA?'Lendo e organizando…':'Escolher CSV, PDF ou imagem'}</Btn><button onClick={()=>setModoEntrada(null)} style={{border:0,background:'transparent',color:C.ink3,fontFamily:'inherit',fontWeight:750,padding:13}}>Voltar</button></div>}
-        <input ref={inputFotoRef} type="file" accept=".csv,text/csv,application/csv,application/vnd.ms-excel,image/*,application/pdf" style={{ display: 'none' }} onChange={onFotoSelecionada} />
-
-        {modoEntrada==='manual'&&<><button onClick={()=>setModoEntrada(null)} style={{border:0,background:'transparent',color:C.ink3,fontFamily:'inherit',fontWeight:750,padding:'0 0 13px'}}>← Voltar</button><div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-          {[['saida', 'Saída'], ['entrada', 'Entrada']].map(([tp, lbl]) => (
-            <button key={tp} onClick={() => setRascunho(r => ({ ...r, tipo: tp, categoria: (tp === 'entrada' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA)[0] }))} style={{
-              flex: 1, padding: '10px 8px', borderRadius: 12, border: `1.5px solid ${rascunho.tipo === tp ? C.green : C.line}`,
-              background: rascunho.tipo === tp ? C.green : 'transparent', color: rascunho.tipo === tp ? '#fff' : C.ink2,
-              fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit'
-            }}>{lbl}</button>
-          ))}
-        </div>
-        <Campo label="Valor (R$)" type="number" inputMode="decimal" placeholder="0,00" value={rascunho.valor} onChange={e => setRascunho(r => ({ ...r, valor: e.target.value }))} />
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ fontSize: 12, fontWeight: 700, color: C.ink2, display: 'block', marginBottom: 6 }}>Categoria</label>
-          <select value={rascunho.categoria} onChange={e => setRascunho(r => ({ ...r, categoria: e.target.value }))}
-            style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${C.line}`, fontSize: 15, color: C.ink, fontFamily: 'inherit', background: '#FAFCFB' }}>
-            {categoriasDoTipo.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ fontSize: 12, fontWeight: 700, color: C.ink2, display: 'block', marginBottom: 6 }}>Conta</label>
-          <select value={rascunho.conta} onChange={e => setRascunho(r => ({ ...r, conta: e.target.value }))}
-            style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${C.line}`, fontSize: 15, color: C.ink, fontFamily: 'inherit', background: '#FAFCFB' }}>
-            {fin.contas.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-        <Campo label="Data" type="date" value={rascunho.data} onChange={e => setRascunho(r => ({ ...r, data: e.target.value }))} />
-        <Area label="Descrição (opcional)" placeholder="Ex.: Mercado da semana" value={rascunho.descricao} onChange={e => setRascunho(r => ({ ...r, descricao: e.target.value }))} />
-        {rascunho.tipo === 'saida' && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: C.ink2, marginBottom: 16, cursor: 'pointer' }}>
-            <input type="checkbox" checked={rascunho.pendente} onChange={e => setRascunho(r => ({ ...r, pendente: e.target.checked }))} />
-            Ainda não paguei (conta a pagar)
-          </label>
-        )}
-        <Btn onClick={salvarLancamento} style={{ width: '100%' }}>Salvar lançamento</Btn></>}
-      </Sheet>
+  return <div style={{padding:'20px 16px 110px',maxWidth:540,margin:'0 auto'}}>
+    <div style={{display:'flex',alignItems:'center',gap:9}}><Wallet size={23} color={C.green}/><h1 style={{fontSize:25,color:C.ink,margin:0}}>Financeiro</h1></div>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'12px 0 18px'}}>
+      <button onClick={()=>trocarMes(-1)} style={{border:0,background:'transparent',color:C.ink2}}><ChevronLeft/></button>
+      <strong style={{fontSize:13,color:C.ink2}}>{MESES_LBL[Number(mesRef.slice(5,7))-1]} de {mesRef.slice(0,4)}</strong>
+      <button onClick={()=>trocarMes(1)} style={{border:0,background:'transparent',color:C.ink2}}><ChevronRight/></button>
     </div>
-  );
+
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+      <Card style={{background:C.mint}}><div style={{fontSize:11,color:C.ink2,fontWeight:800}}><TrendingUp size={14}/> Receita</div><strong style={{fontSize:19,color:C.ink}}>{formatoMoeda(receita)}</strong></Card>
+      <Card style={{background:C.limaSuave}}><div style={{fontSize:11,color:C.ink2,fontWeight:800}}><TrendingDown size={14}/> Despesas</div><strong style={{fontSize:19,color:C.ink}}>{formatoMoeda(despesa)}</strong></Card>
+      <Card><div style={{fontSize:11,color:C.ink2,fontWeight:800}}>Resultado do mês</div><strong style={{fontSize:19,color:saldo>=0?C.green:C.coral}}>{formatoMoeda(saldo)}</strong></Card>
+      <Card><div style={{fontSize:11,color:C.ink2,fontWeight:800}}><FileClock size={14}/> A pagar</div><strong style={{fontSize:19,color:C.ink}}>{formatoMoeda(contasAPagar)}</strong></Card>
+    </div>
+
+    <div style={{margin:'24px 2px 10px'}}><div style={{fontSize:10,fontWeight:900,color:C.roxo,letterSpacing:1.1,textTransform:'uppercase'}}>Investimentos e reservas</div><h2 style={{fontSize:20,color:C.ink,margin:'4px 0'}}>Sua liquidez em construção</h2></div>
+    <Card style={{marginBottom:12,textAlign:'center',padding:'22px 16px'}}>
+      <div style={{fontSize:12,color:C.ink2}}>Meta {formatoMoeda(metaLiquidez)} até 31/12/2026</div>
+      <div style={{width:220,height:220,borderRadius:'50%',margin:'18px auto 8px',background:`conic-gradient(${C.roxo} ${progresso}%, #ECECEF ${progresso}% 100%)`,padding:15,display:'grid',placeItems:'center'}}>
+        <div style={{width:'100%',height:'100%',borderRadius:'50%',background:'#fff',display:'grid',placeItems:'center'}}>
+          <div><PiggyBank size={72} color={C.coral}/><div style={{fontSize:10,color:C.ink3,marginTop:6}}>LIQUIDEZ ATUAL</div></div>
+        </div>
+      </div>
+      <strong style={{display:'block',fontSize:30,color:C.ink}}>{formatoMoeda(liquidezAtual)}</strong>
+      <div style={{fontSize:12,fontWeight:800,color:C.green,marginTop:4}}>{progresso}% da meta</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9,marginTop:16}}>
+        <div style={{background:'#F6F7FF',borderRadius:16,padding:12,textAlign:'left'}}><div style={{fontSize:10,color:C.ink3}}>Reserva mensal</div><strong style={{fontSize:16,color:C.ink}}>{formatoMoeda(FINANCEIRO_REFERENCIA.reservaAutomaticaMensal)}</strong></div>
+        <div style={{background:'#F6F7FF',borderRadius:16,padding:12,textAlign:'left'}}><div style={{fontSize:10,color:C.ink3}}>Reserva por gasto</div><strong style={{fontSize:16,color:C.ink}}>{formatoMoeda(FINANCEIRO_REFERENCIA.reservaPorGasto)}</strong></div>
+      </div>
+    </Card>
+
+    {(fin.dividas||[]).length>0&&<><div style={{display:'flex',alignItems:'center',gap:7,margin:'18px 2px 10px',fontWeight:850,color:C.ink}}><Landmark size={18} color={C.roxo}/>Consórcios e financiamentos</div>{fin.dividas.map(x=><Card key={x.id} style={{marginBottom:9}}><strong style={{fontSize:13,color:C.ink}}>{x.nome||x.instituicao||x.tipo}</strong><div style={{display:'flex',justifyContent:'space-between',fontSize:10.5,color:C.ink3,margin:'8px 0'}}><span>Pago {formatoMoeda(x.valor_pago||0)}</span><span>Falta {formatoMoeda(x.saldo_restante||0)}</span></div><Barra v={Number(x.valor_pago||0)} max={Number(x.valor_total||0)||1} cor={C.roxo}/></Card>)}</>}
+
+    <div style={{margin:'20px 2px 10px'}}><strong style={{color:C.ink}}>Para onde foi seu dinheiro</strong><div style={{fontSize:11,color:C.ink3}}>Somente despesas conciliadas; transferências e pagamento de fatura ficam fora.</div></div>
+    <Card style={{marginBottom:16}}>{categorias.length?categorias.slice(0,8).map(x=><div key={x.categoria} style={{marginBottom:11}}><div style={{display:'flex',justifyContent:'space-between',fontSize:11.5}}><span style={{color:C.ink2}}>{x.categoria}</span><strong style={{color:C.ink}}>{formatoMoeda(x.total)}</strong></div><Barra v={x.total} max={Math.max(...categorias.map(y=>y.total),1)} cor={C.green} h={6}/></div>):<div style={{fontSize:12,color:C.ink3,textAlign:'center',padding:14}}>Nenhum gasto conciliado neste mês.</div>}</Card>
+
+    <Card style={{background:'#F5FAF8',marginBottom:14}}><div style={{display:'flex',gap:10}}><ShieldCheck size={20} color={C.green}/><div><strong style={{fontSize:13,color:C.ink}}>Consolidação protegida</strong><div style={{fontSize:10.7,color:C.ink3,lineHeight:1.45,marginTop:3}}>A ZOE não joga o arquivo direto no dashboard. Primeiro separa por mês, remove duplicidades, neutraliza transferências e faturas e abre a conciliação para tudo que a IA não tiver certeza.</div></div></div></Card>
+
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9}}>
+      <Btn onClick={()=>setSheet('adicionar')}><Plus size={15}/> Adicionar</Btn>
+      <Btn variante="outline" onClick={()=>{setSheet('documento');setTimeout(()=>inputRef.current?.click(),80)}}><Upload size={15}/> Importar mês</Btn>
+    </div>
+
+    <input ref={inputRef} type="file" accept=".csv,text/csv,application/csv,application/vnd.ms-excel,image/*,application/pdf" style={{display:'none'}} onChange={selecionarArquivo}/>
+
+    <Sheet aberto={sheet==='adicionar'} fechar={()=>setSheet(null)} titulo="Adicionar movimentação">
+      <div style={{display:'flex',gap:8,marginBottom:12}}>{[['saida','Saída'],['entrada','Entrada']].map(([v,l])=><button key={v} onClick={()=>setRascunho(r=>({...r,tipo:v,categoria:'Outros'}))} style={{flex:1,padding:10,borderRadius:12,border:`1px solid ${rascunho.tipo===v?C.green:C.line}`,background:rascunho.tipo===v?C.green:'#fff',color:rascunho.tipo===v?'#fff':C.ink}}>{l}</button>)}</div>
+      <Campo label="Valor" type="number" value={rascunho.valor} onChange={e=>setRascunho(r=>({...r,valor:e.target.value}))}/>
+      <Campo label="Data" type="date" value={rascunho.data} onChange={e=>setRascunho(r=>({...r,data:e.target.value}))}/>
+      <Area label="Descrição" placeholder="Ex.: mercado, salário, transferência para reserva" value={rascunho.descricao} onChange={e=>setRascunho(r=>({...r,descricao:e.target.value}))}/>
+      <div style={{fontSize:11,color:C.ink3,margin:'-3px 0 13px'}}>A ZOE tentará reconhecer automaticamente natureza e categoria antes de salvar.</div>
+      <Btn onClick={salvarManual} style={{width:'100%'}}>Analisar e salvar</Btn>
+    </Sheet>
+
+    <Sheet aberto={sheet==='documento'} fechar={()=>setSheet(null)} titulo="Importar documento mensal">
+      <div style={{textAlign:'center',padding:'4px 0 12px'}}><FileText size={36} color={C.roxo}/><h3 style={{color:C.ink,margin:'9px 0 5px'}}>Um mês de cada vez</h3><p style={{fontSize:11.5,lineHeight:1.5,color:C.ink3}}>Prefira extrato ou fatura fechada de um único mês. Se um CSV tiver vários meses, a ZOE divide internamente e obriga a conciliação mês a mês antes de consolidar.</p><Btn disabled={processando} onClick={()=>inputRef.current?.click()} style={{width:'100%'}}>{processando?'Lendo e conciliando…':'Escolher CSV, PDF ou imagem'}</Btn></div>
+    </Sheet>
+
+    <Sheet aberto={sheet==='conciliacao'&&!!mesAtual} fechar={()=>{setSheet(null);setImportacao(null)}} titulo={`Conciliação · ${mesAtual?.mes||''}`}>
+      {mesAtual&&<>
+        <div style={{background:'#F4F1FA',borderRadius:16,padding:13,marginBottom:12}}><div style={{fontSize:10,color:C.ink3}}>Arquivo</div><strong style={{fontSize:12,color:C.ink}}>{importacao.arquivo}</strong><div style={{fontSize:10.5,color:C.ink3,marginTop:5}}>Mês {importacao.indice+1} de {importacao.meses.length} · {resumoConciliacao.validos} válidos · {resumoConciliacao.duplicados} duplicados ignorados</div></div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:7,marginBottom:12}}>
+          <div style={{background:C.mint,borderRadius:12,padding:9,textAlign:'center'}}><ArrowRightLeft size={16} color={C.green}/><strong style={{display:'block',fontSize:14,color:C.ink}}>{resumoConciliacao.internas}</strong><span style={{fontSize:8.5,color:C.ink3}}>transferências</span></div>
+          <div style={{background:'#F4F1FA',borderRadius:12,padding:9,textAlign:'center'}}><CreditCard size={16} color={C.roxo}/><strong style={{display:'block',fontSize:14,color:C.ink}}>{resumoConciliacao.faturas}</strong><span style={{fontSize:8.5,color:C.ink3}}>pag. fatura</span></div>
+          <div style={{background:'#FFF5ED',borderRadius:12,padding:9,textAlign:'center'}}><RotateCcw size={16} color={C.coral}/><strong style={{display:'block',fontSize:14,color:C.ink}}>{resumoConciliacao.estornos}</strong><span style={{fontSize:8.5,color:C.ink3}}>estornos</span></div>
+        </div>
+        {pendentesMes.length>0?<><div style={{display:'flex',gap:7,alignItems:'center',margin:'8px 0 10px'}}><AlertTriangle size={17} color={C.gold}/><strong style={{fontSize:13,color:C.ink}}>A ZOE precisa da sua ajuda em {pendentesMes.length} item(ns)</strong></div>{pendentesMes.slice(0,20).map(t=><Card key={t.id} style={{marginBottom:9,background:'#FFFCF2',border:'1px solid #F0E1A5'}}><div style={{fontSize:12.5,fontWeight:800,color:C.ink}}>{t.descricao}</div><div style={{fontSize:11,color:C.ink3,margin:'3px 0 9px'}}>{formatoMoeda(t.valor)} · {t.data}</div><div style={{display:'flex',flexWrap:'wrap',gap:5}}>{(t.tipo==='entrada'?CATEGORIAS_RECEITA:CATEGORIAS_DESPESA).slice(0,10).map(cat=><button key={cat} onClick={()=>resolver(t.id,cat)} style={{border:`1px solid ${C.line}`,background:'#fff',borderRadius:14,padding:'6px 8px',fontSize:9.5,color:C.ink}}>{cat}</button>)}<button onClick={()=>resolver(t.id,'Outros')} style={{border:`1px solid ${C.roxo}`,background:'#fff',borderRadius:14,padding:'6px 8px',fontSize:9.5,color:C.roxo}}>Manter como Outros</button></div></Card>)}</>:<div style={{display:'flex',gap:8,alignItems:'center',padding:13,background:'#EEF9F4',borderRadius:14,marginBottom:12}}><CheckCircle2 size={19} color={C.green}/><div style={{fontSize:11.5,color:C.ink2}}>Mês pronto para consolidar. Nenhuma pendência de classificação.</div></div>}
+        <Btn onClick={confirmarMes} disabled={pendentesMes.length>0} style={{width:'100%'}}>{importacao.indice<importacao.meses.length-1?'Confirmar mês e revisar próximo':'Confirmar e finalizar importação'}</Btn>
+        <div style={{fontSize:9.8,color:C.ink3,lineHeight:1.45,marginTop:9,textAlign:'center'}}>Nada entra no dashboard antes desta confirmação. A chave de data + valor + conta + descrição impede reimportação duplicada.</div>
+      </>}
+    </Sheet>
+  </div>;
 }
