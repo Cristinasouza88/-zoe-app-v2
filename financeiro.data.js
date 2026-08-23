@@ -30,7 +30,7 @@ const limparFinanceiroLocalUmaVez = () => {
 export const CATEGORIAS_DESPESA = [
   'Moradia', 'Mercado', 'Alimentação', 'Transporte', 'Saúde e Cuidados',
   'Saúde e Fitness', 'Educação e Carreira', 'Assinaturas e Serviços', 'Compras',
-  'Lazer e Cultura', 'Viagens', 'Seguros e Proteções', 'Impostos e Taxas',
+  'Lazer e Cultura', 'Viagens', 'Seguros e Proteções', 'Impostos', 'Impostos e Taxas',
   'Consórcio', 'Financiamento', 'Investimentos', 'Cuidados pessoais', 'Doações', 'Outros'
 ];
 
