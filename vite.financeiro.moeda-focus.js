@@ -35,7 +35,10 @@ export default function financeiroMoedaFocus(){
       // Uma única moeda-base controla símbolo, separadores e formatação de todo o Financeiro.
       const manualAnchor="const [manual,setManual]=useState({data:hoje(),descricao:'',valor:'',tipo:'saida',categoria:'Outros',tagFinanceira:'NORMAL',conta:'Manual'});";
       if(out.includes(manualAnchor)&&!out.includes('const moedaBase=planoDraft?.moeda')){
-        out=out.replace(manualAnchor,manualAnchor+`\n const moedaBase=planoDraft?.moeda||fin.planoFinanceiro?.moeda||'BRL';\n const cfgMoeda={BRL:{simbolo:'R$',locale:'pt-BR',exemplo:'10.000,00'},USD:{simbolo:'US$',locale:'en-US',exemplo:'10,000.00'},EUR:{simbolo:'€',locale:'de-DE',exemplo:'10.000,00'},GBP:{simbolo:'£',locale:'en-GB',exemplo:'10,000.00'}}[moedaBase]||{simbolo:moedaBase,locale:'pt-BR',exemplo:'10.000,00'};\n const simboloMoeda=cfgMoeda.simbolo;\n const formatoValor=v=>{try{return new Intl.NumberFormat(cfgMoeda.locale,{style:'currency',currency:moedaBase,maximumFractionDigits:2}).format(Number(v||0))}catch{return simboloMoeda+' '+Number(v||0).toFixed(2)}};`);
+        const moedaRuntime=manualAnchor+`\n const moedaBase=planoDraft?.moeda||fin.planoFinanceiro?.moeda||'BRL';\n const cfgMoeda={BRL:{simbolo:'R$',locale:'pt-BR',exemplo:'10.000,00'},USD:{simbolo:'US$',locale:'en-US',exemplo:'10,000.00'},EUR:{simbolo:'€',locale:'de-DE',exemplo:'10.000,00'},GBP:{simbolo:'£',locale:'en-GB',exemplo:'10,000.00'}}[moedaBase]||{simbolo:moedaBase,locale:'pt-BR',exemplo:'10.000,00'};\n const simboloMoeda=cfgMoeda.simbolo;\n const formatoValor=v=>{try{return new Intl.NumberFormat(cfgMoeda.locale,{style:'currency',currency:moedaBase,maximumFractionDigits:2}).format(Number(v||0))}catch{return simboloMoeda+' '+Number(v||0).toFixed(2)}};`;
+        // Usa callback para o replacement: strings de moeda como "R$" seguidas de aspas
+        // não podem ser interpretadas pelo String.replace como tokens especiais ($').
+        out=out.replace(manualAnchor,()=>moedaRuntime);
         changed=true;
       }
       if(out.includes('formatoMoeda(')&&out.includes('const formatoValor=')){
@@ -47,7 +50,7 @@ export default function financeiroMoedaFocus(){
       const saldoCampo='<Campo label="Saldo disponível atual" value={planoDraft.saldoInicial} onChange={e=>setPlanoDraft({...planoDraft,saldoInicial:e.target.value})}/>';
       if(out.includes(saldoCampo)){
         const novo=`<Select label="Moeda do Financeiro" value={planoDraft.moeda||'BRL'} onChange={e=>setPlanoDraft({...planoDraft,moeda:e.target.value})}><option value="BRL">Real brasileiro (R$)</option><option value="USD">Dólar americano (US$)</option><option value="EUR">Euro (€)</option><option value="GBP">Libra esterlina (£)</option></Select><Campo label="Saldo disponível atual" prefix={simboloMoeda} type="text" inputMode="decimal" autoComplete="off" placeholder={cfgMoeda.exemplo} value={planoDraft.saldoInicial} onChange={e=>setPlanoDraft({...planoDraft,saldoInicial:e.target.value.replace(/[^0-9,.-]/g,'')})}/><div style={{fontSize:11,color:C.petroleo,fontWeight:800,margin:'-5px 0 10px'}}>Saldo informado: {formatoValor(valorPlano(planoDraft.saldoInicial))}</div>`;
-        out=out.replace(saldoCampo,novo);
+        out=out.replace(saldoCampo,()=>novo);
         changed=true;
       }
 
@@ -71,7 +74,7 @@ export default function financeiroMoedaFocus(){
         const alvo=`<Campo label="${label}" value={${obj}.${key}} onChange={e=>set${obj==='metaCfg'?'MetaCfg':obj==='inv'?'Inv':obj==='ativo'?'Ativo':obj==='comp'?'Comp':obj==='meta'?'Meta':'Manual'}({...${obj},${key}:e.target.value})}/>`;
         if(out.includes(alvo)){
           const setter=obj==='metaCfg'?'setMetaCfg':obj==='inv'?'setInv':obj==='ativo'?'setAtivo':obj==='comp'?'setComp':obj==='meta'?'setMeta':'setManual';
-          out=out.replace(alvo,`<Campo label="${label}" prefix={simboloMoeda} type="text" inputMode="decimal" autoComplete="off" placeholder={cfgMoeda.exemplo} value={${obj}.${key}} onChange={e=>${setter}({...${obj},${key}:e.target.value.replace(/[^0-9,.-]/g,'')})}/>`);
+          out=out.replace(alvo,()=>`<Campo label="${label}" prefix={simboloMoeda} type="text" inputMode="decimal" autoComplete="off" placeholder={cfgMoeda.exemplo} value={${obj}.${key}} onChange={e=>${setter}({...${obj},${key}:e.target.value.replace(/[^0-9,.-]/g,'')})}/>`);
           changed=true;
         }
       }
