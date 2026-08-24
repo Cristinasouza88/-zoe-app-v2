@@ -29,6 +29,9 @@ export function normalizarFinanceiro(raw){
     cartoes:Array.isArray(raw.cartoes)?raw.cartoes:[],
     investimentos:Array.isArray(raw.investimentos)?raw.investimentos:[],
     dividas:Array.isArray(raw.dividas)?raw.dividas:[],
+    patrimonios:Array.isArray(raw.patrimonios)?raw.patrimonios:[],
+    receitasRecorrentes:Array.isArray(raw.receitasRecorrentes)?raw.receitasRecorrentes:[],
+    gastosFixos:Array.isArray(raw.gastosFixos)?raw.gastosFixos:[],
     objetivos:Array.isArray(raw.objetivos)?raw.objetivos:[],
     orcamentos:Array.isArray(raw.orcamentos)?raw.orcamentos:[],
     regrasClassificacao:Array.isArray(raw.regrasClassificacao)?raw.regrasClassificacao:[],
@@ -42,7 +45,8 @@ function categoriaAutomatica(desc,tipo){
   const d=norm(desc);
   if(tipo==='receita'){
     if(/salario pj|raio de sol/.test(d))return'Salário PJ';
-    if(/salario|folha|pro labore/.test(d))return'Salário';
+    if(/pro labore/.test(d))return'Pró-labore';
+    if(/salario|folha/.test(d))return'Salário';
     if(/rendimento|juros|cdb|tesouro/.test(d))return'Rendimentos';
     if(/estorno|reembolso|devolucao/.test(d))return'Reembolso';
     return'Trabalho';
@@ -54,14 +58,16 @@ function categoriaAutomatica(desc,tipo){
     ['Transporte',/uber|99 |combust|posto|pedagio|estacion|shell|ipiranga|localiza|movida/],
     ['Saúde',/farmacia|drogaria|hospital|clinica|laborat|medic|drogasil|raia/],
     ['Fitness',/academia|gym|smart fit|wellhub|gympass/],
-    ['Educação',/curso|faculdade|udemy|hotmart|alura|escola|ingles/],
+    ['Educação',/curso|faculdade|udemy|hotmart|alura|escola|ingles|mensalidade escolar/],
+    ['Beleza e cuidados pessoais',/salao|salão|cabeleire|manicure|estetica|estética|cosmet|skincare|barbearia/],
+    ['Pets',/petshop|pet shop|veterin|racao|ração/],
     ['Assinaturas',/netflix|spotify|adobe|canva|icloud|google one|assinatura/],
     ['Compras',/amazon|shopee|shein|mercado livre|magalu|renner|zara|shopping/],
     ['Viagens',/airbnb|booking|decolar|hotel|latam|gol|azul linhas/],
     ['Impostos',/imposto|simples nacional|das |taxa/],
     ['Seguros',/seguro/],
-    ['Consórcio',/consorcio|klubi|servopa/],
-    ['Financiamento',/financiamento|habitacao/],
+    ['Consórcio',/consorcio|consórcio|klubi|servopa/],
+    ['Financiamento',/financiamento|habitacao|habitação|evolucao de obra|evolução de obra/],
     ['Lazer',/cinema|show|parque|ingresso/]
   ];
   return regras.find(([,r])=>r.test(d))?.[0]||'Outros';
@@ -81,6 +87,8 @@ export function classificarTransacao(base,regras=[]){
   t.origem=t.origem||'manual';
   t.status=t.status||'confirmado';
   t.subcategoria=t.subcategoria||'';
+  t.moeda=t.moeda||'BRL';
+  t.valorMoedaBase=Number(t.valorMoedaBase||t.valor);
   t.parcelaAtual=Number(t.parcelaAtual||0);
   t.totalParcelas=Number(t.totalParcelas||0);
   t.recorrente=!!t.recorrente;
@@ -112,7 +120,7 @@ export function deduplicarTransacoes(existentes,novas){
 }
 
 export function impactos(t){
-  const v=Math.abs(Number(t?.valor||0));
+  const v=Math.abs(Number(t?.valorMoedaBase??t?.valor||0));
   if(t?.transferenciaInterna||t?.pagamentoFatura||t?.aporteInvestimento||t?.resgateInvestimento)return{receita:0,despesa:0};
   if(t?.estorno&&t?.tipo==='receita')return{receita:0,despesa:-v};
   return t?.tipo==='receita'?{receita:v,despesa:0}:{receita:0,despesa:v};
@@ -124,7 +132,7 @@ export function resumoMes(fin,mesRef){
   itens.forEach(t=>{const i=impactos(t);receita+=i.receita;despesa+=i.despesa});
   despesa=Math.max(0,despesa);
   const contasLiquidas=(fin.contas||[]).filter(c=>c.ativa!==false&&c.disponibilidadeImediata);
-  const saldoDisponivel=contasLiquidas.length?contasLiquidas.reduce((a,c)=>a+Number(c.saldoAtual||0),0):null;
+  const saldoDisponivel=contasLiquidas.length?contasLiquidas.reduce((a,c)=>a+Number(c.valorMoedaBase??c.saldoAtual||0),0):null;
   return{itens,receita,despesa,resultado:receita-despesa,saldoDisponivel,dataSaldo:contasLiquidas.map(c=>c.dataSaldo).filter(Boolean).sort().slice(-1)[0]||''};
 }
 
@@ -141,10 +149,33 @@ export function serieMeses(fin,mesRef,quantidade=6){
 }
 
 export function patrimonio(fin){
-  const liquidez=(fin.contas||[]).filter(c=>c.ativa!==false&&c.disponibilidadeImediata).reduce((a,c)=>a+Number(c.saldoAtual||0),0);
-  const investimentos=(fin.investimentos||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorAtual||0),0);
-  const dividas=(fin.dividas||[]).filter(x=>x.ativa!==false).reduce((a,x)=>a+Number(x.saldoDevedor||0),0);
-  return{liquidez,investimentos,dividas,liquido:liquidez+investimentos-dividas};
+  const liquidez=(fin.contas||[]).filter(c=>c.ativa!==false&&c.disponibilidadeImediata).reduce((a,c)=>a+Number(c.valorMoedaBase??c.saldoAtual||0),0);
+  const investimentos=(fin.investimentos||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase??x.valorAtual||0),0);
+  const bens=(fin.patrimonios||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase??x.valorAtual||0),0);
+  const dividas=(fin.dividas||[]).filter(x=>x.ativa!==false).reduce((a,x)=>a+Number(x.saldoDevedorMoedaBase??x.saldoDevedor||0),0);
+  return{liquidez,investimentos,bens,ativos:liquidez+investimentos+bens,dividas,liquido:liquidez+investimentos+bens-dividas};
+}
+
+export function resumoStartFinanceiro(fin){
+  const receitas=(fin.receitasRecorrentes||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase??x.valorMensal||0),0);
+  const gastosFixos=(fin.gastosFixos||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase??x.valorMensal||0),0);
+  const parcelasDividas=(fin.dividas||[]).filter(x=>x.ativa!==false).reduce((a,x)=>a+Number(x.valorParcelaMoedaBase??x.valorParcela||0),0);
+  const amortizacao=(fin.dividas||[]).filter(x=>x.ativa!==false).reduce((a,x)=>a+Number(x.amortizacaoMensal||0),0);
+  const encargosNaoAmortizam=(fin.dividas||[]).filter(x=>x.ativa!==false).reduce((a,x)=>a+Number(x.jurosMensal||0)+Number(x.evolucaoObraMensal||0)+Number(x.seguroMensal||0)+Number(x.taxasMensais||0)+Number(x.outrosNaoAmortizamMensal||0),0);
+  const p=patrimonio(fin);
+  return{
+    rendaMensal:receitas,
+    custoFixoSemDividas:gastosFixos,
+    parcelasDividas,
+    custoFixoTotal:gastosFixos+parcelasDividas,
+    capacidadeMensal:receitas-gastosFixos-parcelasDividas,
+    patrimonioBruto:p.ativos,
+    dividas:p.dividas,
+    patrimonioLiquido:p.liquido,
+    amortizacaoMensal:amortizacao,
+    pagamentosNaoAmortizantes:encargosNaoAmortizam,
+    moedaBase:fin.configuracao?.moedaBase||'BRL'
+  };
 }
 
 export function progressoObjetivo(obj,fin){
@@ -178,19 +209,23 @@ export function orcamentoStatus(fin,mesRef){
 
 export function projecaoProximoMes(fin,mesRef){
   const recorrentes=(fin.transacoes||[]).filter(t=>t.recorrente&&t.status!=='ignorado');
-  let receita=0,despesa=0;
+  let receita=(fin.receitasRecorrentes||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase??x.valorMensal||0),0);
+  let despesa=(fin.gastosFixos||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase??x.valorMensal||0),0);
   recorrentes.forEach(t=>{const i=impactos(t);receita+=i.receita;despesa+=i.despesa});
-  (fin.dividas||[]).filter(d=>d.ativa!==false&&Number(d.parcelasRestantes||0)>0).forEach(d=>despesa+=Number(d.valorParcela||0));
+  (fin.dividas||[]).filter(d=>d.ativa!==false&&Number(d.parcelasRestantes||1)>0).forEach(d=>despesa+=Number(d.valorParcelaMoedaBase??d.valorParcela||0));
   const parcelas=(fin.transacoes||[]).filter(t=>t.totalParcelas>t.parcelaAtual&&t.tipo==='despesa');
   parcelas.forEach(t=>despesa+=Number(t.valor||0));
-  return{receita,comprometido:despesa,livre:receita-despesa,baseadoEm:recorrentes.length+(fin.dividas||[]).length+parcelas.length};
+  return{receita,comprometido:despesa,livre:receita-despesa,baseadoEm:recorrentes.length+(fin.receitasRecorrentes||[]).length+(fin.gastosFixos||[]).length+(fin.dividas||[]).length+parcelas.length};
 }
 
 export function gerarMissoes(fin,mesRef){
   const r=resumoMes(fin,mesRef),cats=categoriasMes(fin,mesRef),revisoes=(fin.transacoes||[]).filter(t=>t.revisar&&t.status!=='ignorado').length;
-  const res=reservaResumo(fin),orc=orcamentoStatus(fin,mesRef);
+  const res=reservaResumo(fin),orc=orcamentoStatus(fin,mesRef),start=resumoStartFinanceiro(fin);
   return[
+    {id:'start',titulo:'Defina seu ponto de partida',atual:fin.startFinanceiroConcluido?1:0,meta:1,xp:80,cristais:25},
     {id:'dados',titulo:'Registre ou importe suas finanças',atual:(fin.transacoes||[]).length?1:0,meta:1,xp:30,cristais:10},
+    {id:'renda',titulo:'Cadastre sua renda recorrente',atual:start.rendaMensal>0?1:0,meta:1,xp:30,cristais:10},
+    {id:'fixos',titulo:'Mapeie seus gastos fixos',atual:(fin.gastosFixos||[]).length?1:0,meta:1,xp:40,cristais:15},
     {id:'despesas5',titulo:'Registre 5 despesas',atual:r.itens.filter(t=>impactos(t).despesa>0).length,meta:5,xp:40,cristais:15},
     {id:'classificar',titulo:'Deixe seus gastos classificados',atual:revisoes===0&&(fin.transacoes||[]).length?1:0,meta:1,xp:50,cristais:20},
     {id:'reserva',titulo:'Defina sua meta de reserva',atual:res.meta>0?1:0,meta:1,xp:60,cristais:20},
@@ -206,10 +241,10 @@ export function nivelFinanceiro(fin,mesRef){
   const concluidas=gerarMissoes(fin,mesRef).filter(m=>m.concluida).length;
   const niveis=[
     {nivel:1,nome:'Organizando',min:0},
-    {nivel:2,nome:'No controle',min:2},
-    {nivel:3,nome:'Construindo reserva',min:4},
-    {nivel:4,nome:'Planejando o futuro',min:6},
-    {nivel:5,nome:'Construindo patrimônio',min:8}
+    {nivel:2,nome:'No controle',min:3},
+    {nivel:3,nome:'Construindo reserva',min:5},
+    {nivel:4,nome:'Planejando o futuro',min:8},
+    {nivel:5,nome:'Construindo patrimônio',min:10}
   ];
   return[...niveis].reverse().find(n=>concluidas>=n.min)||niveis[0];
 }
@@ -238,7 +273,7 @@ export function insightsFinanceiros(fin,mesRef){
   const atual=serie.at(-1),ant=serie.at(-2);
   if(atual&&ant&&ant.despesa>0){const v=(atual.despesa-ant.despesa)/ant.despesa*100;if(Math.abs(v)>=5)out.push(`Suas despesas ${v>0?'subiram':'caíram'} ${Math.abs(v).toFixed(0)}% em relação ao mês anterior.`)}
   if(r.receita>0)out.push(r.resultado>=0?`Seu resultado do mês está positivo em ${Math.round(r.resultado/r.receita*100)}% da receita.`:'As despesas já superaram a receita deste mês.');
-  const res=reservaResumo(fin);if(res.meta>0&&res.aporteNecessario!=null&&res.faltam>0)out.push(`Para atingir sua reserva no prazo, o aporte mensal estimado é de R$ ${res.aporteNecessario.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}.`);
+  const res=reservaResumo(fin);if(res.meta>0&&res.aporteNecessario!=null&&res.faltam>0)out.push(`Para atingir sua reserva no prazo, o aporte mensal estimado é de ${res.aporteNecessario.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}.`);
   return out.slice(0,4);
 }
 
