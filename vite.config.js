@@ -12,6 +12,7 @@ import financeiroTrilhaDocumentos from './vite.financeiro.trilha-documentos.js';
 import financeiroMoedaFocus from './vite.financeiro.moeda-focus.js';
 import financeiroTrilhaFinalV3 from './vite.financeiro.trilha-final-v3.js';
 import financeiroBoasVindasReset from './vite.financeiro.boas-vindas-reset.js';
+import financeiroRebuildLimpo from './vite.financeiro.rebuild-limpo.js';
 import campoPrefixo from './vite.ui.campo-prefixo.js';
 import zoeOrbAnimado from './vite.zoe-orb.js';
 
@@ -19,8 +20,8 @@ export default defineConfig({
   // O App fica persistido localmente via IndexedDB. O Financeiro possui sua propria
   // persistencia remota dedicada; nao usamos mais a persistencia remota do objeto
   // inteiro porque um snapshot antigo/vazio podia sobrescrever os lancamentos no F5.
-  // A trilha financeira final substitui as camadas visuais anteriores para evitar
-  // conflitos entre patches da etapa 3/5 e manter um único fluxo de onboarding.
-  plugins: [storageIndexedDb(), persistenciaZoe(), financeiroFluxoDireto(), financeiroCategoriasDetalhe(), financeiroConciliacaoPermanente(), financeiroProdutoIntegrado(), financeiroFluxoPatrimonialV3(), financeiroFluxoPatrimonialV4(), financeiroTrilhaDocumentos(), financeiroMoedaFocus(), financeiroTrilhaFinalV3(), financeiroBoasVindasReset(), campoPrefixo(), zoeOrbAnimado(), react()],
+  // Durante a reconstrução do Financeiro, toda a interface legada fica desativada
+  // e somente a trilha financeira aprovada é renderizada.
+  plugins: [storageIndexedDb(), persistenciaZoe(), financeiroFluxoDireto(), financeiroCategoriasDetalhe(), financeiroConciliacaoPermanente(), financeiroProdutoIntegrado(), financeiroFluxoPatrimonialV3(), financeiroFluxoPatrimonialV4(), financeiroTrilhaDocumentos(), financeiroMoedaFocus(), financeiroTrilhaFinalV3(), financeiroBoasVindasReset(), financeiroRebuildLimpo(), campoPrefixo(), zoeOrbAnimado(), react()],
   base: './'
 });
