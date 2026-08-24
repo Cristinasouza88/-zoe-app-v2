@@ -1,44 +1,124 @@
 import { supabase } from './supabase.js';
 
-const endpoint='/.netlify/functions/financeiro-data';
+const norm = (v='') => String(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 
-async function authToken(){
+async function sha256Hex(texto) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function usuarioAtual() {
   const { data } = await supabase.auth.getSession();
-  return data?.session?.access_token || '';
+  const id = data?.session?.user?.id;
+  if (!id) throw new Error('Sessão expirada. Faça login novamente.');
+  return id;
 }
 
-export async function carregarFinanceiroRemoto(){
-  const token=await authToken();
-  if(!token)return null;
-  const r=await fetch(`${endpoint}?_=${Date.now()}`,{
-    method:'GET',
-    cache:'no-store',
-    headers:{Authorization:`Bearer ${token}`,'Cache-Control':'no-store'}
-  });
-  const j=await r.json().catch(()=>null);
-  if(!r.ok||!j?.ok)throw new Error(j?.error||`Falha ao carregar Financeiro (${r.status})`);
-  return j.data??null;
-}
-
-let fila=Promise.resolve();
-export function salvarFinanceiroRemoto(data){
-  const tarefa=async()=>{
-    const token=await authToken();
-    if(!token)throw new Error('Sessão sem token para salvar Financeiro');
-    const esperado=Array.isArray(data?.transacoes)?data.transacoes.length:0;
-    const r=await fetch(endpoint,{
-      method:'PUT',
-      cache:'no-store',
-      headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json','Cache-Control':'no-store'},
-      body:JSON.stringify({data})
-    });
-    const j=await r.json().catch(()=>null);
-    if(!r.ok||!j?.ok)throw new Error(j?.error||`Falha ao salvar Financeiro (${r.status})`);
-    if(Number(j.transacoes)!==esperado){
-      throw new Error(`Servidor confirmou ${j.transacoes??0} de ${esperado} lançamentos`);
-    }
-    return j;
+function linhaParaApp(r) {
+  return {
+    id: r.id, data: r.data, descricao: r.descricao, valor: Number(r.valor), tipo: r.tipo,
+    conta: r.conta||'', categoria: r.categoria||'Outros', subcategoria: r.subcategoria||'',
+    natureza: r.natureza||'', confianca: r.confianca||'', competenciaAnalitica: r.competencia_analitica||'',
+    impactoReceita: Number(r.impacto_receita||0), impactoDespesa: Number(r.impacto_despesa||0),
+    ignorarResumo: !!r.ignorar_resumo, transferenciaInterna: !!r.transferencia_interna,
+    pagamentoFatura: !!r.pagamento_fatura, origemDocumento: r.origem_documento||'',
+    statusConciliacao: r.status_conciliacao||'aguardando'
   };
-  fila=fila.then(tarefa,tarefa);
-  return fila;
+}
+
+function appParaLinha(t, { importId, rowNumber, sourceHash }) {
+  return {
+    import_id: importId, row_number: rowNumber, source_hash: sourceHash,
+    data: t.data, descricao: t.descricao, valor: Math.abs(Number(t.valor||0)),
+    tipo: t.tipo==='entrada'?'entrada':'saida', conta: t.conta||'', categoria: t.categoria||'Outros',
+    subcategoria: t.subcategoria||'', natureza: t.natureza||'', confianca: t.confianca||'',
+    competencia_analitica: t.competenciaAnalitica||'', impacto_receita: Number(t.impactoReceita||0),
+    impacto_despesa: Number(t.impactoDespesa||0), ignorar_resumo: !!t.ignorarResumo,
+    transferencia_interna: !!t.transferenciaInterna, pagamento_fatura: !!t.pagamentoFatura,
+    origem_documento: t.origemDocumento||'', status_conciliacao: t.statusConciliacao||'aguardando'
+  };
+}
+
+function marcarOcorrencias(itens, arquivoDe) {
+  const ocorr = new Map();
+  return itens.map(t => {
+    const arquivo = arquivoDe(t);
+    const chave = [arquivo, t.data||'', norm(t.descricao||''), Math.abs(Number(t.valor||0)).toFixed(2), t.tipo||'', norm(t.conta||'')].join('|');
+    const n = (ocorr.get(chave)||0) + 1;
+    ocorr.set(chave, n);
+    return { t, arquivo, n };
+  });
+}
+
+export async function carregarTransacoes() {
+  const { data, error } = await supabase.from('financial_transactions').select('*').order('data', { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data||[]).map(linhaParaApp);
+}
+
+export async function importarTransacoes(itens, arquivo, linhasLidas) {
+  if (!itens.length) return { total: 0, inseridas: 0, jaExistentes: 0, linhas: [] };
+  const userId = await usuarioAtual();
+
+  const { data: imp, error: erroImp } = await supabase.from('financial_imports')
+    .insert({ arquivo, linhas_lidas: linhasLidas, linhas_importadas: 0 }).select().single();
+  if (erroImp) throw new Error(erroImp.message);
+
+  const marcados = marcarOcorrencias(itens, () => arquivo);
+  const linhas = await Promise.all(marcados.map(async ({ t, n }) => {
+    const hash = await sha256Hex([userId, arquivo, t.conta||'', t.data||'', t.descricao||'', Math.abs(Number(t.valor||0)).toFixed(2), n].join('|'));
+    return appParaLinha(t, { importId: imp.id, rowNumber: n, sourceHash: hash });
+  }));
+
+  const { data: inseridas, error: erroInsert } = await supabase.from('financial_transactions')
+    .upsert(linhas, { onConflict: 'user_id,source_hash', ignoreDuplicates: true }).select();
+  if (erroInsert) throw new Error(erroInsert.message);
+
+  await supabase.from('financial_imports').update({ linhas_importadas: inseridas.length }).eq('id', imp.id);
+
+  return { total: linhas.length, inseridas: inseridas.length,
+    jaExistentes: linhas.length - inseridas.length, linhas: (inseridas||[]).map(linhaParaApp) };
+}
+
+export async function migrarTransacoesLegado(itensLegado, corrigirLegado) {
+  if (!itensLegado?.length) return { migrado: false, total: 0 };
+  const userId = await usuarioAtual();
+  const corrigidos = itensLegado.map(corrigirLegado);
+
+  const { data: imp, error: erroImp } = await supabase.from('financial_imports')
+    .insert({ arquivo: 'Migração de dados locais', linhas_lidas: corrigidos.length, linhas_importadas: 0 }).select().single();
+  if (erroImp) throw new Error(erroImp.message);
+
+  const marcados = marcarOcorrencias(corrigidos, t => t.origemDocumento || 'legado');
+  const linhas = await Promise.all(marcados.map(async ({ t, arquivo, n }) => {
+    const hash = await sha256Hex([userId, arquivo, t.conta||'', t.data||'', t.descricao||'', Math.abs(Number(t.valor||0)).toFixed(2), 'legado-'+n].join('|'));
+    return appParaLinha(t, { importId: imp.id, rowNumber: n, sourceHash: hash });
+  }));
+
+  const { data: inseridas, error: erroInsert } = await supabase.from('financial_transactions')
+    .upsert(linhas, { onConflict: 'user_id,source_hash', ignoreDuplicates: true }).select('id');
+  if (erroInsert) throw new Error(erroInsert.message);
+
+  await supabase.from('financial_imports').update({ linhas_importadas: inseridas.length }).eq('id', imp.id);
+  return { migrado: true, total: inseridas.length };
+}
+
+const CAMPOS_EDITAVEIS = { categoria:'categoria', subcategoria:'subcategoria', natureza:'natureza',
+  confianca:'confianca', tipo:'tipo', impactoReceita:'impacto_receita', impactoDespesa:'impacto_despesa',
+  ignorarResumo:'ignorar_resumo', statusConciliacao:'status_conciliacao' };
+
+export async function atualizarTransacao(id, campos) {
+  const linha = {};
+  for (const [chaveApp, chaveDb] of Object.entries(CAMPOS_EDITAVEIS)) {
+    if (chaveApp in campos) linha[chaveDb] = campos[chaveApp];
+  }
+  const { error } = await supabase.from('financial_transactions').update(linha).eq('id', id);
+  if (error) throw new Error(error.message);
+  return true;
+}
+
+export async function excluirTransacao(id) {
+  const { error } = await supabase.from('financial_transactions').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+  return true;
 }
