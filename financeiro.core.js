@@ -120,7 +120,7 @@ export function deduplicarTransacoes(existentes,novas){
 }
 
 export function impactos(t){
-  const v=Math.abs(Number(t?.valorMoedaBase??t?.valor||0));
+  const v=Math.abs(Number(t?.valorMoedaBase ?? t?.valor ?? 0));
   if(t?.transferenciaInterna||t?.pagamentoFatura||t?.aporteInvestimento||t?.resgateInvestimento)return{receita:0,despesa:0};
   if(t?.estorno&&t?.tipo==='receita')return{receita:0,despesa:-v};
   return t?.tipo==='receita'?{receita:v,despesa:0}:{receita:0,despesa:v};
@@ -132,7 +132,7 @@ export function resumoMes(fin,mesRef){
   itens.forEach(t=>{const i=impactos(t);receita+=i.receita;despesa+=i.despesa});
   despesa=Math.max(0,despesa);
   const contasLiquidas=(fin.contas||[]).filter(c=>c.ativa!==false&&c.disponibilidadeImediata);
-  const saldoDisponivel=contasLiquidas.length?contasLiquidas.reduce((a,c)=>a+Number(c.valorMoedaBase??c.saldoAtual||0),0):null;
+  const saldoDisponivel=contasLiquidas.length?contasLiquidas.reduce((a,c)=>a+Number(c.valorMoedaBase ?? c.saldoAtual ?? 0),0):null;
   return{itens,receita,despesa,resultado:receita-despesa,saldoDisponivel,dataSaldo:contasLiquidas.map(c=>c.dataSaldo).filter(Boolean).sort().slice(-1)[0]||''};
 }
 
@@ -149,17 +149,17 @@ export function serieMeses(fin,mesRef,quantidade=6){
 }
 
 export function patrimonio(fin){
-  const liquidez=(fin.contas||[]).filter(c=>c.ativa!==false&&c.disponibilidadeImediata).reduce((a,c)=>a+Number(c.valorMoedaBase??c.saldoAtual||0),0);
-  const investimentos=(fin.investimentos||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase??x.valorAtual||0),0);
-  const bens=(fin.patrimonios||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase??x.valorAtual||0),0);
-  const dividas=(fin.dividas||[]).filter(x=>x.ativa!==false).reduce((a,x)=>a+Number(x.saldoDevedorMoedaBase??x.saldoDevedor||0),0);
+  const liquidez=(fin.contas||[]).filter(c=>c.ativa!==false&&c.disponibilidadeImediata).reduce((a,c)=>a+Number(c.valorMoedaBase ?? c.saldoAtual ?? 0),0);
+  const investimentos=(fin.investimentos||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase ?? x.valorAtual ?? 0),0);
+  const bens=(fin.patrimonios||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase ?? x.valorAtual ?? 0),0);
+  const dividas=(fin.dividas||[]).filter(x=>x.ativa!==false).reduce((a,x)=>a+Number(x.saldoDevedorMoedaBase ?? x.saldoDevedor ?? 0),0);
   return{liquidez,investimentos,bens,ativos:liquidez+investimentos+bens,dividas,liquido:liquidez+investimentos+bens-dividas};
 }
 
 export function resumoStartFinanceiro(fin){
-  const receitas=(fin.receitasRecorrentes||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase??x.valorMensal||0),0);
-  const gastosFixos=(fin.gastosFixos||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase??x.valorMensal||0),0);
-  const parcelasDividas=(fin.dividas||[]).filter(x=>x.ativa!==false).reduce((a,x)=>a+Number(x.valorParcelaMoedaBase??x.valorParcela||0),0);
+  const receitas=(fin.receitasRecorrentes||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase ?? x.valorMensal ?? 0),0);
+  const gastosFixos=(fin.gastosFixos||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase ?? x.valorMensal ?? 0),0);
+  const parcelasDividas=(fin.dividas||[]).filter(x=>x.ativa!==false).reduce((a,x)=>a+Number(x.valorParcelaMoedaBase ?? x.valorParcela ?? 0),0);
   const amortizacao=(fin.dividas||[]).filter(x=>x.ativa!==false).reduce((a,x)=>a+Number(x.amortizacaoMensal||0),0);
   const encargosNaoAmortizam=(fin.dividas||[]).filter(x=>x.ativa!==false).reduce((a,x)=>a+Number(x.jurosMensal||0)+Number(x.evolucaoObraMensal||0)+Number(x.seguroMensal||0)+Number(x.taxasMensais||0)+Number(x.outrosNaoAmortizamMensal||0),0);
   const p=patrimonio(fin);
@@ -209,10 +209,10 @@ export function orcamentoStatus(fin,mesRef){
 
 export function projecaoProximoMes(fin,mesRef){
   const recorrentes=(fin.transacoes||[]).filter(t=>t.recorrente&&t.status!=='ignorado');
-  let receita=(fin.receitasRecorrentes||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase??x.valorMensal||0),0);
-  let despesa=(fin.gastosFixos||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase??x.valorMensal||0),0);
+  let receita=(fin.receitasRecorrentes||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase ?? x.valorMensal ?? 0),0);
+  let despesa=(fin.gastosFixos||[]).filter(x=>x.ativo!==false).reduce((a,x)=>a+Number(x.valorMoedaBase ?? x.valorMensal ?? 0),0);
   recorrentes.forEach(t=>{const i=impactos(t);receita+=i.receita;despesa+=i.despesa});
-  (fin.dividas||[]).filter(d=>d.ativa!==false&&Number(d.parcelasRestantes||1)>0).forEach(d=>despesa+=Number(d.valorParcelaMoedaBase??d.valorParcela||0));
+  (fin.dividas||[]).filter(d=>d.ativa!==false&&Number(d.parcelasRestantes||1)>0).forEach(d=>despesa+=Number(d.valorParcelaMoedaBase ?? d.valorParcela ?? 0));
   const parcelas=(fin.transacoes||[]).filter(t=>t.totalParcelas>t.parcelaAtual&&t.tipo==='despesa');
   parcelas.forEach(t=>despesa+=Number(t.valor||0));
   return{receita,comprometido:despesa,livre:receita-despesa,baseadoEm:recorrentes.length+(fin.receitasRecorrentes||[]).length+(fin.gastosFixos||[]).length+(fin.dividas||[]).length+parcelas.length};
