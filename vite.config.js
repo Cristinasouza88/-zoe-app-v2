@@ -5,7 +5,7 @@ import persistenciaZoe from './vite.persistencia.js';
 import financeiroFluxoDireto from './vite.financeiro.fluxo-direto.js';
 import financeiroCategoriasDetalhe from './vite.financeiro.categorias-detalhe.js';
 import financeiroConciliacaoPermanente from './vite.financeiro.conciliacao-permanente.js';
-import financeiroProdutoIntegrado from './vite.financeiro.produto-integrado.js';
+import financeiroProdutoIntegrado from './vite.financeiro.produto-integrado-v2.js';
 
 export default defineConfig({
   // O App fica persistido localmente via IndexedDB. O Financeiro possui sua propria
