@@ -1476,7 +1476,7 @@ export default function ZoeApp() {
     const aulasCursosFeitas = cursos.reduce((n, c) => n + c.aulas.filter(a => a.feito).length, 0);
     const inglesFeitas = Object.values(d.ingles?.fasesConcluidas || {}).filter(Boolean).length;
     const metaAnual = d.financeiro?.metaAnual || METAANUAL_PADRAO;
-    const economizado = (d.financeiro?.transacoes || []).reduce((a, t) => a + (t.tipo === 'entrada' ? t.valor : -t.valor), 0);
+    const economizado = d.financeiro?.saldoAcumulado ?? 0;
     const pctVida = Math.min(100, Math.round((concluidas / totalEtapas) * 100));
     const trilhasCursos = cursosFixados.length ? cursosFixados.map(c=>{const feitas=c.aulas.filter(a=>a.feito).length;return {id:'cursos',nome:c.nome,icone:BookOpen,cor:'#A86BF4',suave:'#F0E5FF',valor:`${feitas} / ${c.aulas.length}`,pct:c.aulas.length?(feitas/c.aulas.length)*100:0}}) : [{ id: 'cursos', nome: 'Meus cursos', icone: BookOpen, cor: '#A86BF4', suave: '#F0E5FF', valor: cursos.length ? `${aulasCursosFeitas} / ${aulasCursos}` : 'Adicionar curso', pct: aulasCursos ? (aulasCursosFeitas / aulasCursos) * 100 : 0 }];
     const trilhas = [
