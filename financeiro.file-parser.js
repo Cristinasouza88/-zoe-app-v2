@@ -1,3 +1,4 @@
+import pdfWorker from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 const norm = (v='') => String(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const pad = x => String(x).padStart(2,'0');
 
@@ -95,11 +96,7 @@ function transactionsFromLines(lines,{tipoDocumento,fileName,uid}) {
 
 async function parsePdf(file,opts){
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  try {
-    if (pdfjs.GlobalWorkerOptions && !pdfjs.GlobalWorkerOptions.workerSrc) {
-      pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.mjs', import.meta.url).toString();
-    }
-  } catch {}
+  try { if (pdfjs.GlobalWorkerOptions) pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker; } catch {}
   const data = new Uint8Array(await file.arrayBuffer());
   const pdf = await pdfjs.getDocument({data}).promise;
   const lines=[];
@@ -140,7 +137,8 @@ function parseOfxText(raw,{tipoDocumento,fileName,uid}){
 }
 
 async function parseSpreadsheet(file,{tipoDocumento,fileName,uid}){
-  const XLSX=await import('xlsx');
+  const mod=await import('xlsx');
+  const XLSX=mod.default||mod;
   const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:false});
   const ws=wb.Sheets[wb.SheetNames[0]];
   const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
