@@ -5,11 +5,12 @@ import persistenciaZoe from './vite.persistencia.js';
 import financeiroFluxoDireto from './vite.financeiro.fluxo-direto.js';
 import financeiroCategoriasDetalhe from './vite.financeiro.categorias-detalhe.js';
 import financeiroConciliacaoPermanente from './vite.financeiro.conciliacao-permanente.js';
+import financeiroProdutoIntegrado from './vite.financeiro.produto-integrado.js';
 
 export default defineConfig({
   // O App fica persistido localmente via IndexedDB. O Financeiro possui sua propria
   // persistencia remota dedicada; nao usamos mais a persistencia remota do objeto
   // inteiro porque um snapshot antigo/vazio podia sobrescrever os lancamentos no F5.
-  plugins: [storageIndexedDb(), persistenciaZoe(), financeiroFluxoDireto(), financeiroCategoriasDetalhe(), financeiroConciliacaoPermanente(), react()],
+  plugins: [storageIndexedDb(), persistenciaZoe(), financeiroFluxoDireto(), financeiroCategoriasDetalhe(), financeiroConciliacaoPermanente(), financeiroProdutoIntegrado(), react()],
   base: './'
 });
