@@ -10,6 +10,7 @@ import financeiroFluxoPatrimonialV3 from './vite.financeiro.fluxo-patrimonial-v3
 import financeiroFluxoPatrimonialV4 from './vite.financeiro.fluxo-patrimonial-v4.js';
 import financeiroTrilhaDocumentos from './vite.financeiro.trilha-documentos.js';
 import financeiroTrilhaVisualV2 from './vite.financeiro.trilha-visual-v2.js';
+import financeiroDespesasBaseItens from './vite.financeiro.despesas-base-itens.js';
 import financeiroPatrimonioStep5V2 from './vite.financeiro.patrimonio-step5-v2.js';
 import financeiroMoedaFocus from './vite.financeiro.moeda-focus.js';
 import campoPrefixo from './vite.ui.campo-prefixo.js';
@@ -19,6 +20,6 @@ export default defineConfig({
   // O App fica persistido localmente via IndexedDB. O Financeiro possui sua propria
   // persistencia remota dedicada; nao usamos mais a persistencia remota do objeto
   // inteiro porque um snapshot antigo/vazio podia sobrescrever os lancamentos no F5.
-  plugins: [storageIndexedDb(), persistenciaZoe(), financeiroFluxoDireto(), financeiroCategoriasDetalhe(), financeiroConciliacaoPermanente(), financeiroProdutoIntegrado(), financeiroFluxoPatrimonialV3(), financeiroFluxoPatrimonialV4(), financeiroTrilhaDocumentos(), financeiroTrilhaVisualV2(), financeiroPatrimonioStep5V2(), financeiroMoedaFocus(), campoPrefixo(), zoeOrbAnimado(), react()],
+  plugins: [storageIndexedDb(), persistenciaZoe(), financeiroFluxoDireto(), financeiroCategoriasDetalhe(), financeiroConciliacaoPermanente(), financeiroProdutoIntegrado(), financeiroFluxoPatrimonialV3(), financeiroFluxoPatrimonialV4(), financeiroTrilhaDocumentos(), financeiroTrilhaVisualV2(), financeiroDespesasBaseItens(), financeiroPatrimonioStep5V2(), financeiroMoedaFocus(), campoPrefixo(), zoeOrbAnimado(), react()],
   base: './'
 });
