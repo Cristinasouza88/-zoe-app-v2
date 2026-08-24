@@ -11,6 +11,7 @@ import financeiroFluxoPatrimonialV4 from './vite.financeiro.fluxo-patrimonial-v4
 import financeiroTrilhaDocumentos from './vite.financeiro.trilha-documentos.js';
 import financeiroMoedaFocus from './vite.financeiro.moeda-focus.js';
 import financeiroTrilhaFinalV3 from './vite.financeiro.trilha-final-v3.js';
+import financeiroBoasVindasReset from './vite.financeiro.boas-vindas-reset.js';
 import campoPrefixo from './vite.ui.campo-prefixo.js';
 import zoeOrbAnimado from './vite.zoe-orb.js';
 
@@ -20,6 +21,6 @@ export default defineConfig({
   // inteiro porque um snapshot antigo/vazio podia sobrescrever os lancamentos no F5.
   // A trilha financeira final substitui as camadas visuais anteriores para evitar
   // conflitos entre patches da etapa 3/5 e manter um único fluxo de onboarding.
-  plugins: [storageIndexedDb(), persistenciaZoe(), financeiroFluxoDireto(), financeiroCategoriasDetalhe(), financeiroConciliacaoPermanente(), financeiroProdutoIntegrado(), financeiroFluxoPatrimonialV3(), financeiroFluxoPatrimonialV4(), financeiroTrilhaDocumentos(), financeiroMoedaFocus(), financeiroTrilhaFinalV3(), campoPrefixo(), zoeOrbAnimado(), react()],
+  plugins: [storageIndexedDb(), persistenciaZoe(), financeiroFluxoDireto(), financeiroCategoriasDetalhe(), financeiroConciliacaoPermanente(), financeiroProdutoIntegrado(), financeiroFluxoPatrimonialV3(), financeiroFluxoPatrimonialV4(), financeiroTrilhaDocumentos(), financeiroMoedaFocus(), financeiroTrilhaFinalV3(), financeiroBoasVindasReset(), campoPrefixo(), zoeOrbAnimado(), react()],
   base: './'
 });
