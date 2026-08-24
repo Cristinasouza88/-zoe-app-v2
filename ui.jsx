@@ -5,19 +5,64 @@ import { X } from 'lucide-react';
 const memoria = {};
 export const store = {
   async get(k) {
+    // No navegador do app, window.storage pode existir como armazenamento auxiliar
+    // e não sobreviver a um reload. localStorage é a fonte persistente principal.
     try {
-      if (typeof window !== 'undefined' && window.storage) { const r = await window.storage.get(k, false); return r ? JSON.parse(r.value) : null; }
-      if (typeof window !== 'undefined' && window.localStorage) { const v = window.localStorage.getItem(k); return v ? JSON.parse(v) : null; }
-      return memoria[k] ?? null;
-    } catch { return memoria[k] ?? null; }
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const v = window.localStorage.getItem(k);
+        if (v != null) {
+          const parsed = JSON.parse(v);
+          memoria[k] = parsed;
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('ZOE: falha ao ler localStorage', e);
+    }
+
+    try {
+      if (typeof window !== 'undefined' && window.storage) {
+        const r = await window.storage.get(k, false);
+        if (r?.value != null) {
+          const parsed = JSON.parse(r.value);
+          memoria[k] = parsed;
+          // Migra automaticamente qualquer dado antigo para o armazenamento persistente.
+          try { window.localStorage?.setItem(k, JSON.stringify(parsed)); } catch {}
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('ZOE: falha ao ler window.storage', e);
+    }
+
+    return memoria[k] ?? null;
   },
+
   async set(k, v) {
     memoria[k] = v;
+    const serializado = JSON.stringify(v);
+    let gravou = false;
+
+    // Sempre grava primeiro no localStorage, que é o que precisa sobreviver ao F5.
     try {
-      if (typeof window !== 'undefined' && window.storage) { await window.storage.set(k, JSON.stringify(v), false); return true; }
-      if (typeof window !== 'undefined' && window.localStorage) { window.localStorage.setItem(k, JSON.stringify(v)); return true; }
-      return true;
-    } catch { return false; }
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(k, serializado);
+        gravou = window.localStorage.getItem(k) === serializado;
+      }
+    } catch (e) {
+      console.error('ZOE: não foi possível gravar no localStorage', e);
+    }
+
+    // Mantém window.storage apenas como cópia auxiliar, nunca como única fonte.
+    try {
+      if (typeof window !== 'undefined' && window.storage) {
+        await window.storage.set(k, serializado, false);
+      }
+    } catch (e) {
+      console.warn('ZOE: cópia auxiliar em window.storage falhou', e);
+    }
+
+    return gravou;
   }
 };
 
@@ -207,9 +252,9 @@ export function GraficoLinha({ dados, cor, altura = 120 }) {
           strokeDasharray: 900, strokeDashoffset: pronto ? 0 : 900,
           transition: 'stroke-dashoffset 1.1s cubic-bezier(.22,1,.36,1)'
         }} />
-      {pts.map((p, i) => (
-        <circle key={i} cx={p[0]} cy={p[1]} r="3.4" fill="#fff" stroke={cor} strokeWidth="2.2"
-          style={{ opacity: 0, animation: pronto ? `zoePonto .3s ease ${.5 + i * .07}s both` : 'none' }} />
+      {pts.map((p, i) => dados[i] > 0 && (
+        <circle key={i} cx={p[0]} cy={p[1]} r="3.2" fill="#fff" stroke={cor} strokeWidth="2"
+          style={{ opacity: pronto ? 1 : 0, transition: `opacity .25s ${.5 + i * .04}s` }} />
       ))}
     </svg>
   );
