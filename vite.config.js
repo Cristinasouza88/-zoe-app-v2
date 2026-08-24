@@ -1,11 +1,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import storageIndexedDb from './vite.storage-indexeddb.js';
-import remotePersist from './vite.remote-persist.js';
+import persistenciaZoe from './vite.persistencia.js';
 import financeiroFluxoDireto from './vite.financeiro.fluxo-direto.js';
 import financeiroCategoriasDetalhe from './vite.financeiro.categorias-detalhe.js';
 
 export default defineConfig({
-  plugins: [storageIndexedDb(), remotePersist(), financeiroFluxoDireto(), financeiroCategoriasDetalhe(), react()],
+  // O App fica persistido localmente via IndexedDB. O Financeiro possui sua propria
+  // persistencia remota dedicada; nao usamos mais a persistencia remota do objeto
+  // inteiro porque um snapshot antigo/vazio podia sobrescrever os lancamentos no F5.
+  plugins: [storageIndexedDb(), persistenciaZoe(), financeiroFluxoDireto(), financeiroCategoriasDetalhe(), react()],
   base: './'
 });
