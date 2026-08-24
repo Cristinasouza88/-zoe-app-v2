@@ -8,16 +8,17 @@ export default function financeiroVisualV4(){
       let out=code,changed=false;
 
       // Ícones reais da biblioteca do produto. Nada de emojis/símbolos improvisados.
+      // Usamos somente nomes estáveis e compatíveis com a versão instalada do lucide-react.
       out=out.replace(/import\{([^}]*)\}from'lucide-react';/,(_,nomes)=>{
         const lista=nomes.split(',').map(x=>x.trim()).filter(Boolean);
-        ['CreditCard','House','Building2','BriefcaseBusiness','CalendarDays','Gift','BarChart3','WalletCards','Settings2','CircleDollarSign','CarFront','SlidersHorizontal'].forEach(x=>{if(!lista.includes(x))lista.push(x)});
+        ['CreditCard','Home','Building2','Briefcase','Calendar','Gift','BarChart3','Wallet','Car','SlidersHorizontal'].forEach(x=>{if(!lista.includes(x))lista.push(x)});
         changed=true;
         return `import{${lista.join(',')}}from'lucide-react';`;
       });
 
       const viewAnchor=" const view=String(tela||'').startsWith('financeiro')?String(tela):'financeiroHome';";
       if(out.includes(viewAnchor)&&!out.includes('const iconeFinanceiro=')){
-        const helpers=`${viewAnchor}\n const iconeFinanceiro=(tipo,size=20)=>{const mapa={planejamento:SlidersHorizontal,graficos:BarChart3,cartoes:CreditCard,patrimonio:House,investimentos:PiggyBank,recompensas:Gift,painel:WalletCards,objetivos:Target,trilha:Sparkles};const I=mapa[tipo]||CircleDollarSign;return <I size={size} strokeWidth={2}/>};\n const iconePatrimonio=(tipo,size=26)=>{const I=tipo==='Financiamento'?Building2:tipo==='Veículo / carro'?CarFront:tipo==='Consórcio'||tipo==='Imóvel / casa'||tipo==='Terreno'?House:BriefcaseBusiness;return <I size={size} strokeWidth={1.9}/>};\n const BauZoe=({ativo=false})=><div aria-hidden=\"true\" style={{width:116,height:92,margin:'0 auto',position:'relative',filter:ativo?'drop-shadow(0 12px 18px rgba(202,145,48,.24))':'none'}}><div style={{position:'absolute',left:9,right:9,bottom:6,height:54,borderRadius:16,background:ativo?'linear-gradient(180deg,#E7B457,#C88426)':'linear-gradient(180deg,#D9B77E,#B88C4D)',border:'1px solid rgba(112,72,26,.16)'}}/><div style={{position:'absolute',left:15,right:15,top:9,height:39,borderRadius:'18px 18px 8px 8px',background:ativo?'linear-gradient(180deg,#F1CB7D,#D89A36)':'linear-gradient(180deg,#E4CCA5,#C6A46F)',border:'1px solid rgba(112,72,26,.13)'}}/><div style={{position:'absolute',left:48,top:42,width:20,height:24,borderRadius:7,background:'#FFF8E8',border:'3px solid #B77A25',boxSizing:'border-box'}}/><div style={{position:'absolute',left:19,right:19,top:45,height:5,borderRadius:9,background:'rgba(118,72,23,.24)'}}/></div>;`;
+        const helpers=`${viewAnchor}\n const iconeFinanceiro=(tipo,size=20)=>{const mapa={planejamento:SlidersHorizontal,graficos:BarChart3,cartoes:CreditCard,patrimonio:Home,investimentos:PiggyBank,recompensas:Gift,painel:Wallet,objetivos:Target,trilha:Sparkles};const I=mapa[tipo]||Landmark;return <I size={size} strokeWidth={2}/>};\n const iconePatrimonio=(tipo,size=26)=>{const I=tipo==='Financiamento'?Building2:tipo==='Veículo / carro'?Car:tipo==='Consórcio'||tipo==='Imóvel / casa'||tipo==='Terreno'?Home:Briefcase;return <I size={size} strokeWidth={1.9}/>};\n const BauZoe=({ativo=false})=><div aria-hidden=\"true\" style={{width:116,height:92,margin:'0 auto',position:'relative',filter:ativo?'drop-shadow(0 12px 18px rgba(202,145,48,.24))':'none'}}><div style={{position:'absolute',left:9,right:9,bottom:6,height:54,borderRadius:16,background:ativo?'linear-gradient(180deg,#E7B457,#C88426)':'linear-gradient(180deg,#D9B77E,#B88C4D)',border:'1px solid rgba(112,72,26,.16)'}}/><div style={{position:'absolute',left:15,right:15,top:9,height:39,borderRadius:'18px 18px 8px 8px',background:ativo?'linear-gradient(180deg,#F1CB7D,#D89A36)':'linear-gradient(180deg,#E4CCA5,#C6A46F)',border:'1px solid rgba(112,72,26,.13)'}}/><div style={{position:'absolute',left:48,top:42,width:20,height:24,borderRadius:7,background:'#FFF8E8',border:'3px solid #B77A25',boxSizing:'border-box'}}/><div style={{position:'absolute',left:19,right:19,top:45,height:5,borderRadius:9,background:'rgba(118,72,23,.24)'}}/></div>;`;
         out=out.replace(viewAnchor,helpers);changed=true;
       }
 
@@ -30,19 +31,18 @@ export default function financeiroVisualV4(){
       out=out.replace(/^ const nav=.*$/m,' const nav=null;');
 
       // Home: ícones de produto e cartões com a mesma linguagem visual do mockup aprovado.
-      out=out.replace(`<div style={{width:54,height:54,borderRadius:18,display:'grid',placeItems:'center',background:'#EEF2FF',fontSize:25}}>💳</div>`,`<div style={{width:54,height:54,borderRadius:18,display:'grid',placeItems:'center',background:'#EEF2FF',color:'#4F4BE3'}}><WalletCards size={25} strokeWidth={1.9}/></div>`);
+      out=out.replace(`<div style={{width:54,height:54,borderRadius:18,display:'grid',placeItems:'center',background:'#EEF2FF',fontSize:25}}>💳</div>`,`<div style={{width:54,height:54,borderRadius:18,display:'grid',placeItems:'center',background:'#EEF2FF',color:'#4F4BE3'}}><Wallet size={25} strokeWidth={1.9}/></div>`);
       out=out.replace("[['financeiroPlanejamento','◫','Planejamento','Orçamento por categoria'],['financeiroGraficos','▥','Gráficos','Evolução e categorias'],['financeiroCartoes','▤','Cartões','Faturas mês a mês'],['financeiroPatrimonio','⌂','Patrimônio','Casa, carro e consórcios']]","[['financeiroPlanejamento','planejamento','Planejamento','Orçamento por categoria'],['financeiroGraficos','graficos','Gráficos','Evolução e categorias'],['financeiroCartoes','cartoes','Cartões','Faturas mês a mês'],['financeiroPatrimonio','patrimonio','Patrimônio','Casa, carro e consórcios']]");
       out=out.replace(`<span style={{fontSize:20,color:'#5B4BEA'}}>{ic}</span>`,`<span style={{width:36,height:36,borderRadius:12,display:'grid',placeItems:'center',background:'#F1F3FF',color:'#4F4BE3'}}>{iconeFinanceiro(ic,19)}</span>`);
 
       // Todas as subáreas recuperam uma seta real de voltar.
-      out=out.replace("const Trilha=()=>{const missoes=","const Trilha=()=>{const missoes=");
       out=out.replace("return <><div style={{textAlign:'center',padding:'8px 4px 18px'}}><div style={{fontSize:10,fontWeight:900,color:'#62B936'","return <>{voltar('Minha trilha financeira')}<div style={{textAlign:'center',padding:'2px 4px 18px'}}><div style={{fontSize:10,fontWeight:900,color:'#62B936'");
       out=out.replace("const Painel=()=> <>{titulo('Resumo do mês','A visão executiva da sua vida financeira.')}","const Painel=()=> <>{voltar('Painel financeiro')}<div style={{fontSize:10.5,color:'#77798A',margin:'-12px 0 16px'}}>A visão executiva da sua vida financeira.</div>");
       out=out.replace("const Objetivos=()=> <>{titulo('Objetivos','Ativos, alcançados e arquivados ficam no mesmo lugar.')}","const Objetivos=()=> <>{voltar('Objetivos')}<div style={{fontSize:10.5,color:'#77798A',margin:'-12px 0 16px'}}>Ativos, alcançados e arquivados ficam no mesmo lugar.</div>");
       out=out.replace("const Mais=()=> <>{titulo('Mais do Financeiro','Tudo conectado à mesma base de dados.')}","const Mais=()=> <>{voltar('Mais do Financeiro')}<div style={{fontSize:10.5,color:'#77798A',margin:'-12px 0 16px'}}>Tudo conectado à mesma base de dados.</div>");
 
       // Ofensiva, recompensas e reserva sem emojis.
-      out=out.replace(`<div style={{fontSize:42}}>🗓️</div>`,`<div style={{width:86,height:86,borderRadius:28,margin:'0 auto',display:'grid',placeItems:'center',background:'linear-gradient(145deg,#F1F3FF,#FFFFFF)',color:'#4F4BE3',border:'1px solid #E4E7F4',boxShadow:'0 12px 28px rgba(61,70,170,.08)'}}><CalendarDays size={42} strokeWidth={1.8}/></div>`);
+      out=out.replace(`<div style={{fontSize:42}}>🗓️</div>`,`<div style={{width:86,height:86,borderRadius:28,margin:'0 auto',display:'grid',placeItems:'center',background:'linear-gradient(145deg,#F1F3FF,#FFFFFF)',color:'#4F4BE3',border:'1px solid #E4E7F4',boxShadow:'0 12px 28px rgba(61,70,170,.08)'}}><Calendar size={42} strokeWidth={1.8}/></div>`);
       out=out.replace(`<div style={{fontSize:72,filter:recompensaPct>=100?'none':'grayscale(.15)'}}>🧰</div>`,`<BauZoe ativo={recompensaPct>=100}/>`);
       out=out.replace(`<div style={{fontSize:34}}>🐷</div>`,`<div style={{color:'#4F58E8',display:'grid',placeItems:'center'}}><PiggyBank size={38} strokeWidth={1.8}/></div>`);
 
