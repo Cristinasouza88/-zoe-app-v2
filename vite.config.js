@@ -14,6 +14,7 @@ import financeiroTrilhaFinalV3 from './vite.financeiro.trilha-final-v3.js';
 import financeiroBoasVindasReset from './vite.financeiro.boas-vindas-reset.js';
 import financeiroRebuildLimpo from './vite.financeiro.rebuild-limpo.js';
 import financeiroProdutoV2 from './vite.financeiro.produto-v2.js';
+import financeiroVisualV4 from './vite.financeiro.visual-v4.js';
 import campoPrefixo from './vite.ui.campo-prefixo.js';
 import zoeOrbAnimado from './vite.zoe-orb.js';
 
@@ -23,6 +24,8 @@ export default defineConfig({
   // inteiro porque um snapshot antigo/vazio podia sobrescrever os lancamentos no F5.
   // A trilha aprovada continua como onboarding e o produto v2 nasce da mesma base,
   // ignorando a interface/dados derivados do Financeiro legado.
-  plugins: [storageIndexedDb(), persistenciaZoe(), financeiroFluxoDireto(), financeiroCategoriasDetalhe(), financeiroConciliacaoPermanente(), financeiroProdutoIntegrado(), financeiroFluxoPatrimonialV3(), financeiroFluxoPatrimonialV4(), financeiroTrilhaDocumentos(), financeiroMoedaFocus(), financeiroTrilhaFinalV3(), financeiroBoasVindasReset(), financeiroRebuildLimpo(), financeiroProdutoV2(), campoPrefixo(), zoeOrbAnimado(), react()],
+  // O visual v4 remove a segunda navegação, emojis e símbolos improvisados e reaplica
+  // a linguagem visual personalizada da ZOE depois da montagem do produto financeiro.
+  plugins: [storageIndexedDb(), persistenciaZoe(), financeiroFluxoDireto(), financeiroCategoriasDetalhe(), financeiroConciliacaoPermanente(), financeiroProdutoIntegrado(), financeiroFluxoPatrimonialV3(), financeiroFluxoPatrimonialV4(), financeiroTrilhaDocumentos(), financeiroMoedaFocus(), financeiroTrilhaFinalV3(), financeiroBoasVindasReset(), financeiroRebuildLimpo(), financeiroProdutoV2(), financeiroVisualV4(), campoPrefixo(), zoeOrbAnimado(), react()],
   base: './'
 });
