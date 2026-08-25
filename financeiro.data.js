@@ -13,10 +13,6 @@ export const formatoMoeda = (v, moeda='BRL') => Number(v ?? 0).toLocaleString('p
   style: 'currency', currency: MOEDAS.some(m=>m.codigo===moeda)?moeda:'BRL'
 });
 
-// Interpreta entradas como 1200, 1.200, 1,200, 1.200,50 ou 1,200.50.
-// Quando há apenas um separador, 1 ou 2 casas finais são tratadas como decimais;
-// 3 casas finais são tratadas como agrupamento de milhar. O preview abaixo deixa
-// a interpretação visível antes de o usuário salvar o valor.
 export const parseValorMonetario = valor => {
   let s=String(valor??'').trim().replace(/\s/g,'').replace(/[^0-9,.-]/g,'');
   if(!s)return 0;
@@ -46,12 +42,10 @@ export const parseValorMonetario = valor => {
   return Number.isFinite(n)?(negativo?-n:n):0;
 };
 
-// Preview monetário para os campos do Start Financeiro.
-// É delegado no document para não interferir no foco/teclado do iPhone e funciona
-// também nos campos montados dinamicamente dentro do bottom sheet.
 if(typeof window!=='undefined'&&typeof document!=='undefined'&&!window.__zoeMoneyPreviewInstalled){
   window.__zoeMoneyPreviewInstalled=true;
   window.__zoeFinanceCurrency=window.__zoeFinanceCurrency||'BRL';
+  window.__zoeStartNav=window.__zoeStartNav||null;
 
   const moedaDoCampo=input=>{
     const label=input.closest('.fxstart-field');
@@ -88,9 +82,6 @@ if(typeof window!=='undefined'&&typeof document!=='undefined'&&!window.__zoeMone
   document.addEventListener('input',e=>garantirPreview(e.target),true);
   document.addEventListener('focusin',e=>garantirPreview(e.target),true);
 
-  // Ao sair do campo, normaliza somente o valor mantido no estado para que a mesma
-  // interpretação mostrada no preview seja a que será salva pelos cálculos existentes.
-  // A digitação não é formatada nem movida enquanto o usuário escreve.
   document.addEventListener('focusout',e=>{
     const input=e.target;
     if(!input?.matches?.('.fxstart-sheet input[inputmode="decimal"]')||!input.value.trim())return;
@@ -102,10 +93,6 @@ if(typeof window!=='undefined'&&typeof document!=='undefined'&&!window.__zoeMone
     input.dispatchEvent(new Event('input',{bubbles:true}));
   },true);
 
-  // Deixa o fluxo do onboarding explícito. "Adicionar" salva o registro, mas o rótulo
-  // anterior dava a impressão de que ainda faltava um botão de confirmação. Depois de
-  // salvar ao menos um item, o botão de avanço já existente passa a aparecer como
-  // CONTINUAR. Não muda a lógica nem impede cadastrar mais de um item.
   const rotulosStart=new Map([
     ['ADICIONAR RENDA','SALVAR RENDA'],
     ['ADICIONAR GASTO FIXO','SALVAR GASTO'],
@@ -120,13 +107,85 @@ if(typeof window!=='undefined'&&typeof document!=='undefined'&&!window.__zoeMone
     ['CONCLUIR PATRIMÔNIO E SEGUIR','CONTINUAR'],
     ['CONCLUIR FINANCIAMENTOS E SEGUIR','CONTINUAR']
   ]);
+
+  const etapaAtual=()=>{
+    const txt=document.querySelector('.fxstart-sheet-head small')?.textContent||'';
+    const m=txt.match(/ETAPA\s+(\d+)/i);
+    return m?Math.max(0,Number(m[1])-1):0;
+  };
+
+  const reabrirEtapa=()=>{
+    const nav=window.__zoeStartNav;
+    if(!nav||nav.cancelado)return;
+    if(document.querySelector('.fxstart-sheet'))return;
+    const nodes=[...document.querySelectorAll('.fxstart-node')];
+    const alvo=nodes[nav.step];
+    if(!alvo||alvo.disabled){setTimeout(reabrirEtapa,70);return}
+    window.__zoeStartNav=null;
+    alvo.click();
+  };
+
+  const criarSalvarEContinuar=()=>{
+    const sheet=document.querySelector('.fxstart-sheet');
+    if(!sheet)return;
+    const saves=[...sheet.querySelectorAll('button')].filter(btn=>/^SALVAR\b/i.test((btn.textContent||'').trim())&&!btn.classList.contains('fxstart-save-next'));
+    saves.forEach(save=>{
+      if(save.nextElementSibling?.classList?.contains('fxstart-save-next'))return;
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='fxstart-btn wide fxstart-save-next';
+      btn.textContent='SALVAR E CONTINUAR';
+      btn.style.marginTop='8px';
+      btn.addEventListener('click',e=>{
+        e.preventDefault();e.stopPropagation();
+        const atual=etapaAtual();
+        window.__zoeStartNav={step:Math.min(7,atual+1),cancelado:false};
+        window.__zoeStartAdvanceClick=true;
+        save.click();
+        window.__zoeStartAdvanceClick=false;
+        setTimeout(reabrirEtapa,40);
+      });
+      save.insertAdjacentElement('afterend',btn);
+    });
+  };
+
   const ajustarRotulosStart=()=>{
     document.querySelectorAll('.fxstart-sheet button').forEach(btn=>{
       const atual=(btn.textContent||'').replace(/\s+/g,' ').trim().toUpperCase();
       const novo=rotulosStart.get(atual);
       if(novo&&atual!==novo)btn.textContent=novo;
     });
+    criarSalvarEContinuar();
+    if(window.__zoeStartNav)setTimeout(reabrirEtapa,20);
   };
+
+  document.addEventListener('click',e=>{
+    const btn=e.target.closest?.('button');
+    if(!btn)return;
+    const texto=(btn.textContent||'').replace(/\s+/g,' ').trim().toUpperCase();
+    if(btn.matches('.fxstart-close')){
+      window.__zoeStartNav=null;
+      return;
+    }
+    if(/^SALVAR\b/.test(texto)&&!btn.classList.contains('fxstart-save-next')){
+      if(!window.__zoeStartAdvanceClick){
+        window.__zoeStartNav={step:etapaAtual(),cancelado:false};
+        setTimeout(reabrirEtapa,40);
+      }
+    }
+    if(texto==='CONFIRMAR E SEGUIR'){
+      window.__zoeStartNav={step:1,cancelado:false};
+      setTimeout(reabrirEtapa,40);
+    }
+  },true);
+
+  document.addEventListener('mousedown',e=>{
+    if(e.target?.classList?.contains('fxstart-sheet-backdrop')){
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  },true);
+
   const observerStart=new MutationObserver(ajustarRotulosStart);
   const iniciarObserver=()=>{
     if(document.body){observerStart.observe(document.body,{childList:true,subtree:true});ajustarRotulosStart()}
