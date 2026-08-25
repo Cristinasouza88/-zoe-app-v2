@@ -1,0 +1,25 @@
+:root{--niil-plum:#2F2545;--niil-lilac:#9B8DD3;--niil-mist:#DDD6F2;--niil-lime:#C9E56C;--niil-cloud:#F8F6F2;--niil-ink:#2C2834;--niil-muted:#817A89;--niil-line:#E4DFE6;--niil-white:#FFFFFF;--niil-soft:#F1EEF7}
+html,body,#root{background:var(--niil-cloud)!important;color:var(--niil-ink)!important}
+button,input,select,textarea{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+/* Financeiro: mesmo sistema visual do produto NIIL */
+.fx,.fxstart{background:var(--niil-cloud)!important;color:var(--niil-ink)!important}
+.fxstart-hero,.fxstart-main{background:transparent!important}
+.fxstart-progress-card,.fxstart-box,.fxstart-item,.fxstart-summary>*,.fx-card{background:var(--niil-white)!important;border-color:var(--niil-line)!important;box-shadow:0 8px 24px rgba(47,37,69,.055)!important}
+.fxstart-phase-card{background:var(--niil-plum)!important;color:#fff!important;box-shadow:0 8px 0 rgba(47,37,69,.18),0 15px 30px rgba(47,37,69,.10)!important}
+.fxstart-phase-card h2,.fxstart-phase-card p,.fxstart-phase-card small{color:#fff!important}
+.fxstart-progress i{background:var(--niil-lilac)!important}
+.fxstart-node.done .fxstart-node-core{background:var(--niil-lilac)!important;color:#fff!important}
+.fxstart-node.active .fxstart-node-core{background:var(--niil-soft)!important;color:var(--niil-plum)!important}
+.fxstart-node-ring{background:conic-gradient(var(--niil-lilac) var(--ring),var(--niil-line) 0)!important}
+.fxstart-now{background:var(--niil-lime)!important;color:var(--niil-plum)!important}
+.fxstart-btn:not(.ghost):not(.soft){background:var(--niil-plum)!important;color:#fff!important}
+.fxstart-btn.soft{background:var(--niil-soft)!important;color:var(--niil-plum)!important;border-color:var(--niil-mist)!important}
+.fxstart-btn.ghost,.fxstart-skip{color:var(--niil-plum)!important;border-color:var(--niil-line)!important}
+.fxstart-sheet{background:var(--niil-cloud)!important}
+.fxstart-sheet-head{background:var(--niil-cloud)!important;border-color:var(--niil-line)!important}
+.fxstart-sheet-head h3,.fxstart-box h4,.fxstart-item b{color:var(--niil-plum)!important}
+.fxstart-field span,.fxstart-note,.fxstart-item small{color:var(--niil-muted)!important}
+.fxstart-field input,.fxstart-field select,.fxstart-field textarea{background:#fff!important;color:var(--niil-ink)!important;border-color:var(--niil-line)!important}
+.fxstart-money-preview strong{color:var(--niil-plum)!important}
+/* Elementos de presença: lima é sinal, não fundo dominante */
+[style*="#A8FF00"],[style*="rgb(168, 255, 0)"]{--legacy-lime:var(--niil-lime)}
