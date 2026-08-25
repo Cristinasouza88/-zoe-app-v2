@@ -1,6 +1,6 @@
 export default function campoPrefixo(){
   return {
-    name:'zoe-ui-campo-prefixo',
+    name:'niil-ui-campo-prefixo',
     enforce:'pre',
     transform(code,id){
       if(!id.endsWith('/ui.jsx')&&!id.endsWith('ui.jsx')) return null;

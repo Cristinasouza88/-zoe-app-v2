@@ -24,7 +24,7 @@ export default function Dopamina({ d, up }) {
       </div>
       <p style={{ color: C.ink2, fontSize: 14, margin: '0 0 18px' }}>Trilha cronológica · 12 semanas · 3 aulas por dia útil</p>
 
-      <Card cls="zoe-surge" style={{ marginBottom: 16 }}>
+      <Card cls="niil-surge" style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: C.ink2, marginBottom: 6 }}>Progresso da trilha</div>
         <div style={{ fontSize: 26, fontWeight: 800, color: C.ink, marginBottom: 10 }}>{concluidas} <span style={{ fontSize: 15, fontWeight: 600, color: C.ink3 }}>/ {totalLicoesDopamina} aulas</span></div>
         <Barra v={concluidas} max={totalLicoesDopamina} cor={C.coral} />
@@ -70,7 +70,7 @@ export default function Dopamina({ d, up }) {
         const totalNaSemana = sem.dias.reduce((a, di) => a + di.licoes.length, 0);
         const aberta = !!abertas[sem.id];
         return (
-          <Card key={sem.id} cls="zoe-surge" delay={i * 25} style={{ marginBottom: 12, padding: 0, overflow: 'hidden' }}>
+          <Card key={sem.id} cls="niil-surge" delay={i * 25} style={{ marginBottom: 12, padding: 0, overflow: 'hidden' }}>
             <div onClick={() => alternarSemana(sem.id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 16, cursor: 'pointer' }}>
               <div>
                 <div style={{ fontWeight: 800, fontSize: 15, color: C.ink }}>{sem.titulo}</div>

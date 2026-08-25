@@ -51,7 +51,7 @@ export default function Ingles({ d, up, aviso }) {
       </div>
       <p style={{ color: C.ink2, fontSize: 14, margin: '0 0 18px' }}>Fluency Academy — trilha principal + complementares</p>
 
-      <Card cls="zoe-surge" style={{ marginBottom: 16 }}>
+      <Card cls="niil-surge" style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: C.ink2, marginBottom: 6 }}>Progresso da trilha principal</div>
         <div style={{ fontSize: 26, fontWeight: 800, color: C.ink, marginBottom: 10 }}>{aulasConcluidas} <span style={{ fontSize: 15, fontWeight: 600, color: C.ink3 }}>/ {totalAulasIngles} aulas</span></div>
         <Barra v={aulasConcluidas} max={totalAulasIngles} cor={C.gold} />
@@ -60,7 +60,7 @@ export default function Ingles({ d, up, aviso }) {
         </a>
       </Card>
 
-      <Card cls="zoe-surge" delay={40} style={{ marginBottom: 16 }}>
+      <Card cls="niil-surge" delay={40} style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: C.ink2, marginBottom: 10 }}>Seu ritmo</div>
         <div style={{ display: 'flex', gap: 8, marginBottom: ritmoAtual ? 10 : 0 }}>
           {RITMOS.map(r => (
@@ -78,7 +78,7 @@ export default function Ingles({ d, up, aviso }) {
       {FASES.map((f, i) => {
         const feita = !!ing.fasesConcluidas[f.id];
         return (
-          <Card key={f.id} cls="zoe-surge" delay={i * 40} style={{ marginBottom: 12, opacity: feita ? .75 : 1 }}>
+          <Card key={f.id} cls="niil-surge" delay={i * 40} style={{ marginBottom: 12, opacity: feita ? .75 : 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
               <div>
                 <div style={{ fontWeight: 800, fontSize: 16, color: C.ink }}>{f.nome}</div>

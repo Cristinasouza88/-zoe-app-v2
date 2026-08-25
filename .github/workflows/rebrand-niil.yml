@@ -1,0 +1,27 @@
+name: Rebrand NIIL source
+on:
+  push:
+    branches: [rebrand/niil-v1]
+permissions:
+  contents: write
+jobs:
+  rebrand:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rebrand/niil-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/rebrand-niil.mjs
+      - name: Commit rebrand
+        run: |
+          if git diff --quiet && git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Aplicar rebrand completo NIIL"
+          git push origin HEAD:rebrand/niil-v1

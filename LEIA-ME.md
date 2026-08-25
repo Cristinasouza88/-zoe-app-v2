@@ -1,4 +1,4 @@
-# Zoë
+# NIIL
 
 Sua vida extraordinária, um dia por vez.
 
@@ -41,7 +41,7 @@ e use o endereço "Network" que aparecer.
 3. No Vercel: **Add New → Project → Import** o repositório
 4. Ele detecta Vite sozinho. Clique em **Deploy**
 
-Pronto, você recebe um endereço `zoe-app.vercel.app`. Cada vez que você
+Pronto, você recebe um endereço `niil-app.vercel.app`. Cada vez que você
 atualizar o GitHub, o site atualiza sozinho.
 
 ### Opção 2 — Netlify sem GitHub
@@ -57,7 +57,7 @@ Com o site publicado, abra o endereço no celular:
 - **iPhone:** Safari → botão compartilhar → Adicionar à Tela de Início
 - **Android:** Chrome → menu → Instalar aplicativo
 
-Ele passa a abrir em tela cheia, com o ícone da Zoë, sem barra de navegador.
+Ele passa a abrir em tela cheia, com o ícone da NIIL, sem barra de navegador.
 
 ---
 

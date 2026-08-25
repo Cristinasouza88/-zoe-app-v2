@@ -1,6 +1,6 @@
 import { supabase } from './supabase.js';
 
-const endpoint='/.netlify/functions/zoe-data';
+const endpoint='/.netlify/functions/niil-data';
 
 async function token(){
   const {data}=await supabase.auth.getSession();
@@ -14,7 +14,7 @@ export async function carregarRemoto(){
     if(!r.ok)return null;
     const j=await r.json();
     return j?.ok?j.data:null;
-  }catch(e){console.warn('ZOE remoto: falha ao carregar',e);return null}
+  }catch(e){console.warn('NIIL remoto: falha ao carregar',e);return null}
 }
 
 let fila=Promise.resolve();
@@ -24,6 +24,6 @@ export function salvarRemoto(data){
     const r=await fetch(endpoint,{method:'POST',headers:{Authorization:`Bearer ${t}`,'Content-Type':'application/json'},body:JSON.stringify({data})});
     if(!r.ok)throw new Error(`HTTP ${r.status}`);
     return true;
-  }).catch(e=>{console.warn('ZOE remoto: falha ao salvar',e);return false});
+  }).catch(e=>{console.warn('NIIL remoto: falha ao salvar',e);return false});
   return fila;
 }

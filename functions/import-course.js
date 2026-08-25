@@ -59,7 +59,7 @@ const youtubePublico = async url => {
   const playlistId = playlistIdDe(url);
   if (!playlistId) throw Object.assign(new Error('Cole o link completo de uma playlist do YouTube.'), { status: 400 });
   const resp = await fetch(`https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId)}&hl=pt-BR`, {
-    headers: { 'user-agent': 'Mozilla/5.0 (compatible; ZoeCourseImporter/1.0)', 'accept-language': 'pt-BR,pt;q=0.9' }
+    headers: { 'user-agent': 'Mozilla/5.0 (compatible; NIILCourseImporter/1.0)', 'accept-language': 'pt-BR,pt;q=0.9' }
   });
   const html = await resp.text();
   if (!resp.ok) throw Object.assign(new Error('O YouTube não liberou a leitura desta playlist.'), { status: resp.status });

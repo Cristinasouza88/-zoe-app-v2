@@ -32,7 +32,7 @@ export default function Conquistas({ d }) {
         const streak = streakAtual(meta, d.dias, d.perfil);
         const liberada = streak >= meta.alvoDias;
         return (
-          <Card key={meta.id} cls="zoe-surge" delay={i * 40} style={{ marginBottom: 12, opacity: liberada ? 1 : .9 }}>
+          <Card key={meta.id} cls="niil-surge" delay={i * 40} style={{ marginBottom: 12, opacity: liberada ? 1 : .9 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
               <div style={{ fontWeight: 800, fontSize: 15, color: C.ink }}>{meta.titulo}</div>
               {liberada
