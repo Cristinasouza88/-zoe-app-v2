@@ -106,7 +106,6 @@ export default function FinanceiroStart({fin,persistir,aviso=()=>{},onFinish=()=
   return <div className="fxstart">
     <div className="fxstart-hero"><div><h1>Minha trilha financeira</h1><p>Uma etapa por vez. Eu sigo com você.</p></div><div className="fxstart-orb"/></div>
     <div className="fxstart-progress-card"><div className="fxstart-progress-row"><span>Progresso da jornada</span><strong>{feitos} de {etapas.length}</strong></div><div className="fxstart-progress"><i style={{width:`${pctGeral}%`}}/></div></div>
-
     <div className="fxstart-main">
       <div className="fxstart-phase-card"><div><small>FUNDAÇÃO</small><h2>Seu ponto de partida</h2><p>Entender sua realidade financeira antes de definir os próximos passos.</p></div><div className="fxstart-phase-count">{feitos}/{etapas.length}<span>⌃</span></div></div>
       <div className="fxstart-path" style={{height:alturaMapa}}>
@@ -116,6 +115,6 @@ export default function FinanceiroStart({fin,persistir,aviso=()=>{},onFinish=()=
       </div>
     </div>
 
-    {aberto&&liberada(step)&&<div className="fxstart-sheet-backdrop" onMouseDown={e=>e.target===e.currentTarget&&setAberto(false)}><div className="fxstart-sheet"><div className="fxstart-sheet-head"><div><small>ETAPA {step+1} DE {etapas.length}</small><h3>{faseAtual.titulo}</h3></div><button className="fxstart-close" onClick={()=>setAberto(false)}><X size={18}/></button></div>{concluidas[step]&&step<7&&<div className="fxstart-complete"><Check size={16}/> Etapa concluída. Você pode revisar os dados quando quiser.</div>}<Conteudo/>{step>0&&<div className="fxstart-actions"><button className="fxstart-btn ghost" onClick={()=>seguir(step-1)}>VOLTAR</button>{concluidas[step]&&step<7&&<button className="fxstart-btn" onClick={proxima}>PRÓXIMA</button>}</div>}</div></div>}
+    {aberto&&liberada(step)&&<div className="fxstart-sheet-backdrop" onMouseDown={e=>e.target===e.currentTarget&&setAberto(false)}><div className="fxstart-sheet"><div className="fxstart-sheet-head"><div><small>ETAPA {step+1} DE {etapas.length}</small><h3>{faseAtual.titulo}</h3></div><button className="fxstart-close" onClick={()=>setAberto(false)}><X size={18}/></button></div>{concluidas[step]&&step<7&&<div className="fxstart-complete"><Check size={16}/> Etapa concluída. Você pode revisar os dados quando quiser.</div>}{Conteudo()}{step>0&&<div className="fxstart-actions"><button className="fxstart-btn ghost" onClick={()=>seguir(step-1)}>VOLTAR</button>{concluidas[step]&&step<7&&<button className="fxstart-btn" onClick={proxima}>PRÓXIMA</button>}</div>}</div></div>}
   </div>;
 }
