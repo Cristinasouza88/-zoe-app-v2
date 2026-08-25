@@ -7,7 +7,7 @@
 .fxstart-progress-row strong{font-size:13px;font-weight:800;color:#075B59}
 .fxstart-progress{height:10px;border-radius:99px;background:#EDF2F0;overflow:hidden;margin:0}
 .fxstart-progress i{display:block;height:100%;border-radius:99px;background:#A8FF00;transition:width .5s cubic-bezier(.22,1,.36,1)}
-.fxstart-phase-card{width:100%;min-height:92px;display:flex;align-items:center;gap:12px;border:0;border-radius:23px;background:#3ECF8E;color:#fff;padding:16px 17px;box-shadow:0 8px 0 #3ECF8E 42,0 15px 30px rgba(62,207,142,.13);margin:0 0 16px;font-family:inherit;text-align:left}
+.fxstart-phase-card{width:100%;min-height:92px;display:flex;align-items:center;gap:12px;border:0;border-radius:23px;background:#3ECF8E;color:#fff;padding:16px 17px;box-shadow:0 8px 0 rgba(62,207,142,.26),0 15px 30px rgba(62,207,142,.13);margin:0 0 16px;font-family:inherit;text-align:left}
 .fxstart-phase-card>div:first-child{flex:1;min-width:0}
 .fxstart-phase-card small{display:block;font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:1px;opacity:.8}
 .fxstart-phase-card h2{font-size:18px;font-weight:900;margin:4px 0 0;line-height:1.2;color:inherit}
