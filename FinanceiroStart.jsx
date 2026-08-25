@@ -2,7 +2,7 @@ import React,{useMemo,useState}from'react';
 import{WalletCards,Coins,ReceiptText,Landmark,HandCoins,Check,Plus,Trash2,LockKeyhole,X,TrendingUp,Building2,Sparkles,PiggyBank,Target,BookOpen}from'lucide-react';
 import{CATEGORIAS_DESPESA,CATEGORIAS_RECEITA,MOEDAS,TIPOS_PATRIMONIO,TIPOS_DIVIDA,TIPOS_CONTA,TIPOS_INVESTIMENTO,INSTITUICOES_FINANCEIRAS,formatoMoeda,parseValorMonetario}from'./financeiro.data.js';
 import{resumoStartFinanceiro,uid,hoje}from'./financeiro.core.js';
-import avatarExpressoes from'./avatar-expressoes.data.js';
+import avatarExpressoes from'./niil-expressions.data.js';
 import'./FinanceiroStart.css';
 
 const n=v=>parseValorMonetario(v);

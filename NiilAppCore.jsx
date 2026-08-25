@@ -15,9 +15,7 @@ import JornadaSistemica from './JornadaSistemica.jsx';
 import { FASES as FASES_INGLES } from './ingles.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 import { supabase } from './supabase.js';
-import avatarNIILFun from './avatar-niil-fun.data.js';
-import avatarNIILEssencial from './avatar-niil-essencial.data.js';
-import avatarExpressoes from './avatar-expressoes.data.js';
+import avatarExpressoes, { niilMascot } from './niil-mascot.data.js';
 
 /* ══════════ FOTOS ══════════
    As imagens são comprimidas antes de salvar (lado maior 900px, jpeg 72%),
@@ -318,8 +316,8 @@ export default function NIILApp() {
     () => window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery')
   );
   const [d, setD] = useState(inicial);
-  const avatarId = d.perfil?.avatar || 'fun';
-  const avatarImagem = avatarId === 'essencial' ? avatarNIILEssencial : avatarNIILFun;
+  const avatarId = 'niil';
+  const avatarImagem = niilMascot;
   const [aba, setAba] = useState('inicio');
   const [data, setData] = useState(hoje());
   const [etapaAberta, setEtapaAberta] = useState(null);
