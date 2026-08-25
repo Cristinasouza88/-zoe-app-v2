@@ -14,6 +14,82 @@ if(typeof window!=='undefined'&&window.localStorage){
 }
 
 const trocarTexto=(s='')=>s.replace(/ZOE/g,'NIIL').replace(/Zoë/g,'NIIL').replace(/zoë/g,'niil').replace(/Zoe/g,'NIIL').replace(/\bNiil\b/g,'NIIL');
+const texto=el=>(el?.textContent||'').replace(/\s+/g,' ').trim();
+
+const wordmarkSvg=`
+<svg viewBox="0 0 420 190" role="img" aria-label="niil" class="niil-runtime-wordmark">
+  <g fill="none" stroke="#9B8DD3" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M28 164V91C28 43 65 24 104 24s76 19 76 67v73"/>
+    <path d="M244 79v85"/><path d="M313 79v85"/><path d="M382 25v139"/>
+  </g>
+  <circle cx="244" cy="29" r="15" fill="#9B8DD3"/><circle cx="313" cy="29" r="15" fill="#9B8DD3"/>
+</svg>`;
+
+const criarOrb=()=>{
+  const orb=document.createElement('div');
+  orb.className='niil-orb-runtime';
+  orb.setAttribute('role','img');
+  orb.setAttribute('aria-label','NIIL');
+  orb.innerHTML='<span class="niil-orb-cloud"></span><i class="niil-orb-signal"></i>';
+  return orb;
+};
+
+const aplicarMarcaTrilha=(scope=document)=>{
+  const titulos=[...(scope.querySelectorAll?.('h1')||[])].filter(h=>texto(h)==='Minha trilha');
+  titulos.forEach(h1=>{
+    let hero=h1.parentElement;
+    while(hero&&hero!==document.body&&!(hero.style?.background||'').includes('linear-gradient'))hero=hero.parentElement;
+    if(!hero)return;
+    const tela=hero.parentElement;
+    tela?.classList.add('niil-trail-screen');
+    hero.classList.add('niil-trail-hero');
+
+    const headingRow=h1.parentElement?.parentElement;
+    if(headingRow){
+      headingRow.classList.add('niil-trail-heading-row');
+      const avatar=[...headingRow.querySelectorAll('img')].find(img=>/NIIL/i.test(img.alt||''));
+      if(avatar){avatar.classList.add('niil-trail-heading-mascot');avatar.src=niilMascot}
+      if(!headingRow.querySelector('.niil-orb-runtime'))headingRow.appendChild(criarOrb());
+    }
+
+    if(!hero.querySelector('.niil-runtime-brand')){
+      const brand=document.createElement('div');
+      brand.className='niil-runtime-brand';
+      brand.innerHTML=wordmarkSvg;
+      hero.insertBefore(brand,hero.firstChild);
+    }
+
+    const progresso=[...hero.querySelectorAll('span')].find(s=>texto(s)==='Progresso da jornada');
+    const progressoCard=progresso?.parentElement?.parentElement;
+    if(progressoCard)progressoCard.classList.add('niil-trail-progress-card');
+
+    const faseBtns=[...tela.querySelectorAll('button')].filter(btn=>/\d+\s*\/\s*\d+/.test(texto(btn))&&btn.querySelector('div'));
+    faseBtns.forEach((btn,i)=>{
+      btn.classList.add('niil-trail-phase-card',`niil-phase-${i%4}`);
+      if(/Fundação/i.test(texto(btn))||/Primeira volta/i.test(texto(btn)))btn.classList.add('niil-phase-foundation');
+    });
+
+    const titulosEtapa=[...tela.querySelectorAll('div')].filter(el=>{
+      const t=texto(el);
+      return /^(Como você chega hoje\?|Sua Roda da Vida inicial|Escolha sua alavanca|Matriz de ganhos e perdas|Mapa de influências|Experimento de 7 dias|Ative na agenda|Checkpoint da Roda da Vida)$/.test(t);
+    });
+    titulosEtapa.forEach(label=>{
+      const node=label.parentElement;
+      if(!node||node.style?.position!=='absolute')return;
+      node.classList.add('niil-trail-node');
+      if(node.classList.contains('niil-surge')||[...node.querySelectorAll('span')].some(s=>texto(s)==='AGORA'))node.classList.add('is-current');
+      if(node.querySelector('svg.lucide-lock'))node.classList.add('is-locked');
+      if(node.querySelector('svg.lucide-check'))node.classList.add('is-done');
+    });
+
+    tela.querySelectorAll('img').forEach(img=>{
+      if(/NIIL/i.test(img.alt||'')){
+        img.src=niilMascot;
+        if(!img.closest('.niil-trail-heading-row'))img.classList.add('niil-trail-mascot');
+      }
+    });
+  });
+};
 
 const aplicar=(root=document)=>{
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
@@ -28,9 +104,17 @@ const aplicar=(root=document)=>{
       if(escolha)setTimeout(()=>escolha.click(),0);if(sheet)sheet.style.display='none';
     }
   });
+  aplicarMarcaTrilha(root);
 };
 
 if(typeof document!=='undefined'){
-  const iniciar=()=>{aplicar();new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)aplicar(n)}))).observe(document.body,{childList:true,subtree:true})};
+  const iniciar=()=>{
+    aplicar();
+    const obs=new MutationObserver(ms=>{
+      ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)aplicar(n)}));
+      aplicarMarcaTrilha(document);
+    });
+    obs.observe(document.body,{childList:true,subtree:true});
+  };
   document.body?iniciar():document.addEventListener('DOMContentLoaded',iniciar,{once:true});
 }
