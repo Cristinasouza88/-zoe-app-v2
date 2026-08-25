@@ -101,6 +101,38 @@ if(typeof window!=='undefined'&&typeof document!=='undefined'&&!window.__zoeMone
     if(setter)setter.call(input,canonico);else input.value=canonico;
     input.dispatchEvent(new Event('input',{bubbles:true}));
   },true);
+
+  // Deixa o fluxo do onboarding explícito. "Adicionar" salva o registro, mas o rótulo
+  // anterior dava a impressão de que ainda faltava um botão de confirmação. Depois de
+  // salvar ao menos um item, o botão de avanço já existente passa a aparecer como
+  // CONTINUAR. Não muda a lógica nem impede cadastrar mais de um item.
+  const rotulosStart=new Map([
+    ['ADICIONAR RENDA','SALVAR RENDA'],
+    ['ADICIONAR GASTO FIXO','SALVAR GASTO'],
+    ['ADICIONAR CONTA','SALVAR CONTA'],
+    ['ADICIONAR APLICAÇÃO','SALVAR APLICAÇÃO'],
+    ['ADICIONAR PATRIMÔNIO','SALVAR PATRIMÔNIO'],
+    ['ADICIONAR FINANCIAMENTO','SALVAR FINANCIAMENTO'],
+    ['CONCLUIR RENDA E SEGUIR','CONTINUAR'],
+    ['CONCLUIR GASTOS E SEGUIR','CONTINUAR'],
+    ['CONCLUIR CONTAS E SEGUIR','CONTINUAR'],
+    ['CONCLUIR INVESTIMENTOS E SEGUIR','CONTINUAR'],
+    ['CONCLUIR PATRIMÔNIO E SEGUIR','CONTINUAR'],
+    ['CONCLUIR FINANCIAMENTOS E SEGUIR','CONTINUAR']
+  ]);
+  const ajustarRotulosStart=()=>{
+    document.querySelectorAll('.fxstart-sheet button').forEach(btn=>{
+      const atual=(btn.textContent||'').replace(/\s+/g,' ').trim().toUpperCase();
+      const novo=rotulosStart.get(atual);
+      if(novo&&atual!==novo)btn.textContent=novo;
+    });
+  };
+  const observerStart=new MutationObserver(ajustarRotulosStart);
+  const iniciarObserver=()=>{
+    if(document.body){observerStart.observe(document.body,{childList:true,subtree:true});ajustarRotulosStart()}
+    else setTimeout(iniciarObserver,50);
+  };
+  iniciarObserver();
 }
 
 export const METAANUAL_PADRAO = { alvo: 0, ano: new Date().getFullYear() };
