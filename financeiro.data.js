@@ -13,6 +13,96 @@ export const formatoMoeda = (v, moeda='BRL') => Number(v ?? 0).toLocaleString('p
   style: 'currency', currency: MOEDAS.some(m=>m.codigo===moeda)?moeda:'BRL'
 });
 
+// Interpreta entradas como 1200, 1.200, 1,200, 1.200,50 ou 1,200.50.
+// Quando há apenas um separador, 1 ou 2 casas finais são tratadas como decimais;
+// 3 casas finais são tratadas como agrupamento de milhar. O preview abaixo deixa
+// a interpretação visível antes de o usuário salvar o valor.
+export const parseValorMonetario = valor => {
+  let s=String(valor??'').trim().replace(/\s/g,'').replace(/[^0-9,.-]/g,'');
+  if(!s)return 0;
+  const negativo=s.startsWith('-');
+  s=s.replace(/-/g,'');
+  const pontos=(s.match(/\./g)||[]).length;
+  const virgulas=(s.match(/,/g)||[]).length;
+  let normalizado=s;
+  if(pontos&&virgulas){
+    const ultimoPonto=s.lastIndexOf('.');
+    const ultimaVirgula=s.lastIndexOf(',');
+    const decimal=ultimoPonto>ultimaVirgula?'.':',';
+    const milhar=decimal==='.'?',':'.';
+    normalizado=s.split(milhar).join('').replace(decimal,'.');
+  }else if(pontos||virgulas){
+    const sep=pontos?'.':',';
+    const partes=s.split(sep);
+    if(partes.length>2){
+      const ultima=partes.pop();
+      normalizado=ultima.length<=2?partes.join('')+'.'+ultima:partes.join('')+ultima;
+    }else{
+      const casas=partes[1]?.length??0;
+      normalizado=casas>0&&casas<=2?partes[0]+'.'+partes[1]:partes.join('');
+    }
+  }
+  const n=Number(normalizado);
+  return Number.isFinite(n)?(negativo?-n:n):0;
+};
+
+// Preview monetário para os campos do Start Financeiro.
+// É delegado no document para não interferir no foco/teclado do iPhone e funciona
+// também nos campos montados dinamicamente dentro do bottom sheet.
+if(typeof window!=='undefined'&&typeof document!=='undefined'&&!window.__zoeMoneyPreviewInstalled){
+  window.__zoeMoneyPreviewInstalled=true;
+  window.__zoeFinanceCurrency=window.__zoeFinanceCurrency||'BRL';
+
+  const moedaDoCampo=input=>{
+    const label=input.closest('.fxstart-field');
+    const texto=label?.querySelector(':scope > span')?.textContent||'';
+    const match=texto.match(/\((BRL|USD|EUR|GBP|CAD|AUD)\)/);
+    if(match){window.__zoeFinanceCurrency=match[1];return match[1]}
+    return window.__zoeFinanceCurrency||'BRL';
+  };
+
+  const garantirPreview=input=>{
+    if(!input?.matches?.('.fxstart-sheet input[inputmode="decimal"]'))return;
+    let preview=input.nextElementSibling;
+    if(!preview?.classList?.contains('fxstart-money-preview')){
+      preview=document.createElement('div');
+      preview.className='fxstart-money-preview';
+      preview.style.cssText='margin-top:6px;min-height:18px;font-size:11px;line-height:1.35;color:#7D8D91;display:flex;align-items:baseline;gap:5px;flex-wrap:wrap';
+      input.insertAdjacentElement('afterend',preview);
+    }
+    const raw=input.value.trim();
+    if(!raw){preview.textContent='';return}
+    const moeda=moedaDoCampo(input);
+    const valor=parseValorMonetario(raw);
+    preview.innerHTML='<span>Interpretado como</span><strong style="color:#075B59;font-weight:800"></strong>';
+    preview.querySelector('strong').textContent=formatoMoeda(valor,moeda);
+  };
+
+  document.addEventListener('change',e=>{
+    const select=e.target;
+    if(select?.matches?.('.fxstart-sheet select')&&MOEDAS.some(m=>m.codigo===select.value)){
+      window.__zoeFinanceCurrency=select.value;
+    }
+  },true);
+
+  document.addEventListener('input',e=>garantirPreview(e.target),true);
+  document.addEventListener('focusin',e=>garantirPreview(e.target),true);
+
+  // Ao sair do campo, normaliza somente o valor mantido no estado para que a mesma
+  // interpretação mostrada no preview seja a que será salva pelos cálculos existentes.
+  // A digitação não é formatada nem movida enquanto o usuário escreve.
+  document.addEventListener('focusout',e=>{
+    const input=e.target;
+    if(!input?.matches?.('.fxstart-sheet input[inputmode="decimal"]')||!input.value.trim())return;
+    const valor=parseValorMonetario(input.value);
+    const canonico=String(valor).replace('.',',');
+    if(input.value===canonico)return;
+    const setter=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value')?.set;
+    if(setter)setter.call(input,canonico);else input.value=canonico;
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+  },true);
+}
+
 export const METAANUAL_PADRAO = { alvo: 0, ano: new Date().getFullYear() };
 export const MESES_LBL = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
