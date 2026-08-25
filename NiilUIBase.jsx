@@ -17,7 +17,7 @@ export const store = {
         }
       }
     } catch (e) {
-      console.warn('ZOE: falha ao ler localStorage', e);
+      console.warn('NIIL: falha ao ler localStorage', e);
     }
 
     try {
@@ -32,7 +32,7 @@ export const store = {
         }
       }
     } catch (e) {
-      console.warn('ZOE: falha ao ler window.storage', e);
+      console.warn('NIIL: falha ao ler window.storage', e);
     }
 
     return memoria[k] ?? null;
@@ -50,7 +50,7 @@ export const store = {
         gravou = window.localStorage.getItem(k) === serializado;
       }
     } catch (e) {
-      console.error('ZOE: não foi possível gravar no localStorage', e);
+      console.error('NIIL: não foi possível gravar no localStorage', e);
     }
 
     // Mantém window.storage apenas como cópia auxiliar, nunca como única fonte.
@@ -59,7 +59,7 @@ export const store = {
         await window.storage.set(k, serializado, false);
       }
     } catch (e) {
-      console.warn('ZOE: cópia auxiliar em window.storage falhou', e);
+      console.warn('NIIL: cópia auxiliar em window.storage falhou', e);
     }
 
     return gravou;
@@ -92,23 +92,23 @@ export const hoje = () => new Date().toISOString().split('T')[0];
 
 /* ══════════ CSS de animação ══════════ */
 export const CSS = `
-@keyframes zoeSurge{0%{opacity:0;transform:translateY(14px) scale(.94)}100%{opacity:1;transform:none}}
-@keyframes zoeFade{0%{opacity:0}100%{opacity:1}}
-@keyframes zoeBarra{0%{transform:scaleY(0)}100%{transform:scaleY(1)}}
-@keyframes zoePonto{0%{opacity:0;transform:scale(0)}100%{opacity:1;transform:scale(1)}}
-@keyframes zoeTracar{to{stroke-dashoffset:0}}
-@keyframes zoePontoLogo{0%{opacity:0;transform:scale(0) translateY(7px)}100%{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes zoeCelebra{0%{opacity:0;transform:translateY(20px) scale(.82) rotate(-3deg)}55%{transform:translateY(-5px) scale(1.05) rotate(2deg)}100%{opacity:1;transform:none}}
-@keyframes zoePulso{0%,100%{box-shadow:0 0 0 0 rgba(168,255,0,0)}50%{box-shadow:0 0 0 12px rgba(168,255,0,.16)}}
-@keyframes zoeGira{to{transform:rotate(360deg)}}
-.zoe-surge{animation:zoeSurge .42s cubic-bezier(.22,1,.36,1) both}
-.zoe-barra{transform-origin:bottom;animation:zoeBarra .6s cubic-bezier(.22,1,.36,1) both}
-.zoe-fade{animation:zoeFade .5s ease both}
-.zoe-celebra{animation:zoeCelebra .72s cubic-bezier(.22,1.25,.36,1) both,zoePulso 1.8s ease .75s 2}
-.zoe-gira{animation:zoeGira .85s linear infinite}
+@keyframes niilSurge{0%{opacity:0;transform:translateY(14px) scale(.94)}100%{opacity:1;transform:none}}
+@keyframes niilFade{0%{opacity:0}100%{opacity:1}}
+@keyframes niilBarra{0%{transform:scaleY(0)}100%{transform:scaleY(1)}}
+@keyframes niilPonto{0%{opacity:0;transform:scale(0)}100%{opacity:1;transform:scale(1)}}
+@keyframes niilTracar{to{stroke-dashoffset:0}}
+@keyframes niilPontoLogo{0%{opacity:0;transform:scale(0) translateY(7px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes niilCelebra{0%{opacity:0;transform:translateY(20px) scale(.82) rotate(-3deg)}55%{transform:translateY(-5px) scale(1.05) rotate(2deg)}100%{opacity:1;transform:none}}
+@keyframes niilPulso{0%,100%{box-shadow:0 0 0 0 rgba(168,255,0,0)}50%{box-shadow:0 0 0 12px rgba(168,255,0,.16)}}
+@keyframes niilGira{to{transform:rotate(360deg)}}
+.niil-surge{animation:niilSurge .42s cubic-bezier(.22,1,.36,1) both}
+.niil-barra{transform-origin:bottom;animation:niilBarra .6s cubic-bezier(.22,1,.36,1) both}
+.niil-fade{animation:niilFade .5s ease both}
+.niil-celebra{animation:niilCelebra .72s cubic-bezier(.22,1.25,.36,1) both,niilPulso 1.8s ease .75s 2}
+.niil-gira{animation:niilGira .85s linear infinite}
 @media (prefers-reduced-motion:reduce){
-  .zoe-surge,.zoe-barra,.zoe-fade,.zoe-celebra,.zoe-gira{animation:none!important}
-  .zoe-barra{transform:none!important}
+  .niil-surge,.niil-barra,.niil-fade,.niil-celebra,.niil-gira{animation:none!important}
+  .niil-barra{transform:none!important}
 }
 `;
 
@@ -151,7 +151,7 @@ export const Barra = ({ v, max, cor, h = 8 }) => (
 
 export const Sheet = ({ aberto, fechar, titulo, children }) => aberto ? (
   <div onClick={fechar} style={{ position: 'fixed', inset: 0, background: 'rgba(11,20,22,.42)', zIndex: 90, display: 'flex', alignItems: 'flex-end' }}>
-    <div onClick={e => e.stopPropagation()} className="zoe-surge" style={{ background: C.card, width: '100%', maxHeight: '88vh', overflowY: 'auto', borderRadius: '26px 26px 0 0', padding: 20, paddingBottom: 32 }}>
+    <div onClick={e => e.stopPropagation()} className="niil-surge" style={{ background: C.card, width: '100%', maxHeight: '88vh', overflowY: 'auto', borderRadius: '26px 26px 0 0', padding: 20, paddingBottom: 32 }}>
       <div style={{ width: 40, height: 4, background: C.line, borderRadius: 99, margin: '0 auto 16px' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h2 style={{ fontSize: 20, fontWeight: 800, color: C.ink, margin: 0 }}>{titulo}</h2>
@@ -162,23 +162,23 @@ export const Sheet = ({ aberto, fechar, titulo, children }) => aberto ? (
   </div>
 ) : null;
 
-/* ══════════ WORDMARK zoë ══════════ */
+/* ══════════ WORDMARK niil ══════════ */
 /* traçados geométricos da marca: z reto, o circular, e de terminal aberto, trema lima */
 export function Wordmark({ altura = 54, cor = C.ink, corPontos = C.lima, animar = false, atraso = 0 }) {
   const traco = 4.4;
   const comum = { fill: 'none', stroke: cor, strokeWidth: traco, strokeLinecap: 'round', strokeLinejoin: 'round' };
   const anim = (i) => animar ? {
     strokeDasharray: 260, strokeDashoffset: 260,
-    animation: `zoeTracar .85s cubic-bezier(.6,.05,.3,1) ${atraso + i * 0.16}s forwards`
+    animation: `niilTracar .85s cubic-bezier(.6,.05,.3,1) ${atraso + i * 0.16}s forwards`
   } : {};
   return (
-    <svg viewBox="-6 -18 172 70" style={{ height: altura, display: 'block', overflow: 'visible' }} aria-label="zoë">
+    <svg viewBox="-6 -18 172 70" style={{ height: altura, display: 'block', overflow: 'visible' }} aria-label="niil">
       <path d="M 4,5 L 40,5 L 4,45 L 42,45" {...comum} style={anim(0)} />
       <circle cx="76" cy="25" r="20" {...comum} style={anim(1)} />
       <path d="M 112,25 L 152,25 A 20,20 0 1 0 147,37" {...comum} style={anim(2)} />
       {[124.5, 141].map((cx, i) => (
         <circle key={cx} cx={cx} cy="-5" r="5.2" fill={corPontos}
-          style={animar ? { opacity: 0, transformOrigin: `${cx}px -5px`, animation: `zoePontoLogo .45s cubic-bezier(.34,1.56,.64,1) ${atraso + .72 + i * .1}s forwards` } : {}} />
+          style={animar ? { opacity: 0, transformOrigin: `${cx}px -5px`, animation: `niilPontoLogo .45s cubic-bezier(.34,1.56,.64,1) ${atraso + .72 + i * .1}s forwards` } : {}} />
       ))}
     </svg>
   );
@@ -191,7 +191,7 @@ export function Foto({ id, email, style, onClick, alt = '' }) {
   useEffect(() => {
     if (cacheFotos.has(id)) { setSrc(cacheFotos.get(id)); return; }
     let vivo = true;
-    store.get(`zoe:foto:${email}:${id}`).then(v => {
+    store.get(`niil:foto:${email}:${id}`).then(v => {
       if (v && vivo) { cacheFotos.set(id, v); setSrc(v); }
     });
     return () => { vivo = false; };
@@ -212,7 +212,7 @@ export function GraficoBarras({ dados, max, cor, altura = 110, rotulos }) {
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: altura }}>
         {dados.map((v, i) => (
           <div key={i} style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'flex-end' }}>
-            <div className={pronto ? 'zoe-barra' : ''} style={{
+            <div className={pronto ? 'niil-barra' : ''} style={{
               width: '100%', height: `${Math.max(3, (v / m) * 100)}%`,
               background: v > 0 ? cor : '#EDF2F0', borderRadius: '6px 6px 3px 3px',
               animationDelay: `${i * 45}ms`, opacity: pronto ? 1 : 0
@@ -246,7 +246,7 @@ export function GraficoLinha({ dados, cor, altura = 120 }) {
           <stop offset="100%" stopColor={cor} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={dArea} fill={`url(#g${cor.slice(1)})`} style={{ animation: pronto ? 'zoeFade .8s ease .5s both' : 'none', opacity: 0 }} />
+      <path d={dArea} fill={`url(#g${cor.slice(1)})`} style={{ animation: pronto ? 'niilFade .8s ease .5s both' : 'none', opacity: 0 }} />
       <path d={dPath} fill="none" stroke={cor} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"
         style={{
           strokeDasharray: 900, strokeDashoffset: pronto ? 0 : 900,

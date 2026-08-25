@@ -37,7 +37,7 @@ export const CSS=Base.CSS+`
 :root{--niil-plum:#2F2545;--niil-lilac:#9B8DD3;--niil-mist:#DDD6F2;--niil-lime:#C9E56C;--niil-cloud:#F8F6F2;--niil-ink:#2C2834;--niil-muted:#817A89;--niil-line:#E4DFE6;--niil-soft:#F1EEF7}
 html,body,#root{background:var(--niil-cloud)!important;color:var(--niil-ink)}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-.zoe-surge{animation-name:zoeSurge}
+.niil-surge{animation-name:niilSurge}
 ::selection{background:var(--niil-mist);color:var(--niil-plum)}
 `;
 

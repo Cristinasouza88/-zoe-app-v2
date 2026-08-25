@@ -22,7 +22,7 @@ exports.handler=async event=>{
   const host=origin.hostname.toLowerCase(),suffix='.entregadigital.app.br';
   if(!host.endsWith(suffix)||host.startsWith('api-'))return json(400,{erro:'Este conector é exclusivo para cursos da Entrega Digital.'});
   const slug=host.slice(0,-suffix.length);if(!/^[a-z0-9-]+$/.test(slug))return json(400,{erro:'Endereço da plataforma não reconhecido.'});
-  const apiOrigin=`https://api-${slug}.entregadigital.app.br`,base=`${apiOrigin}/api/v1/pwa/`,courseOrigin=origin.origin,baseHeaders={accept:'application/json','content-type':'application/json',os:'Web','os-version':'browser','device-model':'ZOE Web','app-version':'2.69.0','device-id':`zoe-${Date.now()}`};
+  const apiOrigin=`https://api-${slug}.entregadigital.app.br`,base=`${apiOrigin}/api/v1/pwa/`,courseOrigin=origin.origin,baseHeaders={accept:'application/json','content-type':'application/json',os:'Web','os-version':'browser','device-model':'NIIL Web','app-version':'2.69.0','device-id':`niil-${Date.now()}`};
   try{
     const session=await csrfSession(apiOrigin,courseOrigin,baseHeaders);
     const loginHeaders={...baseHeaders,origin:courseOrigin,referer:`${courseOrigin}/`};

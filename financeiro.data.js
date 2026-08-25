@@ -43,9 +43,9 @@ export const INSTITUICOES_FINANCEIRAS=[
 // A seleção original é um <select> controlado pelo React. No iOS opções nativas não aceitam imagens.
 // Este enhancer mantém o select como fonte de verdade, mas apresenta por cima um picker com logos reais.
 // Ao escolher "Outros", abre um campo de texto e o nome digitado é enviado de volta ao mesmo select/estado.
-if(typeof window!=='undefined'&&typeof document!=='undefined'&&!window.__zoeBankPickerInstalled){
- window.__zoeBankPickerInstalled=true;
- window.__zoeCustomInstitutions=window.__zoeCustomInstitutions||{};
+if(typeof window!=='undefined'&&typeof document!=='undefined'&&!window.__niilBankPickerInstalled){
+ window.__niilBankPickerInstalled=true;
+ window.__niilCustomInstitutions=window.__niilCustomInstitutions||{};
  const keyDoSelect=sel=>{
    const step=(document.querySelector('.fxstart-sheet-head small')?.textContent||'').replace(/\s+/g,' ').trim();
    const label=sel.closest('.fxstart-field')?.querySelector(':scope > span')?.textContent||'Instituição';
@@ -53,7 +53,7 @@ if(typeof window!=='undefined'&&typeof document!=='undefined'&&!window.__zoeBank
  };
  const setSelectValue=(sel,value)=>{
    let opt=[...sel.options].find(o=>o.value===value);
-   if(!opt&&value){opt=document.createElement('option');opt.value=value;opt.textContent=value;opt.dataset.zoeCustom='1';sel.appendChild(opt)}
+   if(!opt&&value){opt=document.createElement('option');opt.value=value;opt.textContent=value;opt.dataset.niilCustom='1';sel.appendChild(opt)}
    const setter=Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype,'value')?.set;
    if(setter)setter.call(sel,value);else sel.value=value;
    sel.dispatchEvent(new Event('change',{bubbles:true}));
@@ -63,16 +63,16 @@ if(typeof window!=='undefined'&&typeof document!=='undefined'&&!window.__zoeBank
    const field=sel.closest('.fxstart-field');
    const label=(field?.querySelector(':scope > span')?.textContent||'').toLowerCase();
    if(!label.includes('instituição'))return;
-   if(field.querySelector('.zoe-bank-picker'))return;
-   const key=keyDoSelect(sel),known=INSTITUICOES_FINANCEIRAS.find(b=>b.nome===sel.value),custom=window.__zoeCustomInstitutions[key]||(!known&&sel.value?sel.value:'');
-   const wrap=document.createElement('div');wrap.className='zoe-bank-picker';wrap.style.cssText='position:relative;margin-top:8px';
+   if(field.querySelector('.niil-bank-picker'))return;
+   const key=keyDoSelect(sel),known=INSTITUICOES_FINANCEIRAS.find(b=>b.nome===sel.value),custom=window.__niilCustomInstitutions[key]||(!known&&sel.value?sel.value:'');
+   const wrap=document.createElement('div');wrap.className='niil-bank-picker';wrap.style.cssText='position:relative;margin-top:8px';
    const trigger=document.createElement('button');trigger.type='button';trigger.style.cssText='width:100%;min-height:54px;border:1px solid #D9E3E1;border-radius:14px;background:#fff;display:flex;align-items:center;gap:10px;padding:10px 12px;font:inherit;color:#173F3E;text-align:left';
-   const refreshTrigger=()=>{const bank=INSTITUICOES_FINANCEIRAS.find(b=>b.nome===sel.value),name=window.__zoeCustomInstitutions[key]||sel.value||'Selecione';trigger.innerHTML='';if(bank?.logo){const img=document.createElement('img');img.src=bank.logo;img.alt='';img.width=28;img.height=28;img.style.cssText='border-radius:7px;object-fit:contain;background:#fff';trigger.appendChild(img)}else{const ic=document.createElement('span');ic.textContent='🏦';ic.style.fontSize='22px';trigger.appendChild(ic)}const txt=document.createElement('span');txt.textContent=name;txt.style.flex='1';trigger.appendChild(txt);const chevron=document.createElement('span');chevron.textContent='⌄';chevron.style.color='#71807F';trigger.appendChild(chevron)};
+   const refreshTrigger=()=>{const bank=INSTITUICOES_FINANCEIRAS.find(b=>b.nome===sel.value),name=window.__niilCustomInstitutions[key]||sel.value||'Selecione';trigger.innerHTML='';if(bank?.logo){const img=document.createElement('img');img.src=bank.logo;img.alt='';img.width=28;img.height=28;img.style.cssText='border-radius:7px;object-fit:contain;background:#fff';trigger.appendChild(img)}else{const ic=document.createElement('span');ic.textContent='🏦';ic.style.fontSize='22px';trigger.appendChild(ic)}const txt=document.createElement('span');txt.textContent=name;txt.style.flex='1';trigger.appendChild(txt);const chevron=document.createElement('span');chevron.textContent='⌄';chevron.style.color='#71807F';trigger.appendChild(chevron)};
    const menu=document.createElement('div');menu.style.cssText='display:none;position:absolute;z-index:50;left:0;right:0;top:60px;max-height:310px;overflow:auto;background:#fff;border:1px solid #D9E3E1;border-radius:16px;padding:8px;box-shadow:0 16px 40px rgba(5,60,58,.16)';
-   INSTITUICOES_FINANCEIRAS.forEach(bank=>{const b=document.createElement('button');b.type='button';b.style.cssText='width:100%;border:0;background:#fff;display:flex;align-items:center;gap:10px;padding:10px;border-radius:11px;text-align:left;font:inherit;color:#173F3E';if(bank.logo){const img=document.createElement('img');img.src=bank.logo;img.alt='';img.width=30;img.height=30;img.loading='lazy';img.style.cssText='border-radius:7px;object-fit:contain;background:#fff';b.appendChild(img)}else{const ic=document.createElement('span');ic.textContent='➕';ic.style.cssText='width:30px;text-align:center';b.appendChild(ic)}const txt=document.createElement('span');txt.textContent=bank.id==='outro'?'Outros':bank.nome;b.appendChild(txt);b.addEventListener('click',()=>{menu.style.display='none';if(bank.id==='outro'){window.__zoeCustomInstitutions[key]='';setSelectValue(sel,'Outra instituição');customBox.style.display='block';customInput.focus();refreshTrigger()}else{delete window.__zoeCustomInstitutions[key];customBox.style.display='none';setSelectValue(sel,bank.nome);refreshTrigger()}});menu.appendChild(b)});
+   INSTITUICOES_FINANCEIRAS.forEach(bank=>{const b=document.createElement('button');b.type='button';b.style.cssText='width:100%;border:0;background:#fff;display:flex;align-items:center;gap:10px;padding:10px;border-radius:11px;text-align:left;font:inherit;color:#173F3E';if(bank.logo){const img=document.createElement('img');img.src=bank.logo;img.alt='';img.width=30;img.height=30;img.loading='lazy';img.style.cssText='border-radius:7px;object-fit:contain;background:#fff';b.appendChild(img)}else{const ic=document.createElement('span');ic.textContent='➕';ic.style.cssText='width:30px;text-align:center';b.appendChild(ic)}const txt=document.createElement('span');txt.textContent=bank.id==='outro'?'Outros':bank.nome;b.appendChild(txt);b.addEventListener('click',()=>{menu.style.display='none';if(bank.id==='outro'){window.__niilCustomInstitutions[key]='';setSelectValue(sel,'Outra instituição');customBox.style.display='block';customInput.focus();refreshTrigger()}else{delete window.__niilCustomInstitutions[key];customBox.style.display='none';setSelectValue(sel,bank.nome);refreshTrigger()}});menu.appendChild(b)});
    const customBox=document.createElement('div');customBox.style.cssText=`display:${custom||sel.value==='Outra instituição'?'block':'none'};margin-top:8px`;
    const customInput=document.createElement('input');customInput.type='text';customInput.placeholder='Digite o nome da instituição';customInput.value=custom;customInput.style.cssText='width:100%;min-height:50px;border:1px solid #D9E3E1;border-radius:14px;padding:10px 12px;font:inherit;box-sizing:border-box';
-   customInput.addEventListener('input',()=>{const v=customInput.value;window.__zoeCustomInstitutions[key]=v;if(v.trim())setSelectValue(sel,v.trim());refreshTrigger()});
+   customInput.addEventListener('input',()=>{const v=customInput.value;window.__niilCustomInstitutions[key]=v;if(v.trim())setSelectValue(sel,v.trim());refreshTrigger()});
    customBox.appendChild(customInput);
    trigger.addEventListener('click',()=>{menu.style.display=menu.style.display==='block'?'none':'block'});
    wrap.appendChild(trigger);wrap.appendChild(menu);wrap.appendChild(customBox);
@@ -81,7 +81,7 @@ if(typeof window!=='undefined'&&typeof document!=='undefined'&&!window.__zoeBank
  };
  const enhance=()=>document.querySelectorAll('.fxstart-sheet .fxstart-field select').forEach(renderBankPicker);
  const obs=new MutationObserver(enhance);const start=()=>{if(document.body){obs.observe(document.body,{childList:true,subtree:true});enhance()}else setTimeout(start,50)};start();
- document.addEventListener('click',e=>{const btn=e.target.closest?.('button');if(!btn)return;const t=(btn.textContent||'').replace(/\s+/g,' ').trim().toUpperCase();if(/^SALVAR\b/.test(t)){const step=(document.querySelector('.fxstart-sheet-head small')?.textContent||'').replace(/\s+/g,' ').trim();Object.keys(window.__zoeCustomInstitutions).filter(k=>k.startsWith(step+'|')).forEach(k=>delete window.__zoeCustomInstitutions[k])}},true);
+ document.addEventListener('click',e=>{const btn=e.target.closest?.('button');if(!btn)return;const t=(btn.textContent||'').replace(/\s+/g,' ').trim().toUpperCase();if(/^SALVAR\b/.test(t)){const step=(document.querySelector('.fxstart-sheet-head small')?.textContent||'').replace(/\s+/g,' ').trim();Object.keys(window.__niilCustomInstitutions).filter(k=>k.startsWith(step+'|')).forEach(k=>delete window.__niilCustomInstitutions[k])}},true);
 }
 
 export const METAANUAL_PADRAO={alvo:0,ano:new Date().getFullYear()};

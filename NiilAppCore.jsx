@@ -15,8 +15,8 @@ import JornadaSistemica from './JornadaSistemica.jsx';
 import { FASES as FASES_INGLES } from './ingles.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 import { supabase } from './supabase.js';
-import avatarZoeFun from './avatar-zoe-fun.data.js';
-import avatarZoeEssencial from './avatar-zoe-essencial.data.js';
+import avatarNIILFun from './avatar-niil-fun.data.js';
+import avatarNIILEssencial from './avatar-niil-essencial.data.js';
 import avatarExpressoes from './avatar-expressoes.data.js';
 
 /* ══════════ FOTOS ══════════
@@ -102,7 +102,7 @@ function GoogleIcon() {
   );
 }
 
-function ZoeContaIcon({ tamanho = 36 }) {
+function NIILContaIcon({ tamanho = 36 }) {
   return (
     <svg width={tamanho} height={tamanho} viewBox="0 0 40 40" aria-hidden="true">
       <rect x="2" y="2" width="36" height="36" rx="13" fill="#A8FF00" />
@@ -255,11 +255,11 @@ function Login({ onEntrar }) {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: -140, right: -110, width: 320, height: 320, borderRadius: '50%', filter: 'blur(80px)', opacity: .2, background: `conic-gradient(from 40deg, ${C.lima}, ${C.aqua}, ${C.azul}, ${C.lima})` }} />
-      <div className="zoe-surge" style={{ textAlign: 'center', marginBottom: 30, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div className="niil-surge" style={{ textAlign: 'center', marginBottom: 30, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Wordmark altura={58} />
         <p style={{ color: C.ink2, fontSize: 13.5, marginTop: 16 }}>Sua vida extraordinária, um dia por vez</p>
       </div>
-      <Card cls="zoe-surge" style={{ padding: 22, animationDelay: '120ms' }}>
+      <Card cls="niil-surge" style={{ padding: 22, animationDelay: '120ms' }}>
         <div style={{ display: 'flex', background: '#F2F5F4', borderRadius: 12, padding: 4, marginBottom: 20 }}>
           {[['entrar', 'Entrar'], ['criar', 'Criar conta']].map(([k, l]) => (
             <button key={k} onClick={() => { setModo(k); setErro(''); setMensagem(''); }} style={{
@@ -298,7 +298,7 @@ function Login({ onEntrar }) {
 
 /* ══════════ ESTADO ══════════ */
 const inicial = {
-  perfil: { nome: '', email: '', metaKcal: 1500, metaAgua: 3000, avatar: null },
+  perfil: { nome: '', email: '', metaKcal: 1500, metaAgua: 3000, avatar: 'niil' },
   etapas: {},        // { 's4-diagnostico': {feito:true, data:'...'} }
   agenda: {},        // { '2026-08-09': { 's1-agenda-3': true } }
   dias: {},
@@ -311,7 +311,7 @@ const inicial = {
 };
 
 /* ══════════ APP ══════════ */
-export default function ZoeApp() {
+export default function NIILApp() {
   const [usuario, setUsuario] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [recuperandoSenha, setRecuperandoSenha] = useState(
@@ -319,7 +319,7 @@ export default function ZoeApp() {
   );
   const [d, setD] = useState(inicial);
   const avatarId = d.perfil?.avatar || 'fun';
-  const avatarImagem = avatarId === 'essencial' ? avatarZoeEssencial : avatarZoeFun;
+  const avatarImagem = avatarId === 'essencial' ? avatarNIILEssencial : avatarNIILFun;
   const [aba, setAba] = useState('inicio');
   const [data, setData] = useState(hoje());
   const [etapaAberta, setEtapaAberta] = useState(null);
@@ -369,7 +369,7 @@ export default function ZoeApp() {
         setUsuario(perfil);
         setCarregando(false);
       }
-      store.get(`zoe:dados:${perfil.email}`).then(dd => {
+      store.get(`niil:dados:${perfil.email}`).then(dd => {
         if (!ativo) return;
         setD(dd ? { ...inicial, ...dd } : {
           ...inicial,
@@ -422,13 +422,13 @@ export default function ZoeApp() {
     return () => clearInterval(t);
   }, [precisaRelogio]);
 
-  const salvar = n => { setD(n); if (usuario) store.set(`zoe:dados:${usuario.email}`, n); };
+  const salvar = n => { setD(n); if (usuario) store.set(`niil:dados:${usuario.email}`, n); };
   const up = fn => salvar(fn(d));
   const aviso = m => { setToast(m); setTimeout(() => setToast(''), 2300); };
 
   const entrar = async u => {
     setUsuario(u);
-    const dd = await store.get(`zoe:dados:${u.email}`);
+    const dd = await store.get(`niil:dados:${u.email}`);
     setD(dd ? { ...inicial, ...dd } : { ...inicial, perfil: { ...inicial.perfil, nome: u.nome, email: u.email } });
   };
   const sair = async () => {
@@ -471,7 +471,7 @@ export default function ZoeApp() {
       reflexoes: [
         'O que ficou mais claro sobre você depois desta sessão?',
         'Qual comportamento pequeno pode provar essa mudança ainda nesta semana?',
-        'O que a ZOE deve te lembrar quando você perder o ritmo?'
+        'O que a NIIL deve te lembrar quando você perder o ritmo?'
       ]
     };
   };
@@ -497,7 +497,7 @@ export default function ZoeApp() {
       const regras = {
         checkinEmocional: [!!d.jornada?.emocaoAtual, 'Escolha como você está chegando hoje.'],
         rodaInicial: [completosRoda(1), 'Avalie todas as áreas da sua Roda da Vida.'],
-        escolhaPrioridade: [!!campo('zoe-prioridade') && campo('zoe-prioridade-porque').trim().length >= 8, 'Escolha uma área e conte por que ela importa agora.'],
+        escolhaPrioridade: [!!campo('niil-prioridade') && campo('niil-prioridade-porque').trim().length >= 8, 'Escolha uma área e conte por que ela importa agora.'],
         matrizGanhosPerdas: [[
           'matriz-ganho-mudar', 'matriz-perda-mudar', 'matriz-ganho-nao', 'matriz-perda-nao'
         ].every(k => campo(k).trim().length >= 3), 'Preencha os quatro lados da matriz antes de seguir.'],
@@ -597,7 +597,7 @@ export default function ZoeApp() {
     }
     try {
       const id = 'f' + Date.now();
-      const ok = await store.set(`zoe:foto:${usuario.email}:${id}`, dataUrl);
+      const ok = await store.set(`niil:foto:${usuario.email}:${id}`, dataUrl);
       if (!ok) return aviso('Não consegui salvar. O armazenamento pode estar cheio.');
       cacheFotos.set(id, dataUrl);
       up(s => ({ ...s, fotos: [{ id, data: hoje(), cat: ctxFoto.cat, etapaId: ctxFoto.etapaId, legenda: '' }, ...s.fotos] }));
@@ -609,7 +609,7 @@ export default function ZoeApp() {
 
   const apagarFoto = (id) => {
     cacheFotos.delete(id);
-    store.set(`zoe:foto:${usuario.email}:${id}`, null);
+    store.set(`niil:foto:${usuario.email}:${id}`, null);
     up(s => ({ ...s, fotos: s.fotos.filter(f => f.id !== id) }));
     setVisor(null);
     setComparar(c => c.filter(x => x !== id));
@@ -642,7 +642,7 @@ export default function ZoeApp() {
         if (tocou.current[c]) return;
         tocou.current[c] = true;
         aviso(`⏰ ${al.titulo}`);
-        try { if (typeof Notification !== 'undefined' && Notification.permission === 'granted') new Notification('Zoë', { body: al.titulo }); } catch { }
+        try { if (typeof Notification !== 'undefined' && Notification.permission === 'granted') new Notification('NIIL', { body: al.titulo }); } catch { }
       });
     }, 20000);
     return () => clearInterval(t);
@@ -1255,7 +1255,7 @@ export default function ZoeApp() {
 
         <div style={{ padding: 18 }}>
           {e.texto && (
-            <Card cls="zoe-surge" style={{ marginBottom: 16, borderLeft: `4px solid ${e.bloco.cor}` }}>
+            <Card cls="niil-surge" style={{ marginBottom: 16, borderLeft: `4px solid ${e.bloco.cor}` }}>
               {e.texto.map((t, i) => <p key={i} style={{ margin: i ? '10px 0 0' : 0, fontSize: 14, color: C.ink, lineHeight: 1.62 }}>{t}</p>)}
               {e.citacao && <p style={{ margin: '14px 0 0', padding: 12, background: '#FAFCFB', borderRadius: 12, fontSize: 13, fontStyle: 'italic', color: C.ink2, lineHeight: 1.55 }}>{e.citacao}</p>}
               {e.destaques && <div style={{ marginTop: 12 }}>
@@ -1270,7 +1270,7 @@ export default function ZoeApp() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 16, flexWrap: 'wrap' }}>
                   {e.ciclo.map((c, i) => (
                     <React.Fragment key={c}>
-                      <div className="zoe-surge" style={{ padding: '8px 12px', background: C.mint, borderRadius: 11, fontSize: 12, fontWeight: 800, color: C.greenDark, animationDelay: `${i * 130}ms` }}>{c}</div>
+                      <div className="niil-surge" style={{ padding: '8px 12px', background: C.mint, borderRadius: 11, fontSize: 12, fontWeight: 800, color: C.greenDark, animationDelay: `${i * 130}ms` }}>{c}</div>
                       {i < e.ciclo.length - 1 && <ChevronRight size={14} color={C.ink3} />}
                     </React.Fragment>
                   ))}
@@ -1323,7 +1323,7 @@ export default function ZoeApp() {
     return (
       <div style={{ paddingBottom: 120 }}>
         <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 14px' }}>
-          <div style={{ display:'flex',alignItems:'center',minHeight:94 }}><div style={{ flex:1 }}><h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Minha trilha</h1><p style={{ fontSize: 13, color: C.ink2, margin: 0 }}>Uma missão por vez. Eu sigo com você.</p></div><img src={avatarImagem} alt="ZOE" style={{ width:88,height:96,objectFit:'contain',objectPosition:'center',filter:'drop-shadow(0 8px 12px rgba(55,28,105,.18))' }}/></div>
+          <div style={{ display:'flex',alignItems:'center',minHeight:94 }}><div style={{ flex:1 }}><h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Minha trilha</h1><p style={{ fontSize: 13, color: C.ink2, margin: 0 }}>Uma missão por vez. Eu sigo com você.</p></div><img src={avatarImagem} alt="NIIL" style={{ width:88,height:96,objectFit:'contain',objectPosition:'center',filter:'drop-shadow(0 8px 12px rgba(55,28,105,.18))' }}/></div>
           <Card>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>Progresso da jornada</span>
@@ -1343,7 +1343,7 @@ export default function ZoeApp() {
             const posicoes = [50, 68, 58, 34, 25, 43, 67, 72, 51, 29, 35, 61];
             const alturaMapa = b.etapas.length * 116 + 18;
             const emocoes = ['acolher', 'refletir', 'incentivar', 'celebrar'];
-            const aparicoesZoe = [1, 4, 7].filter(i => i < b.etapas.length).map((indice, j) => ({
+            const aparicoesNIIL = [1, 4, 7].filter(i => i < b.etapas.length).map((indice, j) => ({
               indice,
               emocao: emocoes[(bi + j) % emocoes.length],
               lado: posicoes[indice % posicoes.length] > 50 ? 'left' : 'right'
@@ -1366,8 +1366,8 @@ export default function ZoeApp() {
                     <polyline points={b.etapas.map((_, i) => `${posicoes[i % posicoes.length]},${i * 116 + 42}`).join(' ')} fill="none" stroke="#DDE5E3" strokeWidth="2.2" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
                     {b.etapas.slice(0, -1).map((e, i) => feito(e.id) && <line key={e.id} x1={posicoes[i % posicoes.length]} y1={i * 116 + 42} x2={posicoes[(i + 1) % posicoes.length]} y2={(i + 1) * 116 + 42} stroke={b.cor} strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />)}
                   </svg>
-                  {blocoLiberado && aparicoesZoe.map((ap, j) => (
-                    <img key={`${b.id}-zoe-${ap.indice}`} src={avatarExpressoes[ap.emocao][avatarId]} alt={`ZOE em modo ${ap.emocao}`}
+                  {blocoLiberado && aparicoesNIIL.map((ap, j) => (
+                    <img key={`${b.id}-niil-${ap.indice}`} src={avatarExpressoes[ap.emocao][avatarId]} alt={`NIIL em modo ${ap.emocao}`}
                       style={{ position: 'absolute', top: ap.indice * 116 - 28, [ap.lado]: 4, width: avatarId === 'essencial' ? 86 : 96, height: 108, objectFit: 'contain', objectPosition: `${ap.lado} center`, filter: 'drop-shadow(0 8px 12px rgba(55,28,105,.16))', zIndex: 3, transform: j % 2 ? 'rotate(2deg)' : 'rotate(-2deg)' }} />
                   ))}
                   {b.etapas.map((e, i) => {
@@ -1376,7 +1376,7 @@ export default function ZoeApp() {
                     const IconeEtapa = e.tipo === 'agenda' ? CalendarDays : e.tipo === 'roda' ? Target : e.tipo === 'ferramenta' ? Sparkles : e.tipo === 'fichas' ? BookOpen : Route;
                     return (
                       <div key={e.id} onClick={() => lib && setEtapaAberta(e.id)}
-                        className={atual ? 'zoe-surge' : ''}
+                        className={atual ? 'niil-surge' : ''}
                         style={{
                           position: 'absolute', top: i * 116, left: `${x}%`, transform: 'translateX(-50%)', width: 144,
                           display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: lib ? 'pointer' : 'default', opacity: lib ? 1 : .5, zIndex: 2
@@ -1404,9 +1404,9 @@ export default function ZoeApp() {
   /* ══════════ AGENDA ══════════ */
   const Agenda = () => {
     const base = new Date(data + 'T12:00');
-    const planoZoe = d.jornada?.planoSemana;
+    const planoNIIL = d.jornada?.planoSemana;
     const nomeDia = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][base.getDay()];
-    const planoNesteDia = planoZoe?.ativo && planoZoe.dias?.includes(nomeDia);
+    const planoNesteDia = planoNIIL?.ativo && planoNIIL.dias?.includes(nomeDia);
     const inicioMes = new Date(base.getFullYear(), base.getMonth(), 1, 12);
     const inicioGrade = new Date(inicioMes);
     inicioGrade.setDate(1 - ((inicioMes.getDay() + 6) % 7));
@@ -1433,7 +1433,7 @@ export default function ZoeApp() {
     return (
       <div style={{ padding: '20px 16px 120px', minHeight: '100vh', background: '#F7FAF9' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}><CalendarDays size={24} color={C.green} /><h1 style={{ margin: 0, color: C.ink, fontSize: 24 }}>Minha agenda</h1></div>
-        <p style={{ margin: '4px 0 18px 34px', color: C.ink3, fontSize: 12.5 }}>Agenda e missões organizadas pela ZOE</p>
+        <p style={{ margin: '4px 0 18px 34px', color: C.ink3, fontSize: 12.5 }}>Agenda e missões organizadas pela NIIL</p>
         <Card style={{marginBottom:14,background:'linear-gradient(135deg,#0A6963,#15977E)',color:'#fff',padding:16}}><div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center'}}><div><Flame size={21} color={C.lima}/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{streak}</div><div style={{fontSize:9,opacity:.78}}>dias de ofensiva</div></div><div style={{borderLeft:'1px solid rgba(255,255,255,.2)',borderRight:'1px solid rgba(255,255,255,.2)'}}><Trophy size={21} color="#FFD759"/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{fasesConcluidas}</div><div style={{fontSize:9,opacity:.78}}>fases vencidas</div></div><div><Sparkles size={21} color="#DDB4FF"/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{reflexoesCursos}</div><div style={{fontSize:9,opacity:.78}}>reflexões</div></div></div></Card>
         <Card style={{ marginBottom: 16, padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}><button onClick={() => { const x=new Date(base); x.setMonth(x.getMonth()-1); setData(x.toISOString().slice(0,10)); }} style={{ border:0,background:'transparent' }}><ChevronLeft size={20}/></button><strong style={{ color:C.ink, textTransform:'capitalize' }}>{base.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</strong><button onClick={() => { const x=new Date(base); x.setMonth(x.getMonth()+1); setData(x.toISOString().slice(0,10)); }} style={{ border:0,background:'transparent' }}><ChevronRight size={20}/></button></div>
@@ -1448,10 +1448,10 @@ export default function ZoeApp() {
           <Barra v={realizadas} max={Math.max(1, tarefas.length)} cor={C.lima} h={8} />
           <div style={{ fontSize: 11, opacity: .75, marginTop: 7 }}>{realizadas} de {tarefas.length} tarefas realizadas</div>
         </Card>
-        {planoNesteDia && <Card cls="zoe-surge" onClick={() => up(s => ({ ...s, agenda: { ...s.agenda, [data]: { ...(s.agenda[data] || {}), 'zoe-experimento': !(s.agenda[data] || {})['zoe-experimento'] } } }))} style={{ marginBottom: 14, border: `2px solid ${marcas['zoe-experimento'] ? C.green : C.roxo}`, background: marcas['zoe-experimento'] ? C.mint : '#FBF7FF', cursor: 'pointer' }}>
+        {planoNesteDia && <Card cls="niil-surge" onClick={() => up(s => ({ ...s, agenda: { ...s.agenda, [data]: { ...(s.agenda[data] || {}), 'niil-experimento': !(s.agenda[data] || {})['niil-experimento'] } } }))} style={{ marginBottom: 14, border: `2px solid ${marcas['niil-experimento'] ? C.green : C.roxo}`, background: marcas['niil-experimento'] ? C.mint : '#FBF7FF', cursor: 'pointer' }}>
           <div style={{ display:'flex',gap:11,alignItems:'center' }}>
-            <div style={{ width:38,height:38,borderRadius:13,background:marcas['zoe-experimento']?C.green:C.roxo,color:'#fff',display:'grid',placeItems:'center' }}>{marcas['zoe-experimento']?<Check size={20}/>:<Sparkles size={19}/>}</div>
-            <div style={{ flex:1,minWidth:0 }}><div style={{ color:C.ink,fontSize:10,fontWeight:900,letterSpacing:.7 }}>EXPERIMENTO ZOE</div><div style={{ color:C.ink,fontSize:13.5,fontWeight:850,marginTop:3,textDecoration:marcas['zoe-experimento']?'line-through':'none' }}>{planoZoe.acao}</div><div style={{ color:C.ink3,fontSize:10.5,marginTop:4 }}>{planoZoe.hora} · {planoZoe.duracao} min</div></div>
+            <div style={{ width:38,height:38,borderRadius:13,background:marcas['niil-experimento']?C.green:C.roxo,color:'#fff',display:'grid',placeItems:'center' }}>{marcas['niil-experimento']?<Check size={20}/>:<Sparkles size={19}/>}</div>
+            <div style={{ flex:1,minWidth:0 }}><div style={{ color:C.ink,fontSize:10,fontWeight:900,letterSpacing:.7 }}>EXPERIMENTO NIIL</div><div style={{ color:C.ink,fontSize:13.5,fontWeight:850,marginTop:3,textDecoration:marcas['niil-experimento']?'line-through':'none' }}>{planoNIIL.acao}</div><div style={{ color:C.ink3,fontSize:10.5,marginTop:4 }}>{planoNIIL.hora} · {planoNIIL.duracao} min</div></div>
           </div>
         </Card>}
         {eventosCursos.length>0&&<><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'18px 2px 10px'}}><h2 style={{margin:0,fontSize:17,color:C.ink}}>Cursos na agenda</h2><span style={{fontSize:10,color:C.roxo,fontWeight:850}}>{eventosCursos.filter(e=>e.feito).length}/{eventosCursos.length}</span></div>{eventosCursos.map(e=><Card key={e.id} onClick={()=>setAba('cursos')} style={{marginBottom:9,border:`1.5px solid ${e.feito?C.green:'#E3D8F1'}`,background:e.feito?C.mint:'#FBF8FF',cursor:'pointer'}}><div style={{display:'flex',gap:11,alignItems:'center'}}><div style={{width:38,height:38,borderRadius:13,background:e.feito?C.green:C.roxo,color:'#fff',display:'grid',placeItems:'center'}}>{e.feito?<Check size={19}/>:<BookOpen size={18}/>}</div><div style={{flex:1}}><div style={{fontSize:9,fontWeight:900,color:C.roxo,letterSpacing:.6}}>{e.modulo||'CURSO'} · {e.hora}</div><div style={{fontSize:13,fontWeight:850,color:C.ink,marginTop:3,textDecoration:e.feito?'line-through':'none'}}>{e.titulo}</div></div><ChevronRight size={18} color={C.ink3}/></div></Card>)}</>}
@@ -1463,7 +1463,7 @@ export default function ZoeApp() {
             <div style={{ width: 26, height: 26, borderRadius: 9, display: 'grid', placeItems: 'center', background: on ? C.green : '#F2F5F4', color: on ? '#fff' : C.ink3 }}>{on ? <Check size={15} /> : <Circle size={14} />}</div>
             <div style={{ flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink, textDecoration: on ? 'line-through' : 'none' }}>{t.t}</div><div style={{ fontSize: 10.5, color: C.ink3, marginTop: 3 }}>{t.hora || 'Ao longo do dia'} · {t.p} pontos</div></div>
           </div>;
-        }) : <Card><div style={{ textAlign: 'center', color: C.ink3, padding: 18 }}>Conclua as primeiras etapas para a ZOE liberar sua agenda.</div></Card>}
+        }) : <Card><div style={{ textAlign: 'center', color: C.ink3, padding: 18 }}>Conclua as primeiras etapas para a NIIL liberar sua agenda.</div></Card>}
       </div>
     );
   };
@@ -1500,7 +1500,7 @@ export default function ZoeApp() {
     return (
       <div style={{ padding: '18px 16px 120px', background: 'radial-gradient(circle at 50% 7%,rgba(168,255,0,.13),transparent 27%),radial-gradient(circle at 92% 18%,rgba(0,230,210,.10),transparent 24%),linear-gradient(180deg,#FCFFFD 0%,#F7FAF9 100%)' }}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 22 }}>
-          <button onClick={() => setSheet('perfil')} aria-label="Abrir menu da conta" style={{ width: 42, height: 42, border: 'none', borderRadius: 15, background: '#fff', color: C.ink, boxShadow: '0 5px 16px rgba(24,42,65,.08)', display: 'grid', placeItems: 'center', overflow: 'hidden', padding: 2 }}><ZoeContaIcon tamanho={38} /></button>
+          <button onClick={() => setSheet('perfil')} aria-label="Abrir menu da conta" style={{ width: 42, height: 42, border: 'none', borderRadius: 15, background: '#fff', color: C.ink, boxShadow: '0 5px 16px rgba(24,42,65,.08)', display: 'grid', placeItems: 'center', overflow: 'hidden', padding: 2 }}><NIILContaIcon tamanho={38} /></button>
           <div style={{ flex: 1, marginLeft: 10, fontSize: 17, fontWeight: 800, color: C.ink }}>Olá, {d.perfil.nome || usuario.nome} <span aria-hidden="true">👋</span></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: C.green, fontWeight: 800 }}><Heart size={18} /> {pontosDia}</div>
@@ -1516,7 +1516,7 @@ export default function ZoeApp() {
             <div style={{ position: 'absolute', top: -9, left: '50%', transform: 'translateX(-50%)', zIndex: 2, minWidth: 66, height: 38, padding: '0 13px', borderRadius: 16, background: '#fff', display: 'grid', placeItems: 'center', color: C.petroleo, fontSize: 13, fontWeight: 900, boxShadow: '0 7px 18px rgba(15,58,56,.12)' }}>{pctVida}%</div>
             <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle at 50% 42%,#FFFFFF 0%,#FBFFFD 58%,#F0FFF8 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
               <div style={{ color: '#25B97F', fontSize: 11, fontWeight: 800, marginTop: 22, zIndex: 1 }}>Progresso geral</div>
-              <img src={avatarImagem} alt="ZOE, sua coach" style={{ width: avatarId === 'essencial' ? 130 : 190, height: 159, objectFit: 'contain', margin: '-2px 0 -4px', filter: 'drop-shadow(0 12px 13px rgba(74,25,133,.13))', zIndex: 1 }} />
+              <img src={avatarImagem} alt="NIIL, sua coach" style={{ width: avatarId === 'essencial' ? 130 : 190, height: 159, objectFit: 'contain', margin: '-2px 0 -4px', filter: 'drop-shadow(0 12px 13px rgba(74,25,133,.13))', zIndex: 1 }} />
               <div style={{ color: C.ink, fontWeight: 900, fontSize: 17, zIndex: 1 }}>{concluidas} <span style={{ color: C.ink3, fontWeight: 600 }}>/ {totalEtapas}</span></div>
               <div style={{ color: C.ink3, fontSize: 11.5, marginTop: 1, zIndex: 1 }}>etapas concluídas</div>
             </div>
@@ -1572,7 +1572,7 @@ export default function ZoeApp() {
       <div style={{ paddingBottom: 120 }}>
         <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 12px' }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 14px' }}>Alimentação</h1>
-          <Card cls="zoe-surge">
+          <Card cls="niil-surge">
             <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', marginBottom: 13 }}>
               <div style={{ textAlign: 'center' }}><div style={{ fontSize: 21, fontWeight: 800, color: C.ink }}>{dia.kcal}</div><div style={{ fontSize: 10.5, color: C.ink3 }}>Consumidas</div></div>
               <div style={{ textAlign: 'center' }}><div style={{ fontSize: 35, fontWeight: 800, color: C.azul }}>{Math.max(0, d.perfil.metaKcal - dia.kcal)}</div><div style={{ fontSize: 10.5, color: C.ink3 }}>kcal restantes</div></div>
@@ -1673,7 +1673,7 @@ export default function ZoeApp() {
         <div style={{ padding: 18 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 16 }}>
             {[['Pontos', serie.reduce((a, s) => a + s.pts, 0), C.petroleo], ['Etapas', concluidas, C.sky], ['Sequência', streak, C.coral]].map(([l, v, cor], i) => (
-              <Card key={l} cls="zoe-surge" style={{ textAlign: 'center', padding: 14, animationDelay: `${i * 70}ms` }}>
+              <Card key={l} cls="niil-surge" style={{ textAlign: 'center', padding: 14, animationDelay: `${i * 70}ms` }}>
                 <div style={{ fontSize: 23, fontWeight: 800, color: cor }}>{v}</div>
                 <div style={{ fontSize: 10.5, color: C.ink3, marginTop: 2 }}>{l}</div>
               </Card>
@@ -1942,13 +1942,13 @@ export default function ZoeApp() {
             ['📷', 'Foto do diário', () => { setFab(false); setAba('diario'); }],
             ['📖', 'Livro ou lembrete', () => { setFab(false); setAba('extras'); }]
           ].map(([ic, n, fn], i) => (
-            <Card key={n} cls="zoe-surge" onClick={fn} style={{ textAlign: 'center', padding: 20, cursor: 'pointer', animationDelay: `${i * 45}ms` }}>
+            <Card key={n} cls="niil-surge" onClick={fn} style={{ textAlign: 'center', padding: 20, cursor: 'pointer', animationDelay: `${i * 45}ms` }}>
               <div style={{ fontSize: 28, marginBottom: 7 }}>{ic}</div>
               <div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>{n}</div>
             </Card>
           ))}
         </div>
-        <Card cls="zoe-surge" onClick={() => {
+        <Card cls="niil-surge" onClick={() => {
           if (d.jejum) { up(s => ({ ...s, jejum: null })); aviso('Jejum encerrado'); }
           else { up(s => ({ ...s, jejum: { inicio: Date.now(), metaHoras: 16 } })); aviso('Jejum iniciado'); }
           setFab(false);
@@ -2013,18 +2013,13 @@ export default function ZoeApp() {
 
         <Sheet aberto={sheet === 'perfil'} fechar={() => setSheet(null)} titulo="Sua conta">
           <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '2px 2px 18px', borderBottom: `1px solid ${C.line}` }}>
-            <div style={{ width: 52, height: 52, borderRadius: 18, background: '#fff', boxShadow: '0 6px 18px rgba(24,42,65,.09)', display: 'grid', placeItems: 'center' }}><ZoeContaIcon tamanho={46} /></div>
+            <div style={{ width: 52, height: 52, borderRadius: 18, background: '#fff', boxShadow: '0 6px 18px rgba(24,42,65,.09)', display: 'grid', placeItems: 'center' }}><NIILContaIcon tamanho={46} /></div>
             <div style={{ minWidth: 0 }}>
               <div style={{ color: C.ink, fontWeight: 900, fontSize: 16 }}>{d.perfil.nome || usuario?.nome || 'Minha conta'}</div>
               <div style={{ color: C.ink3, fontSize: 11.5, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.perfil.email || usuario?.email}</div>
             </div>
           </div>
           <div style={{ display: 'grid', gap: 9, marginTop: 16 }}>
-            <button onClick={() => setSheet('avatar')} style={{ minHeight: 54, padding: '0 14px', borderRadius: 16, border: `1px solid ${C.line}`, background: '#fff', color: C.ink, display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left' }}>
-              <span style={{ width: 34, height: 34, borderRadius: 11, background: C.limaSuave, display: 'grid', placeItems: 'center', color: C.petroleo }}><Sparkles size={17} /></span>
-              <span style={{ flex: 1 }}><span style={{ display: 'block', fontSize: 13.5, fontWeight: 850 }}>Trocar avatar</span><span style={{ display: 'block', color: C.ink3, fontSize: 10.5, marginTop: 2 }}>Escolha entre Essencial e Fun</span></span>
-              <ChevronRight size={17} color={C.ink3} />
-            </button>
             <button onClick={() => { setSheet(null); permissao(); }} style={{ minHeight: 54, padding: '0 14px', borderRadius: 16, border: `1px solid ${C.line}`, background: '#fff', color: C.ink, display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left' }}>
               <span style={{ width: 34, height: 34, borderRadius: 11, background: C.aquaSuave, display: 'grid', placeItems: 'center', color: C.petroleo }}><Bell size={17} /></span>
               <span style={{ flex: 1, fontSize: 13.5, fontWeight: 850 }}>Notificações</span>
@@ -2035,39 +2030,7 @@ export default function ZoeApp() {
               <span style={{ flex: 1, fontSize: 13.5, fontWeight: 850 }}>Sair do aplicativo</span>
             </button>
           </div>
-          <div style={{ textAlign: 'center', color: C.ink3, fontSize: 10.5, marginTop: 18 }}>ZOE · versão 1.0.0</div>
-        </Sheet>
-
-        <Sheet
-          aberto={sheet === 'avatar' || !!(usuario && !d.perfil?.avatar)}
-          fechar={() => { if (d.perfil?.avatar) setSheet(null); }}
-          titulo="Como a ZOE acompanha você?"
-        >
-          <p style={{ margin: '-6px 0 18px', color: C.ink2, fontSize: 13, lineHeight: 1.5 }}>
-            Escolha a companhia que combina com seu jeito. Você poderá trocar quando quiser.
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            {[
-              { id: 'essencial', nome: 'ZOE Essencial', texto: 'Mais madura, discreta e reflexiva.', imagem: avatarZoeEssencial, fundo: '#F4EDFF' },
-              { id: 'fun', nome: 'ZOE Fun', texto: 'Mais expressiva, leve e gamificada.', imagem: avatarZoeFun, fundo: '#F1FFDB' }
-            ].map(opcao => {
-              const ativa = d.perfil?.avatar === opcao.id;
-              return (
-                <button key={opcao.id} onClick={() => {
-                  up(s => ({ ...s, perfil: { ...s.perfil, avatar: opcao.id } }));
-                  setSheet(null);
-                  aviso(`${opcao.nome} escolhida`);
-                }} style={{ border: `2px solid ${ativa ? C.roxo : C.line}`, background: ativa ? '#FBF8FF' : '#fff', borderRadius: 20, padding: 12, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', boxShadow: ativa ? '0 8px 22px rgba(142,45,226,.13)' : 'none' }}>
-                  <div style={{ height: 170, borderRadius: 16, background: opcao.fundo, display: 'grid', placeItems: 'center', overflow: 'hidden', marginBottom: 11 }}>
-                    <img src={opcao.imagem} alt="" style={{ width: opcao.id === 'essencial' ? '78%' : '92%', height: '94%', objectFit: 'contain' }} />
-                  </div>
-                  <div style={{ color: C.ink, fontWeight: 900, fontSize: 13.5 }}>{opcao.nome}</div>
-                  <div style={{ color: C.ink3, fontSize: 10.5, lineHeight: 1.4, marginTop: 4 }}>{opcao.texto}</div>
-                  <div style={{ height: 28, marginTop: 10, borderRadius: 10, display: 'grid', placeItems: 'center', background: ativa ? C.roxo : '#F2F5F4', color: ativa ? '#fff' : C.ink3, fontSize: 10.5, fontWeight: 900 }}>{ativa ? 'ESCOLHIDA' : 'ESCOLHER'}</div>
-                </button>
-              );
-            })}
-          </div>
+          <div style={{ textAlign: 'center', color: C.ink3, fontSize: 10.5, marginTop: 18 }}>NIIL · versão 1.0.0</div>
         </Sheet>
 
         <Sheet aberto={sheet === 'treino'} fechar={() => setSheet(null)} titulo="Registrar treino">
@@ -2087,8 +2050,8 @@ export default function ZoeApp() {
         {coach && (
           <div style={{ position: 'fixed', inset: 0, zIndex: 110, background: `linear-gradient(160deg,${coach.bloco.cor},${C.petroleo})`, padding: '28px 20px', overflowY: 'auto', color: '#fff' }}>
             <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ width: 240, height: 245, margin: '4px auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFEFA', borderRadius: '47% 53% 44% 56% / 55% 45% 55% 45%', boxShadow: '0 16px 32px rgba(21,12,58,.2)' }}><img src={avatarImagem} alt="ZOE celebrando" style={{ height: avatarId === 'essencial' ? 220 : 190, maxWidth: 205, objectFit: 'contain' }} /></div>
-              <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: 1.4, opacity: .75 }}>ZOE · SUA COACH</div>
+              <div style={{ width: 240, height: 245, margin: '4px auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFEFA', borderRadius: '47% 53% 44% 56% / 55% 45% 55% 45%', boxShadow: '0 16px 32px rgba(21,12,58,.2)' }}><img src={avatarImagem} alt="NIIL celebrando" style={{ height: avatarId === 'essencial' ? 220 : 190, maxWidth: 205, objectFit: 'contain' }} /></div>
+              <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: 1.4, opacity: .75 }}>NIIL · SUA COACH</div>
               <h1 style={{ textAlign: 'center', fontSize: 27, lineHeight: 1.18, margin: '8px 0 18px' }}>{coach.titulo}</h1>
               <div style={{ background: 'rgba(255,255,255,.96)', color: C.ink, borderRadius: 24, padding: 20, boxShadow: '0 18px 45px rgba(0,0,0,.18)' }}>
                 <p style={{ fontSize: 14, lineHeight: 1.65, margin: '0 0 17px', color: C.ink2 }}>{coach.texto}</p>
@@ -2127,7 +2090,7 @@ export default function ZoeApp() {
         })()}
 
         {toast && (
-          <div className="zoe-surge" style={{ position: 'fixed', bottom: 100, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: C.petroleo, color: '#fff', padding: '12px 20px', borderRadius: 14, fontSize: 13.5, fontWeight: 700, boxShadow: '0 8px 24px rgba(11,20,22,.28)', maxWidth: '90vw' }}>{toast}</div>
+          <div className="niil-surge" style={{ position: 'fixed', bottom: 100, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: C.petroleo, color: '#fff', padding: '12px 20px', borderRadius: 14, fontSize: 13.5, fontWeight: 700, boxShadow: '0 8px 24px rgba(11,20,22,.28)', maxWidth: '90vw' }}>{toast}</div>
         )}
 
         <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 520, background: C.card, borderTop: `1px solid ${C.line}`, display: 'flex', alignItems: 'center', justifyContent: 'space-around', height: 74, paddingBottom: 8, zIndex: 70 }}>
