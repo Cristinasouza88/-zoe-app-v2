@@ -54,6 +54,7 @@ button,input,select,textarea{font-family:-apple-system,BlinkMacSystemFont,"Segoe
   box-shadow:0 12px 30px rgba(47,37,69,.16),inset 0 0 0 1px rgba(255,255,255,.72),0 0 0 5px rgba(255,255,255,.34);animation:niilOrbBreath 5.5s ease-in-out infinite;
 }
 .niil-orb-cloud{position:absolute;left:17%;right:17%;top:31%;height:37%;border-radius:48% 52% 46% 54% / 54% 42% 58% 46%;background:radial-gradient(ellipse at center,rgba(255,255,255,.94) 0%,rgba(248,246,242,.82) 38%,rgba(221,214,242,.52) 66%,rgba(221,214,242,0) 100%);filter:blur(5px);animation:niilCloudDrift 7s ease-in-out infinite}
+.niil-orb-glow{position:absolute;inset:8%;border-radius:50%;background:radial-gradient(circle at 24% 25%,rgba(255,255,255,.44),transparent 22%),radial-gradient(circle at 78% 72%,rgba(97,80,202,.20),transparent 38%);mix-blend-mode:screen;animation:niilOrbGlow 4.8s ease-in-out infinite}
 .niil-orb-signal{position:absolute;right:18%;top:18%;width:6px;height:6px;border-radius:50%;background:var(--niil-lime);box-shadow:0 0 12px rgba(201,229,108,.75)}
 .niil-trail-progress-card{background:rgba(255,255,255,.94)!important;border:1px solid rgba(221,214,242,.72)!important;border-radius:20px!important;padding:17px!important;box-shadow:0 10px 28px rgba(47,37,69,.07)!important}
 .niil-trail-progress-card span:first-child{color:var(--niil-plum)!important;font-size:13.5px!important}
@@ -94,6 +95,16 @@ button,input,select,textarea{font-family:-apple-system,BlinkMacSystemFont,"Segoe
 .niil-home-life-inner{background:radial-gradient(circle at 50% 35%,#FFFFFF 0%,#FBFAFD 56%,#F1EDF8 100%)!important}
 .niil-home-progress-label{color:#7468D9!important}
 .niil-home-mascot{width:180px!important;height:154px!important;object-fit:contain!important;filter:drop-shadow(0 12px 16px rgba(47,37,69,.17))!important}
+.niil-home-mascot-hidden{display:none!important}
+.niil-home-orb{
+  width:168px!important;height:168px!important;margin:18px auto 20px!important;flex:none!important;
+  background:radial-gradient(circle at 28% 26%,rgba(255,255,255,.74) 0 8%,rgba(255,255,255,.20) 19%,transparent 34%),radial-gradient(circle at 72% 72%,rgba(74,57,177,.30),transparent 44%),linear-gradient(145deg,#7464EC 0%,#8778E2 38%,#A99EE0 68%,#DDD6F2 100%)!important;
+  box-shadow:0 17px 34px rgba(47,37,69,.17),inset 0 0 0 1px rgba(255,255,255,.74),0 0 0 4px rgba(255,255,255,.30)!important;
+  animation:niilHomeOrbFloat 5.2s ease-in-out infinite,niilHomeOrbPulse 3.6s ease-in-out infinite!important;
+}
+.niil-home-orb .niil-orb-cloud{left:14%;right:14%;top:31%;height:38%;filter:blur(8px);background:radial-gradient(ellipse at center,rgba(255,255,255,.98) 0%,rgba(248,246,242,.90) 34%,rgba(221,214,242,.65) 58%,rgba(221,214,242,0) 100%);animation:niilHomeCloud 6.8s ease-in-out infinite!important}
+.niil-home-orb .niil-orb-glow{animation:niilOrbGlow 4.8s ease-in-out infinite!important}
+.niil-home-orb .niil-orb-signal{display:none}
 .niil-home-continue{background:linear-gradient(135deg,#44385F,var(--niil-plum))!important;color:#fff!important;box-shadow:0 11px 25px rgba(47,37,69,.22)!important}
 .niil-home-other-title{color:#746D7C!important}
 .niil-home-screen [style*="color: rgb(37, 185, 127)"],.niil-home-screen [style*="color:#25B97F"]{color:#7468D9!important}
@@ -105,5 +116,9 @@ button,input,select,textarea{font-family:-apple-system,BlinkMacSystemFont,"Segoe
 
 @keyframes niilOrbBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
 @keyframes niilCloudDrift{0%,100%{transform:translate(-3%,-2%) scale(1)}50%{transform:translate(6%,4%) scale(1.06)}}
-@media(prefers-reduced-motion:reduce){.niil-orb-runtime,.niil-orb-cloud{animation:none!important}}
+@keyframes niilOrbGlow{0%,100%{opacity:.70;transform:rotate(-2deg) scale(.98)}50%{opacity:1;transform:rotate(3deg) scale(1.04)}}
+@keyframes niilHomeOrbFloat{0%,100%{transform:translateY(0) rotate(-.5deg)}50%{transform:translateY(-7px) rotate(.7deg)}}
+@keyframes niilHomeOrbPulse{0%,100%{filter:saturate(1) brightness(1)}50%{filter:saturate(1.07) brightness(1.045)}}
+@keyframes niilHomeCloud{0%,100%{transform:translate(-4%,-2%) scale(.97) rotate(-2deg);opacity:.84}50%{transform:translate(7%,4%) scale(1.08) rotate(2deg);opacity:1}}
+@media(prefers-reduced-motion:reduce){.niil-orb-runtime,.niil-orb-cloud,.niil-orb-glow,.niil-home-orb{animation:none!important}}
 [style*="#A8FF00"],[style*="rgb(168, 255, 0)"]{--legacy-lime:var(--niil-lime)}
