@@ -77,6 +77,32 @@ button,input,select,textarea{font-family:-apple-system,BlinkMacSystemFont,"Segoe
 .niil-trail-node.is-current>div:first-of-type{width:82px!important;height:82px!important;background:linear-gradient(145deg,#F5F2FB,#E8E1F5)!important;color:#7468D9!important;border:7px solid #fff!important;box-shadow:0 0 0 5px rgba(155,141,211,.25),0 8px 0 rgba(93,79,153,.18),0 16px 30px rgba(47,37,69,.10)!important}
 .niil-trail-node.is-current>span{top:-9px!important;width:34px!important;min-width:34px!important;height:6px!important;padding:0!important;overflow:hidden!important;font-size:0!important;color:transparent!important;border-radius:99px!important;background:var(--niil-lime)!important;box-shadow:0 2px 8px rgba(201,229,108,.5)!important}
 .niil-trail-mascot{object-fit:contain!important;filter:drop-shadow(0 10px 14px rgba(47,37,69,.16))!important;transform:none!important}
+
+/* Home NIIL — remove visual legado verde e usa a identidade oficial */
+.niil-home-screen{
+  min-height:100vh!important;
+  background:radial-gradient(circle at 15% 3%,rgba(221,214,242,.72),transparent 28%),radial-gradient(circle at 92% 17%,rgba(155,141,211,.13),transparent 27%),linear-gradient(180deg,#FCFBF9 0%,var(--niil-cloud) 72%,#F4F0F8 100%)!important;
+  color:var(--niil-ink)!important;
+}
+.niil-home-header{position:relative;z-index:2}
+.niil-home-account{background-color:#fff!important;border:1px solid rgba(221,214,242,.72)!important;box-shadow:0 6px 18px rgba(47,37,69,.08)!important}
+.niil-home-account svg{opacity:0!important}
+.niil-home-main>div:first-child{color:#746D7C!important}
+.niil-home-main>div:nth-child(2){color:var(--niil-plum)!important}
+.niil-home-life-ring{box-shadow:0 20px 50px rgba(47,37,69,.12)!important}
+.niil-home-percent{color:var(--niil-plum)!important;background:rgba(255,255,255,.96)!important;border:1px solid rgba(221,214,242,.62)!important;box-shadow:0 8px 20px rgba(47,37,69,.09)!important}
+.niil-home-life-inner{background:radial-gradient(circle at 50% 35%,#FFFFFF 0%,#FBFAFD 56%,#F1EDF8 100%)!important}
+.niil-home-progress-label{color:#7468D9!important}
+.niil-home-mascot{width:180px!important;height:154px!important;object-fit:contain!important;filter:drop-shadow(0 12px 16px rgba(47,37,69,.17))!important}
+.niil-home-continue{background:linear-gradient(135deg,#44385F,var(--niil-plum))!important;color:#fff!important;box-shadow:0 11px 25px rgba(47,37,69,.22)!important}
+.niil-home-other-title{color:#746D7C!important}
+.niil-home-screen [style*="color: rgb(37, 185, 127)"],.niil-home-screen [style*="color:#25B97F"]{color:#7468D9!important}
+
+/* Financeiro modal: estabilidade no iPhone/Safari */
+.fx2-overlay{touch-action:manipulation;overscroll-behavior:contain}
+.fx2-sheet{touch-action:auto;isolation:isolate}
+.fx2-link,.fx2-btn,.fx2-goal button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+
 @keyframes niilOrbBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
 @keyframes niilCloudDrift{0%,100%{transform:translate(-3%,-2%) scale(1)}50%{transform:translate(6%,4%) scale(1.06)}}
 @media(prefers-reduced-motion:reduce){.niil-orb-runtime,.niil-orb-cloud{animation:none!important}}
