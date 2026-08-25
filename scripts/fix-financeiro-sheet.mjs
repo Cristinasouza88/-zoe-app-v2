@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const p='Financeiro.jsx';
+let s=fs.readFileSync(p,'utf8');
+const oldDef="  const Onboarding=()=> <FinanceiroStart fin={fin} persistir={persistir} aviso={aviso} onFinish={()=>setTela('visao')}/>;\n";
+const oldUse="!fin.startFinanceiroConcluido?<Onboarding/>:";
+const newUse="!fin.startFinanceiroConcluido?<FinanceiroStart fin={fin} persistir={persistir} aviso={aviso} onFinish={()=>setTela('visao')}/>:";
+if(!s.includes(oldDef)) throw new Error('Definição Onboarding esperada não encontrada');
+if(!s.includes(oldUse)) throw new Error('Uso Onboarding esperado não encontrado');
+s=s.replace(oldDef,'').replace(oldUse,newUse);
+fs.writeFileSync(p,s);
+console.log('FinanceiroStart agora é renderizado diretamente e mantém o estado do sheet entre rerenders do Financeiro.');
