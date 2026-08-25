@@ -15,8 +15,12 @@ function BankSelect({value,onChange,label='Instituição'}){return <Field label=
 function Total({label,value,moeda,extra}){return <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,padding:'12px 14px',margin:'10px 0',borderRadius:16,background:'#F3F8F7'}}><div><small style={{display:'block',color:'#78868A'}}>{label}</small>{extra&&<small style={{color:'#9AA5A8'}}>{extra}</small>}</div><b style={{color:'#075B59',whiteSpace:'nowrap'}}>{formatoMoeda(value,moeda)}</b></div>}
 function ChoiceCards({items,value,onChange,multi=false}){const selected=Array.isArray(value)?value:[];return <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:8}}>{items.map(i=>{const on=multi?selected.includes(i.id):value===i.id;return <button type="button" key={i.id} className={`fxstart-btn ${on?'':'ghost'}`} style={{minHeight:74,textAlign:'left',padding:12}} onClick={()=>multi?onChange(on?selected.filter(x=>x!==i.id):[...selected,i.id]):onChange(i.id)}><div><b>{i.titulo}</b>{i.sub&&<small style={{display:'block',marginTop:4,opacity:.75}}>{i.sub}</small>}</div></button>})}</div>}
 
-export default function FinanceiroStart({fin,persistir,aviso=()=>{},onFinish=()=>{}}){
- const[step,setStep]=useState(0),[aberto,setAberto]=useState(false);
+export default function FinanceiroStart({fin,persistir,aviso=()=>{},ui,setUi,onFinish=()=>{}}){
+ const[uiInterna,setUiInterna]=useState({step:0,aberto:false});
+ const estadoUi=ui||uiInterna,setEstadoUi=setUi||setUiInterna;
+ const step=Number(estadoUi.step||0),aberto=!!estadoUi.aberto;
+ const setStep=value=>setEstadoUi(prev=>({...prev,step:typeof value==='function'?value(Number(prev?.step||0)):value}));
+ const setAberto=value=>setEstadoUi(prev=>({...prev,aberto:typeof value==='function'?value(!!prev?.aberto):value}));
  const[receita,setReceita]=useState({nome:'',categoria:'Salário',valorMensal:''});
  const[gasto,setGasto]=useState({nome:'',categoria:'Moradia',valorMensal:''});
  const[conta,setConta]=useState({nome:'',instituicao:'',tipo:'Conta corrente',saldoAtual:'',dataSaldo:hoje(),disponibilidadeImediata:true});

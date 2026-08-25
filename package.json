@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "scripts": {"dev":"vite","build":"node scripts/fix-financeiro-sheet.mjs && vite build","preview":"vite preview"},
+  "scripts": {"dev":"vite","build":"vite build","preview":"vite preview"},
   "dependencies": {"lucide-react":"^0.383.0","react":"^18.3.1","react-dom":"^18.3.1","@supabase/supabase-js":"^2.56.0","@netlify/blobs":"^10.0.8","pdfjs-dist":"^4.10.38","xlsx":"^0.18.5"},
   "devDependencies": {"@vitejs/plugin-react":"^4.3.1","vite":"^5.3.1","vite-plugin-singlefile":"^2.3.3"}
 }

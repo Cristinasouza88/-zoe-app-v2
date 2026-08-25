@@ -420,8 +420,8 @@ export default function NIILApp() {
     return () => clearInterval(t);
   }, [precisaRelogio]);
 
-  const salvar = n => { setD(n); if (usuario) store.set(`niil:dados:${usuario.email}`, n); };
-  const up = fn => salvar(fn(d));
+  const salvar = n => { setD(n); if (usuario) store.set(`niil:dados:${usuario.email}`, n).catch?.(()=>{}); };
+  const up = fn => setD(prev => { const next = typeof fn === 'function' ? fn(prev) : fn; if (usuario) store.set(`niil:dados:${usuario.email}`, next).catch?.(()=>{}); return next; });
   const aviso = m => { setToast(m); setTimeout(() => setToast(''), 2300); };
 
   const entrar = async u => {

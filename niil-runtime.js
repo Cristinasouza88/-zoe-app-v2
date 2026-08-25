@@ -147,52 +147,6 @@ const aplicarMarcaTrilha=(scope=document)=>{
   });
 };
 
-let ultimoGatilhoFinanceiro=null;
-let ultimaAberturaFinanceira=0;
-let fechamentoExplicitoAte=0;
-let reabrindo=false;
-
-const registrarGatilho=e=>{
-  const el=e.target?.closest?.('.fxstart-node,.fx2-link,.fx2-btn,.fx2-more-card');
-  if(!el||el.disabled)return;
-  ultimoGatilhoFinanceiro=el;
-  ultimaAberturaFinanceira=Date.now();
-};
-
-const registrarFechamento=e=>{
-  if(e.target?.closest?.('.fxstart-close,.fx2-close'))fechamentoExplicitoAte=Date.now()+1200;
-};
-
-const protegerFinanceiro=(scope=document)=>{
-  todos(scope,'.fx2-overlay,.fxstart-sheet-backdrop').forEach(overlay=>{
-    if(overlay.dataset.niilGuarded==='1')return;
-    overlay.dataset.niilGuarded='1';
-    overlay.dataset.niilOpenedAt=String(Date.now());
-    const proteger=e=>{
-      const idade=Date.now()-Number(overlay.dataset.niilOpenedAt||0);
-      if(idade<900&&e.target===overlay){
-        e.preventDefault?.();
-        e.stopPropagation?.();
-        e.stopImmediatePropagation?.();
-      }
-    };
-    ['pointerdown','mousedown','touchend','click'].forEach(tipo=>overlay.addEventListener(tipo,proteger,true));
-    overlay.querySelector('.fx2-sheet,.fxstart-sheet')?.addEventListener('click',e=>e.stopPropagation());
-  });
-};
-
-const tentarReabrirFinanceiro=()=>{
-  if(reabrindo||Date.now()<fechamentoExplicitoAte)return;
-  if(!ultimoGatilhoFinanceiro||!document.contains(ultimoGatilhoFinanceiro))return;
-  if(Date.now()-ultimaAberturaFinanceira>1200)return;
-  if(document.querySelector('.fx2-overlay,.fxstart-sheet-backdrop'))return;
-  reabrindo=true;
-  setTimeout(()=>{
-    if(!document.querySelector('.fx2-overlay,.fxstart-sheet-backdrop')&&document.contains(ultimoGatilhoFinanceiro))ultimoGatilhoFinanceiro.click();
-    setTimeout(()=>{reabrindo=false},250);
-  },120);
-};
-
 const aplicar=(root=document)=>{
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
@@ -201,28 +155,15 @@ const aplicar=(root=document)=>{
   root.querySelectorAll?.('button').forEach(btn=>{if(/trocar avatar/i.test(btn.textContent||''))btn.style.display='none'});
   aplicarMarcaInicio(root);
   aplicarMarcaTrilha(root);
-  protegerFinanceiro(root);
 };
 
 if(typeof document!=='undefined'){
   const iniciar=()=>{
-    document.addEventListener('pointerdown',registrarGatilho,true);
-    document.addEventListener('click',registrarGatilho,true);
-    document.addEventListener('pointerdown',registrarFechamento,true);
-    document.addEventListener('click',registrarFechamento,true);
     aplicar();
     const obs=new MutationObserver(ms=>{
-      let removeuSheet=false;
-      ms.forEach(m=>{
-        m.addedNodes.forEach(n=>{if(n.nodeType===1)aplicar(n)});
-        m.removedNodes.forEach(n=>{
-          if(n.nodeType===1&&(n.matches?.('.fx2-overlay,.fxstart-sheet-backdrop')||n.querySelector?.('.fx2-overlay,.fxstart-sheet-backdrop')))removeuSheet=true;
-        });
-      });
+      ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)aplicar(n)}));
       aplicarMarcaInicio(document);
       aplicarMarcaTrilha(document);
-      protegerFinanceiro(document);
-      if(removeuSheet)tentarReabrirFinanceiro();
     });
     obs.observe(document.body,{childList:true,subtree:true});
   };

@@ -3,7 +3,7 @@ export default function persistenciaNIIL(){
     name:'niil-persistencia-funcional',
     enforce:'pre',
     transform(code,id){
-      if(!id.endsWith('/App.jsx')&&!id.endsWith('App.jsx')) return null;
+      if(!id.endsWith('/NiilAppCore.jsx')&&!id.endsWith('NiilAppCore.jsx')) return null;
       let out=code,changed=false;
 
       // Atualizacoes de estado sempre usam o valor mais recente do React.
