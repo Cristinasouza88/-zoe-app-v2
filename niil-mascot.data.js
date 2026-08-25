@@ -1,5 +1,16 @@
-const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 340" role="img" aria-label="NIIL"><defs><radialGradient id="body" cx="38%" cy="24%" r="82%"><stop offset="0" stop-color="#E8E2FA"/><stop offset=".42" stop-color="#B9ACE7"/><stop offset=".74" stop-color="#9B8DD3"/><stop offset="1" stop-color="#7567B6"/></radialGradient><linearGradient id="tentacle" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#CFC5F2"/><stop offset=".5" stop-color="#A596DA"/><stop offset="1" stop-color="#7768B9"/></linearGradient><radialGradient id="shine" cx="30%" cy="20%" r="75%"><stop stop-color="#FFFFFF" stop-opacity=".72"/><stop offset=".55" stop-color="#FFFFFF" stop-opacity=".10"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient><filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#2F2545" flood-opacity=".18"/></filter><filter id="soft"><feGaussianBlur stdDeviation="7"/></filter></defs><ellipse cx="180" cy="309" rx="116" ry="16" fill="#2F2545" opacity=".10" filter="url(#soft)"/><g filter="url(#shadow)"><path d="M102 220c-35 9-62 34-58 55 3 17 26 25 50 16 15-5 28-16 38-30-3 28 10 49 31 50 21 2 34-17 35-43 8 24 28 42 48 37 20-5 26-27 16-49 20 15 45 18 59 5 15-14 9-37-11-51-22-15-53-18-77-17z" fill="url(#tentacle)"/><path d="M74 237c-18 8-28 22-26 34 2 9 11 14 23 14" fill="none" stroke="#E9E4FA" stroke-width="9" stroke-linecap="round" opacity=".45"/><ellipse cx="180" cy="145" rx="108" ry="118" fill="url(#body)"/><ellipse cx="180" cy="145" rx="108" ry="118" fill="url(#shine)"/><g><circle cx="70" cy="144" r="27" fill="#7567B6"/><circle cx="70" cy="144" r="17" fill="#C9E56C"/><circle cx="70" cy="144" r="10" fill="#9B8DD3"/><circle cx="290" cy="144" r="27" fill="#7567B6"/><circle cx="290" cy="144" r="17" fill="#C9E56C"/><circle cx="290" cy="144" r="10" fill="#9B8DD3"/></g><ellipse cx="151" cy="137" rx="11" ry="15" fill="#2F2545"/><ellipse cx="209" cy="137" rx="11" ry="15" fill="#2F2545"/><circle cx="148" cy="132" r="3.3" fill="#fff" opacity=".9"/><circle cx="206" cy="132" r="3.3" fill="#fff" opacity=".9"/><path d="M159 177c12 12 30 12 42 0" fill="none" stroke="#7567B6" stroke-width="7" stroke-linecap="round"/><circle cx="168" cy="76" r="7" fill="#C9E56C"/><circle cx="193" cy="76" r="7" fill="#C9E56C"/><path d="M180 241c-13-19-38-8-34 12 3 14 18 24 34 35 16-11 31-21 34-35 4-20-21-31-34-12z" fill="#C9E56C"/><ellipse cx="144" cy="72" rx="43" ry="24" fill="#fff" opacity=".14" filter="url(#soft)"/></g></svg>`;
-export const niilMascot=`data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+import p1 from './niil-mascot.asset.1.js';
+import p2 from './niil-mascot.asset.2.js';
+import p3 from './niil-mascot.asset.3.js';
+import p4 from './niil-mascot.asset.4.js';
+import p5 from './niil-mascot.asset.5.js';
+import p6 from './niil-mascot.asset.6.js';
+
+const niilMascotWebp=[p1,p2,p3,p4,p5,p6].join('');
+export const niilMascot=`data:image/webp;base64,${niilMascotWebp}`;
+
 const estados=['acolher','refletir','incentivar','celebrar'];
-const expressoes=Object.fromEntries(estados.map(e=>[e,{niil:niilMascot,fun:niilMascot,essencial:niilMascot}]));
+const expressoes=Object.fromEntries(
+  estados.map(e=>[e,{niil:niilMascot,fun:niilMascot,essencial:niilMascot}])
+);
+
 export default expressoes;
