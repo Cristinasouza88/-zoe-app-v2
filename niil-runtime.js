@@ -15,6 +15,12 @@ if(typeof window!=='undefined'&&window.localStorage){
 
 const trocarTexto=(s='')=>s.replace(/ZOE/g,'NIIL').replace(/Zoë/g,'NIIL').replace(/zoë/g,'niil').replace(/Zoe/g,'NIIL').replace(/\bNiil\b/g,'NIIL');
 const texto=el=>(el?.textContent||'').replace(/\s+/g,' ').trim();
+const todos=(scope,selector)=>{
+  const itens=[];
+  if(scope?.matches?.(selector))itens.push(scope);
+  if(scope?.querySelectorAll)itens.push(...scope.querySelectorAll(selector));
+  return itens;
+};
 
 const wordmarkSvg=`
 <svg viewBox="0 0 420 190" role="img" aria-label="niil" class="niil-runtime-wordmark">
@@ -34,8 +40,52 @@ const criarOrb=()=>{
   return orb;
 };
 
+const aplicarMarcaInicio=(scope=document)=>{
+  const marcadores=todos(scope,'div').filter(el=>texto(el)==='Sua trilha principal');
+  marcadores.forEach(marcador=>{
+    const centro=marcador.parentElement;
+    const tela=centro?.parentElement;
+    if(!centro||!tela)return;
+    tela.classList.add('niil-home-screen');
+    centro.classList.add('niil-home-main');
+    const header=tela.firstElementChild;
+    header?.classList.add('niil-home-header');
+
+    const contaBtn=header?.querySelector('button[aria-label="Abrir menu da conta"]');
+    if(contaBtn){
+      contaBtn.classList.add('niil-home-account');
+      contaBtn.style.setProperty('background-image',`url("${niilMascot}")`,'important');
+      contaBtn.style.setProperty('background-size','36px 36px','important');
+      contaBtn.style.setProperty('background-position','center','important');
+      contaBtn.style.setProperty('background-repeat','no-repeat','important');
+    }
+
+    const filhos=[...centro.children];
+    const ring=filhos.find(el=>el.tagName==='DIV'&&/conic-gradient/i.test(el.style?.background||''));
+    if(ring){
+      ring.classList.add('niil-home-life-ring');
+      const badge=ring.firstElementChild;
+      badge?.classList.add('niil-home-percent');
+      const pct=Math.max(0,Math.min(100,parseFloat(texto(badge))||0));
+      ring.style.setProperty('background',`conic-gradient(from 222deg,#C9E56C 0%,#9B8DD3 ${pct}%,#E9E4F3 ${pct}% 86%,transparent 86%)`,'important');
+      const miolo=ring.children?.[1];
+      miolo?.classList.add('niil-home-life-inner');
+      const progresso=[...miolo?.children||[]].find(el=>texto(el)==='Progresso geral');
+      progresso?.classList.add('niil-home-progress-label');
+      const avatar=[...miolo?.querySelectorAll?.('img')||[]][0];
+      if(avatar){avatar.src=niilMascot;avatar.classList.add('niil-home-mascot')}
+    }
+
+    const continuar=[...centro.querySelectorAll('button')].find(btn=>/Continuar trilha/i.test(texto(btn)));
+    continuar?.classList.add('niil-home-continue');
+
+    const outras=[...tela.querySelectorAll('div')].find(el=>texto(el)==='Outras trilhas que impulsionam você');
+    outras?.classList.add('niil-home-other-title');
+  });
+};
+
 const aplicarMarcaTrilha=(scope=document)=>{
-  const titulos=[...(scope.querySelectorAll?.('h1')||[])].filter(h=>texto(h)==='Minha trilha');
+  const titulos=todos(scope,'h1').filter(h=>texto(h)==='Minha trilha');
   titulos.forEach(h1=>{
     let hero=h1.parentElement;
     while(hero&&hero!==document.body&&!(hero.style?.background||'').includes('linear-gradient'))hero=hero.parentElement;
@@ -91,6 +141,24 @@ const aplicarMarcaTrilha=(scope=document)=>{
   });
 };
 
+const protegerFinanceiro=(scope=document)=>{
+  todos(scope,'.fx2-overlay').forEach(overlay=>{
+    if(overlay.dataset.niilGuarded==='1')return;
+    overlay.dataset.niilGuarded='1';
+    overlay.dataset.niilOpenedAt=String(Date.now());
+    const proteger=e=>{
+      const idade=Date.now()-Number(overlay.dataset.niilOpenedAt||0);
+      if(idade<700&&e.target===overlay){
+        e.preventDefault?.();
+        e.stopPropagation?.();
+        e.stopImmediatePropagation?.();
+      }
+    };
+    ['pointerdown','mousedown','touchend','click'].forEach(tipo=>overlay.addEventListener(tipo,proteger,true));
+    overlay.querySelector('.fx2-sheet')?.addEventListener('click',e=>e.stopPropagation());
+  });
+};
+
 const aplicar=(root=document)=>{
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
@@ -104,7 +172,9 @@ const aplicar=(root=document)=>{
       if(escolha)setTimeout(()=>escolha.click(),0);if(sheet)sheet.style.display='none';
     }
   });
+  aplicarMarcaInicio(root);
   aplicarMarcaTrilha(root);
+  protegerFinanceiro(root);
 };
 
 if(typeof document!=='undefined'){
@@ -112,7 +182,9 @@ if(typeof document!=='undefined'){
     aplicar();
     const obs=new MutationObserver(ms=>{
       ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)aplicar(n)}));
+      aplicarMarcaInicio(document);
       aplicarMarcaTrilha(document);
+      protegerFinanceiro(document);
     });
     obs.observe(document.body,{childList:true,subtree:true});
   };
