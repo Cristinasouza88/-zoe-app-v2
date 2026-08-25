@@ -1,4 +1,4 @@
-import {niilMascot} from './niil-mascot.data.js';
+import {niilMascot,niilMascotFallback} from './niil-mascot.data.js';
 
 const migrarObjeto=v=>{
   if(Array.isArray(v))return v.map(migrarObjeto);
@@ -20,6 +20,17 @@ const todos=(scope,selector)=>{
   if(scope?.matches?.(selector))itens.push(scope);
   if(scope?.querySelectorAll)itens.push(...scope.querySelectorAll(selector));
   return itens;
+};
+
+const aplicarImagemNIIL=img=>{
+  if(!img)return;
+  img.onerror=()=>{
+    if(img.dataset.niilFallback==='1')return;
+    img.dataset.niilFallback='1';
+    img.src=niilMascotFallback;
+  };
+  if(img.src!==niilMascot)img.src=niilMascot;
+  img.alt=trocarTexto(img.alt||'NIIL');
 };
 
 const wordmarkSvg=`
@@ -73,7 +84,7 @@ const aplicarMarcaInicio=(scope=document)=>{
       const progresso=[...miolo?.children||[]].find(el=>texto(el)==='Progresso geral');
       progresso?.classList.add('niil-home-progress-label');
       const avatar=[...miolo?.querySelectorAll?.('img')||[]][0];
-      if(avatar){avatar.src=niilMascot;avatar.classList.add('niil-home-mascot')}
+      if(avatar){aplicarImagemNIIL(avatar);avatar.classList.add('niil-home-mascot')}
     }
 
     const continuar=[...centro.querySelectorAll('button')].find(btn=>/Continuar trilha/i.test(texto(btn)));
@@ -98,7 +109,7 @@ const aplicarMarcaTrilha=(scope=document)=>{
     if(headingRow){
       headingRow.classList.add('niil-trail-heading-row');
       const avatar=[...headingRow.querySelectorAll('img')].find(img=>/NIIL/i.test(img.alt||''));
-      if(avatar){avatar.classList.add('niil-trail-heading-mascot');avatar.src=niilMascot}
+      if(avatar){avatar.classList.add('niil-trail-heading-mascot');aplicarImagemNIIL(avatar)}
       if(!headingRow.querySelector('.niil-orb-runtime'))headingRow.appendChild(criarOrb());
     }
 
@@ -119,59 +130,67 @@ const aplicarMarcaTrilha=(scope=document)=>{
       if(/Fundação/i.test(texto(btn))||/Primeira volta/i.test(texto(btn)))btn.classList.add('niil-phase-foundation');
     });
 
-    const titulosEtapa=[...tela.querySelectorAll('div')].filter(el=>{
-      const t=texto(el);
-      return /^(Como você chega hoje\?|Sua Roda da Vida inicial|Escolha sua alavanca|Matriz de ganhos e perdas|Mapa de influências|Experimento de 7 dias|Ative na agenda|Checkpoint da Roda da Vida)$/.test(t);
-    });
-    titulosEtapa.forEach(label=>{
-      const node=label.parentElement;
-      if(!node||node.style?.position!=='absolute')return;
-      node.classList.add('niil-trail-node');
-      if(node.classList.contains('niil-surge')||[...node.querySelectorAll('span')].some(s=>texto(s)==='AGORA'))node.classList.add('is-current');
-      if(node.querySelector('svg.lucide-lock'))node.classList.add('is-locked');
-      if(node.querySelector('svg.lucide-check'))node.classList.add('is-done');
-    });
-
     tela.querySelectorAll('img').forEach(img=>{
       if(/NIIL/i.test(img.alt||'')){
-        img.src=niilMascot;
+        aplicarImagemNIIL(img);
         if(!img.closest('.niil-trail-heading-row'))img.classList.add('niil-trail-mascot');
       }
     });
   });
 };
 
+let ultimoGatilhoFinanceiro=null;
+let ultimaAberturaFinanceira=0;
+let fechamentoExplicitoAte=0;
+let reabrindo=false;
+
+const registrarGatilho=e=>{
+  const el=e.target?.closest?.('.fxstart-node,.fx2-link,.fx2-btn,.fx2-more-card');
+  if(!el||el.disabled)return;
+  ultimoGatilhoFinanceiro=el;
+  ultimaAberturaFinanceira=Date.now();
+};
+
+const registrarFechamento=e=>{
+  if(e.target?.closest?.('.fxstart-close,.fx2-close'))fechamentoExplicitoAte=Date.now()+1200;
+};
+
 const protegerFinanceiro=(scope=document)=>{
-  todos(scope,'.fx2-overlay').forEach(overlay=>{
+  todos(scope,'.fx2-overlay,.fxstart-sheet-backdrop').forEach(overlay=>{
     if(overlay.dataset.niilGuarded==='1')return;
     overlay.dataset.niilGuarded='1';
     overlay.dataset.niilOpenedAt=String(Date.now());
     const proteger=e=>{
       const idade=Date.now()-Number(overlay.dataset.niilOpenedAt||0);
-      if(idade<700&&e.target===overlay){
+      if(idade<900&&e.target===overlay){
         e.preventDefault?.();
         e.stopPropagation?.();
         e.stopImmediatePropagation?.();
       }
     };
     ['pointerdown','mousedown','touchend','click'].forEach(tipo=>overlay.addEventListener(tipo,proteger,true));
-    overlay.querySelector('.fx2-sheet')?.addEventListener('click',e=>e.stopPropagation());
+    overlay.querySelector('.fx2-sheet,.fxstart-sheet')?.addEventListener('click',e=>e.stopPropagation());
   });
+};
+
+const tentarReabrirFinanceiro=()=>{
+  if(reabrindo||Date.now()<fechamentoExplicitoAte)return;
+  if(!ultimoGatilhoFinanceiro||!document.contains(ultimoGatilhoFinanceiro))return;
+  if(Date.now()-ultimaAberturaFinanceira>1200)return;
+  if(document.querySelector('.fx2-overlay,.fxstart-sheet-backdrop'))return;
+  reabrindo=true;
+  setTimeout(()=>{
+    if(!document.querySelector('.fx2-overlay,.fxstart-sheet-backdrop')&&document.contains(ultimoGatilhoFinanceiro))ultimoGatilhoFinanceiro.click();
+    setTimeout(()=>{reabrindo=false},250);
+  },120);
 };
 
 const aplicar=(root=document)=>{
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
   nodes.forEach(n=>{const novo=trocarTexto(n.nodeValue);if(novo!==n.nodeValue)n.nodeValue=novo});
-  root.querySelectorAll?.('img').forEach(img=>{if(/ZOE|Zoë|Zoe|NIIL/i.test(img.alt||'')){img.src=niilMascot;img.alt=trocarTexto(img.alt||'NIIL')}});
+  root.querySelectorAll?.('img').forEach(img=>{if(/ZOE|Zoë|Zoe|NIIL/i.test(img.alt||''))aplicarImagemNIIL(img)});
   root.querySelectorAll?.('button').forEach(btn=>{if(/trocar avatar/i.test(btn.textContent||''))btn.style.display='none'});
-  root.querySelectorAll?.('h2').forEach(h=>{
-    if(/Como a (ZOE|NIIL) acompanha você\?/i.test(h.textContent||'')){
-      const sheet=h.closest('[style*="position: fixed"]');
-      const escolha=[...(sheet?.querySelectorAll('button')||[])].find(b=>/Essencial|Fun/i.test(b.textContent||''));
-      if(escolha)setTimeout(()=>escolha.click(),0);if(sheet)sheet.style.display='none';
-    }
-  });
   aplicarMarcaInicio(root);
   aplicarMarcaTrilha(root);
   protegerFinanceiro(root);
@@ -179,12 +198,23 @@ const aplicar=(root=document)=>{
 
 if(typeof document!=='undefined'){
   const iniciar=()=>{
+    document.addEventListener('pointerdown',registrarGatilho,true);
+    document.addEventListener('click',registrarGatilho,true);
+    document.addEventListener('pointerdown',registrarFechamento,true);
+    document.addEventListener('click',registrarFechamento,true);
     aplicar();
     const obs=new MutationObserver(ms=>{
-      ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)aplicar(n)}));
+      let removeuSheet=false;
+      ms.forEach(m=>{
+        m.addedNodes.forEach(n=>{if(n.nodeType===1)aplicar(n)});
+        m.removedNodes.forEach(n=>{
+          if(n.nodeType===1&&(n.matches?.('.fx2-overlay,.fxstart-sheet-backdrop')||n.querySelector?.('.fx2-overlay,.fxstart-sheet-backdrop')))removeuSheet=true;
+        });
+      });
       aplicarMarcaInicio(document);
       aplicarMarcaTrilha(document);
       protegerFinanceiro(document);
+      if(removeuSheet)tentarReabrirFinanceiro();
     });
     obs.observe(document.body,{childList:true,subtree:true});
   };
