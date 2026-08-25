@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+// One-off source fix: preserve FinanceiroStart component identity across parent rerenders.
 const p='Financeiro.jsx';
 let s=fs.readFileSync(p,'utf8');
 const oldDef="  const Onboarding=()=> <FinanceiroStart fin={fin} persistir={persistir} aviso={aviso} onFinish={()=>setTela('visao')}/>;\n";
