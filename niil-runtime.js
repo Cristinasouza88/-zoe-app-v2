@@ -42,12 +42,12 @@ const wordmarkSvg=`
   <circle cx="244" cy="29" r="15" fill="#9B8DD3"/><circle cx="313" cy="29" r="15" fill="#9B8DD3"/>
 </svg>`;
 
-const criarOrb=()=>{
+const criarOrb=(extraClass='')=>{
   const orb=document.createElement('div');
-  orb.className='niil-orb-runtime';
+  orb.className=`niil-orb-runtime ${extraClass}`.trim();
   orb.setAttribute('role','img');
   orb.setAttribute('aria-label','NIIL');
-  orb.innerHTML='<span class="niil-orb-cloud"></span><i class="niil-orb-signal"></i>';
+  orb.innerHTML='<span class="niil-orb-cloud"></span><span class="niil-orb-glow"></span><i class="niil-orb-signal"></i>';
   return orb;
 };
 
@@ -84,7 +84,15 @@ const aplicarMarcaInicio=(scope=document)=>{
       const progresso=[...miolo?.children||[]].find(el=>texto(el)==='Progresso geral');
       progresso?.classList.add('niil-home-progress-label');
       const avatar=[...miolo?.querySelectorAll?.('img')||[]][0];
-      if(avatar){aplicarImagemNIIL(avatar);avatar.classList.add('niil-home-mascot')}
+      if(avatar){
+        avatar.classList.add('niil-home-mascot','niil-home-mascot-hidden');
+        avatar.setAttribute('aria-hidden','true');
+      }
+      if(miolo&&!miolo.querySelector('.niil-home-orb')){
+        const orb=criarOrb('niil-home-orb');
+        if(avatar?.parentNode)avatar.parentNode.insertBefore(orb,avatar.nextSibling);
+        else miolo.appendChild(orb);
+      }
     }
 
     const continuar=[...centro.querySelectorAll('button')].find(btn=>/Continuar trilha/i.test(texto(btn)));
