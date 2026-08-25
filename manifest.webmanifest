@@ -1,13 +1,13 @@
 {
-  "name": "Zoë",
-  "short_name": "Zoë",
-  "description": "Sua vida extraordinária, um dia por vez",
+  "name": "NIIL",
+  "short_name": "NIIL",
+  "description": "Sua vida, conectada.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#F7F8F6",
-  "theme_color": "#075B59",
+  "background_color": "#F8F6F2",
+  "theme_color": "#2F2545",
   "orientation": "portrait",
   "icons": [
-    { "src": "./icone.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]
 }
