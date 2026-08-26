@@ -41,12 +41,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 ::selection{background:var(--niil-mist);color:var(--niil-plum)}
 `;
 
-export function Wordmark({altura=54,cor='#9B8DD3'}){
+// Wordmark oficial NIIL: letras lilás, dois pontos lime e terminal curvo no “l”.
+export function Wordmark({altura=54,cor='#9B8DD3',corPontos='#C9E56C'}){
   return <svg viewBox="0 0 420 190" style={{height:altura,display:'block',overflow:'visible'}} role="img" aria-label="niil">
-    <g fill="none" stroke={cor} strokeWidth="30" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M28 164V91C28 43 65 24 104 24s76 19 76 67v73"/>
-      <path d="M244 79v85"/><path d="M313 79v85"/><path d="M382 25v139"/>
+    <g fill="none" stroke={cor} strokeWidth="28" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M28 160V92C28 48 61 26 103 26s75 22 75 66v68"/>
+      <path d="M236 70v90"/>
+      <path d="M304 70v90"/>
+      <path d="M370 25v112c0 15 9 23 24 23"/>
     </g>
-    <circle cx="244" cy="29" r="15" fill={cor}/><circle cx="313" cy="29" r="15" fill={cor}/>
+    <circle cx="236" cy="24" r="15" fill={corPontos}/>
+    <circle cx="304" cy="24" r="15" fill={corPontos}/>
   </svg>;
 }
