@@ -36,3 +36,13 @@
   .fx2 .fx2-invest-mini span{font-size:7.5px}
   .fx2 .fx2-quick button{min-height:80px}
 }
+
+
+/* finance-mainnav-reference */
+.fx2 .fx2-mainnav{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:0 0 18px}
+.fx2 .fx2-mainnav-btn{min-width:0;aspect-ratio:1/1;border:1px solid #ECEBF0;background:#fff;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 7px 20px rgba(44,36,66,.055);font:inherit;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+.fx2 .fx2-mainnav-btn span{font-size:8px;font-weight:800;color:#777183;line-height:1;white-space:nowrap}
+.fx2 .fx2-mainnav-btn.green svg{color:#19B77A}.fx2 .fx2-mainnav-btn.purple svg{color:#7D35E8}.fx2 .fx2-mainnav-btn.blue svg{color:#3478F6}.fx2 .fx2-mainnav-btn.orange svg{color:#F3A11A}.fx2 .fx2-mainnav-btn.pink svg{color:#F20B55}
+.fx2 .fx2-mainnav-btn.active{transform:translateY(-1px);border-color:rgba(155,141,211,.32);box-shadow:0 9px 23px rgba(44,36,66,.09)}
+.fx2 .fx2-mainnav-btn.active span{color:#2F2545}
+@media(max-width:390px){.fx2 .fx2-mainnav{gap:7px}.fx2 .fx2-mainnav-btn{border-radius:17px}.fx2 .fx2-mainnav-btn svg{width:24px;height:24px}.fx2 .fx2-mainnav-btn span{font-size:7px}}
