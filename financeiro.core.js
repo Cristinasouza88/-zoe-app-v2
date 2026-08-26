@@ -36,6 +36,8 @@ export function normalizarFinanceiro(raw){
     orcamentos:Array.isArray(raw.orcamentos)?raw.orcamentos:[],
     regrasClassificacao:Array.isArray(raw.regrasClassificacao)?raw.regrasClassificacao:[],
     importacoes:Array.isArray(raw.importacoes)?raw.importacoes:[],
+    trilhasFinanceiras:Array.isArray(raw.trilhasFinanceiras)?raw.trilhasFinanceiras:[],
+    caixinhas:Array.isArray(raw.caixinhas)?raw.caixinhas:[],
     alocacoesSobra:Array.isArray(raw.alocacoesSobra)?raw.alocacoesSobra:[],
     configuracao:{...ESTADO_FINANCEIRO_INICIAL.configuracao,...(raw.configuracao||{})},
     gamificacao:{...ESTADO_FINANCEIRO_INICIAL.gamificacao,...(raw.gamificacao||{})}
@@ -47,6 +49,8 @@ function categoriaAutomatica(desc,tipo){
   if(tipo==='receita'){
     if(/salario pj|raio de sol/.test(d))return'Salário PJ';
     if(/pro labore/.test(d))return'Pró-labore';
+    if(/comiss|commission/.test(d))return'Comissão';
+    if(/bonus|bônus|premiacao|premiação/.test(d))return'Bônus';
     if(/salario|folha/.test(d))return'Salário';
     if(/rendimento|juros|cdb|tesouro/.test(d))return'Rendimentos';
     if(/estorno|reembolso|devolucao/.test(d))return'Reembolso';

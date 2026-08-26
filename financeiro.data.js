@@ -87,7 +87,7 @@ if(typeof window!=='undefined'&&typeof document!=='undefined'&&!window.__niilBan
 export const METAANUAL_PADRAO={alvo:0,ano:new Date().getFullYear()};
 export const MESES_LBL=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 export const CATEGORIAS_DESPESA=['Moradia','Mercado','Alimentação','Transporte','Saúde','Educação','Beleza e cuidados pessoais','Fitness','Filhos e família','Pets','Carreira','Assinaturas','Compras','Lazer','Viagens','Impostos','Seguros','Consórcio','Financiamento','Presentes e doações','Investimentos','Outros'];
-export const CATEGORIAS_RECEITA=['Salário','Salário PJ','Pró-labore','Trabalho','Renda variável','Rendimentos','Reembolso','Aluguel recebido','Outros'];
+export const CATEGORIAS_RECEITA=['Salário','Salário PJ','Pró-labore','Comissão','Bônus','Trabalho','Renda variável','Rendimentos','Reembolso','Aluguel recebido','Outros'];
 export const TIPOS_CONTA=['Conta corrente','Conta pagamento','Carteira','Poupança','Investimento'];
 export const TIPOS_INVESTIMENTO=['Reserva','CDB','Tesouro','Fundo de renda fixa','Fundo imobiliário (FII)','Ações','ETF','Previdência','Cripto','Outro'];
 export const TIPOS_DIVIDA=['Financiamento imobiliário - imóvel pronto','Financiamento imobiliário - em construção','Financiamento de veículo','Consórcio imobiliário','Consórcio de veículo','Empréstimo','Parcelamento','Outro compromisso'];
@@ -97,7 +97,7 @@ export const FINANCEIRO_REFERENCIA={azul:'#246BFD',azulEscuro:'#1756D7',verde:'#
 
 export const ESTADO_FINANCEIRO_INICIAL={
  versao:VERSAO_FINANCEIRO,onboardingConcluido:false,startFinanceiroConcluido:false,
- transacoes:[],contas:[],cartoes:[],investimentos:[],dividas:[],patrimonios:[],receitasRecorrentes:[],gastosFixos:[],objetivos:[],orcamentos:[],regrasClassificacao:[],importacoes:[],trilhasFinanceiras:[],alocacoesSobra:[],alocacoesSobra:[],
+ transacoes:[],contas:[],cartoes:[],investimentos:[],dividas:[],patrimonios:[],receitasRecorrentes:[],gastosFixos:[],objetivos:[],orcamentos:[],regrasClassificacao:[],importacoes:[],trilhasFinanceiras:[],caixinhas:[],alocacoesSobra:[],
  configuracao:{ocultarValores:false,moedaBase:'BRL',metaReserva:0,prazoReserva:'',aporteReservaMensal:0,metaReservaMeses:6,metasPrioritarias:[],trilhasEducacao:[]},
  gamificacao:{xp:0,cristais:0,nivel:1,missoesPremiadas:[],ofensiva:null,atividadeDias:[],bausAbertos:[]},metaAnual:METAANUAL_PADRAO
 };
