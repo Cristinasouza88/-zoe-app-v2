@@ -34,7 +34,7 @@ function Section({title,action,onAction,children}){return <section className="fx
 function Empty({icon:Icon=CircleDollarSign,title,text,action,onAction}){return <div className="fx2-empty">{Icon&&<Icon size={29}/>}<b>{title}</b><small>{text}</small>{action&&<><div style={{height:10}}/><button className="fx2-btn ghost" onClick={onAction}>{action}</button></>}</div>}
 function Back({onClick,label='Voltar'}){return <button className="fx2-back" onClick={onClick}><ChevronLeft size={15}/>{label}</button>}
 function Field({label,children}){return <div className="fx2-field"><label>{label}</label>{children}</div>}
-function Sheet({title,onClose,children}){return <div className="fx2-overlay" onMouseDown={e=>e.target===e.currentTarget&&onClose()}><div className="fx2-sheet"><div className="fx2-sheet-head"><h3>{title}</h3><button className="fx2-close" onClick={onClose}><X size={17}/></button></div>{children}</div></div>}
+function Sheet({title,onClose,children}){return <div className="fx2-overlay"><div className="fx2-sheet" role="dialog" aria-modal="true" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}><div className="fx2-sheet-head"><h3>{title}</h3><button type="button" className="fx2-close" onClick={onClose} aria-label="Fechar"><X size={17}/></button></div>{children}</div></div>}
 
 export default function Financeiro({d={},up=()=>{},aviso=()=>{}}){
   const fin=useMemo(()=>normalizarFinanceiro(d.financeiro),[d.financeiro]);
@@ -269,5 +269,5 @@ export default function Financeiro({d={},up=()=>{},aviso=()=>{}}){
     return null;
   };
 
-  return <CurrencyContext.Provider value={fin.configuracao?.moedaBase||'BRL'}><div className="fx2"><div className="fx2-shell"><Header/>{diagnosticoConcluido&&!revisandoDiagnostico&&tela!=='visao'&&<FinanceNav/>}{render()}</div><Modal/></div></CurrencyContext.Provider>;
+  return <CurrencyContext.Provider value={fin.configuracao?.moedaBase||'BRL'}><div className="fx2"><div className="fx2-shell"><Header/>{diagnosticoConcluido&&!revisandoDiagnostico&&tela!=='visao'&&<FinanceNav/>}{render()}</div>{Modal()}</div></CurrencyContext.Provider>;
 }
