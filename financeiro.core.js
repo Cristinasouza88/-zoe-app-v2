@@ -36,6 +36,7 @@ export function normalizarFinanceiro(raw){
     orcamentos:Array.isArray(raw.orcamentos)?raw.orcamentos:[],
     regrasClassificacao:Array.isArray(raw.regrasClassificacao)?raw.regrasClassificacao:[],
     importacoes:Array.isArray(raw.importacoes)?raw.importacoes:[],
+    alocacoesSobra:Array.isArray(raw.alocacoesSobra)?raw.alocacoesSobra:[],
     configuracao:{...ESTADO_FINANCEIRO_INICIAL.configuracao,...(raw.configuracao||{})},
     gamificacao:{...ESTADO_FINANCEIRO_INICIAL.gamificacao,...(raw.gamificacao||{})}
   };

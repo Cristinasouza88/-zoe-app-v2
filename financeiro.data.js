@@ -97,7 +97,7 @@ export const FINANCEIRO_REFERENCIA={azul:'#246BFD',azulEscuro:'#1756D7',verde:'#
 
 export const ESTADO_FINANCEIRO_INICIAL={
  versao:VERSAO_FINANCEIRO,onboardingConcluido:false,startFinanceiroConcluido:false,
- transacoes:[],contas:[],cartoes:[],investimentos:[],dividas:[],patrimonios:[],receitasRecorrentes:[],gastosFixos:[],objetivos:[],orcamentos:[],regrasClassificacao:[],importacoes:[],
+ transacoes:[],contas:[],cartoes:[],investimentos:[],dividas:[],patrimonios:[],receitasRecorrentes:[],gastosFixos:[],objetivos:[],orcamentos:[],regrasClassificacao:[],importacoes:[],alocacoesSobra:[],
  configuracao:{ocultarValores:false,moedaBase:'BRL',metaReserva:0,prazoReserva:'',aporteReservaMensal:0,metaReservaMeses:6,metasPrioritarias:[],trilhasEducacao:[]},
  gamificacao:{xp:0,cristais:0,nivel:1,missoesPremiadas:[],ofensiva:null,atividadeDias:[],bausAbertos:[]},metaAnual:METAANUAL_PADRAO
 };
