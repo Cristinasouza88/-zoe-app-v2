@@ -31,8 +31,8 @@ jobs:
               ""
             ),
             (
-              "{contas.map(x=><Item key={x.id} campo=\"contas\" item={x} valor={x.saldoAtual} sub={`${x.instituicao||x.tipo} · ${x.tipo}`}/>)}`",
-              "{contas.map(x=><Item key={x.id} campo=\"contas\" item={{...x,nome:x.instituicao||x.nome||x.tipo}} valor={x.saldoAtual} sub={x.tipo}/>)}`"
+              "item={x} valor={x.saldoAtual} sub={`${x.instituicao||x.tipo} · ${x.tipo}`}",
+              "item={{...x,nome:x.instituicao||x.nome||x.tipo}} valor={x.saldoAtual} sub={x.tipo}"
             )
           ]
 
