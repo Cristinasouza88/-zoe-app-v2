@@ -1,3 +1,6 @@
 import './niil-brand.css';
 import './niil-runtime.js';
-export {default} from './NiilAppCore.jsx';
+import './cloudStateBootstrap.js';
+import NIILAppCore from './NiilAppCore.jsx';
+
+export default NIILAppCore;
