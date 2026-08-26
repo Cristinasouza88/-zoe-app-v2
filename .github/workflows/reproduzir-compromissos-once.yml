@@ -101,3 +101,4 @@ const soma=""",
           git add FinanceiroStart.jsx FinanceiroStart.css
           git commit -m "Reproduzir painel de compromissos e parcelas"
           git push origin HEAD:main
+# trigger
