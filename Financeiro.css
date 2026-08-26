@@ -63,3 +63,14 @@
 .fx2 .fx2-surplus-free{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0;padding:14px 16px;border-radius:17px;background:#F2F9F6;color:#28564A}.fx2 .fx2-surplus-free span{font-size:10px}.fx2 .fx2-surplus-free strong{font-size:16px}
 .fx2 .fx2-surplus-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.fx2 .fx2-surplus-actions button{border:1px solid #E6EBE8;background:#fff;border-radius:19px;padding:16px 13px;text-align:left;font:inherit;color:#231D38;box-shadow:0 7px 20px rgba(44,36,66,.045);cursor:pointer}.fx2 .fx2-surplus-actions svg{color:#18B978;margin-bottom:10px}.fx2 .fx2-surplus-actions b{display:block;font-size:11px}.fx2 .fx2-surplus-actions small{display:block;font-size:8.5px;color:#7D8595;line-height:1.4;margin-top:5px}
 @media(max-width:390px){.fx2 .fx2-mainnav-btn{width:48px!important;height:48px!important;min-width:48px!important}.fx2 .fx2-mainnav-btn svg{width:26px;height:26px}.fx2 .fx2-surplus-actions{grid-template-columns:1fr}}
+
+
+/* finance-trails-hub */
+.fx2 .fx2-trails-stack{display:grid;gap:12px}
+.fx2 .fx2-trail-card{border:1px solid #ECE8EF;box-shadow:0 8px 24px rgba(47,37,69,.055)}
+.fx2 .fx2-trail-card.completed{background:linear-gradient(145deg,#fff 0%,#FBFAFD 100%)}
+.fx2 .fx2-trail-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.fx2 .fx2-trail-card h3,.fx2 .fx2-trail-next h3{font-size:16px;color:#2F2545;margin:5px 0 7px}
+.fx2 .fx2-trail-card p,.fx2 .fx2-trail-next p{line-height:1.55;margin:0 0 12px}
+.fx2 .fx2-trail-card .fx2-btn{margin-top:13px}
+.fx2 .fx2-trail-next{border:1px dashed #CFC7DD;background:#FAF8FD}

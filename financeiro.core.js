@@ -21,9 +21,9 @@ export const mesDa = t => String(t?.competencia||t?.data||'').slice(0,7);
 export const rotuloMes = m => { const [a,b]=String(m||'').split('-').map(Number); return a&&b?`${MESES_LBL[b-1]}/${String(a).slice(-2)}`:'—'; };
 
 export function normalizarFinanceiro(raw){
-  if(!raw || raw.versao!==VERSAO_FINANCEIRO) return cloneFinanceiroInicial();
+  if(!raw || typeof raw!=='object') return cloneFinanceiroInicial();
   return {
-    ...cloneFinanceiroInicial(), ...raw,
+    ...cloneFinanceiroInicial(), ...raw, versao:VERSAO_FINANCEIRO,
     transacoes:Array.isArray(raw.transacoes)?raw.transacoes:[],
     contas:Array.isArray(raw.contas)?raw.contas:[],
     cartoes:Array.isArray(raw.cartoes)?raw.cartoes:[],
