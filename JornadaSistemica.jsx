@@ -8,7 +8,7 @@ const EMOCOES = [
   { valor: 2, rosto: '⌢', nome: 'Desanimada', cor: '#D7A74E' },
   { valor: 3, rosto: '—', nome: 'Neutra', cor: '#98A5AE' },
   { valor: 4, rosto: '⌣', nome: 'Bem', cor: '#48BC8B' },
-  { valor: 5, rosto: '★', nome: 'Energizada', cor: '#075B59' }
+  { valor: 5, rosto: '★', nome: 'Energizada', cor: '#6C9700' }
 ];
 
 const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
