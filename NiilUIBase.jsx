@@ -102,13 +102,13 @@ export const store = {
 };
 
 export const C = {
-  bg: '#F7F8F5', card: '#FFFFFF', petroleo: '#B7F20C', petroleoEsc: '#6C9700', carvao: '#17151D',
+  bg: '#F7F8F5', card: '#FFFFFF', petroleo: '#17151D', petroleoEsc: '#6C9700', carvao: '#17151D',
   ink: '#17151D', ink2: '#5F5A66', ink3: '#8B8791', line: '#E7E4EA',
   azul: '#17151D', aqua: '#F3F9DB', aquaSuave: '#F3F9DB',
   lima: '#B7F20C', limaSuave: '#F3F9DB',
   lilas: '#B7F20C',
   roxo: '#17151D', roxoEletrico: '#6C9700',
-  get green() { return this.petroleo }, get greenDark() { return this.petroleoEsc },
+  get green() { return this.lima }, get greenDark() { return this.petroleoEsc },
   get mint() { return this.aquaSuave }, get sky() { return this.petroleoEsc },
   get gold() { return this.petroleo }, get coral() { return '#FF8A3D' }, get lilac() { return this.petroleoEsc }
 };
