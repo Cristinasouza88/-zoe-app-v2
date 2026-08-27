@@ -2,121 +2,259 @@
   --niil-green:#B7F20C;
   --niil-green-dark:#6C9700;
   --niil-green-soft:#F3F9DB;
-  --niil-purple:#5B2D86;
-  --niil-purple-2:#6C46C8;
-  --niil-purple-soft:#EEE7F7;
   --niil-orange:#FF8A3D;
   --niil-bg:#F7F8F5;
   --niil-card:#FFFFFF;
   --niil-ink:#17151D;
+  --niil-ink-2:#5F5A66;
   --niil-muted:#8B8791;
   --niil-line:#E7E4EA;
+  --niil-danger:#C44747;
 }
 
-/* NIIL — direção visual aprovada em 27.08.2026
-   Verde protagonista, roxo estratégico, laranja pontual.
-   Fundos chapados: sem degradês decorativos. */
+/* NIIL — sistema visual consolidado
+   Base clara + grafite + verde protagonista.
+   Laranja/vermelho somente para atenção, erro e ação destrutiva.
+   Sem degradês decorativos. */
 
-html,body,#root{background:var(--niil-bg)!important;color:var(--niil-ink)!important}
+html,body,#root{
+  background:var(--niil-bg)!important;
+  color:var(--niil-ink)!important;
+}
+button,input,textarea,select{font-family:inherit}
+button{touch-action:manipulation}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{
+  outline:3px solid rgba(183,242,12,.45);
+  outline-offset:2px;
+}
 
-/* remove personagens da experiência principal */
+/* Personagens deixam de ser elementos da interface principal. */
 .niil-home-mascot,
 .niil-trail-mascot,
 .niil-trail-heading-mascot,
-.fxstart-mascot{display:none!important}
+.fxstart-mascot,
+.agx-mascot,
+.sn-mascot{display:none!important}
 
 /* HOME */
 .niil-home-screen{background:var(--niil-bg)!important;color:var(--niil-ink)!important}
 .niil-home-life-inner{background:var(--niil-card)!important}
 .niil-home-progress-label{color:var(--niil-green-dark)!important}
-.niil-home-percent{background:var(--niil-card)!important;color:var(--niil-purple)!important;border-color:var(--niil-line)!important}
-.niil-home-continue{background:var(--niil-green)!important;color:var(--niil-ink)!important;box-shadow:0 10px 24px rgba(23,21,29,.10)!important}
-.niil-home-orb,.niil-orb-runtime{background:var(--niil-green)!important;border:1px solid rgba(23,21,29,.08)!important;box-shadow:0 12px 26px rgba(23,21,29,.10)!important}
-.niil-home-orb .niil-orb-cloud,.niil-orb-cloud{background:var(--niil-card)!important;opacity:.9!important}
-.niil-home-orb .niil-orb-glow,.niil-orb-glow{background:rgba(91,45,134,.12)!important;mix-blend-mode:normal!important}
-.niil-orb-signal{background:var(--niil-orange)!important;box-shadow:none!important}
+.niil-home-percent{background:var(--niil-card)!important;color:var(--niil-ink)!important;border-color:var(--niil-line)!important}
+.niil-home-continue{background:var(--niil-green)!important;color:var(--niil-ink)!important;box-shadow:0 8px 18px rgba(23,21,29,.09)!important}
 
-/* TRILHA */
+/* TRILHA — estrutura Duolingo preservada; somente unidade cromática/superfícies. */
 .niil-trail-screen,.niil-trail-hero{background:var(--niil-bg)!important;color:var(--niil-ink)!important}
-.niil-trail-progress-card{background:var(--niil-card)!important;border-color:var(--niil-line)!important}
-.niil-trail-progress-card span:first-child{color:var(--niil-purple)!important}
+.niil-trail-progress-card{
+  background:var(--niil-card)!important;
+  border-color:var(--niil-line)!important;
+  box-shadow:0 8px 22px rgba(23,21,29,.045)!important;
+}
+.niil-trail-progress-card span:first-child{color:var(--niil-ink)!important}
 .niil-trail-progress-card span:last-child{color:var(--niil-green-dark)!important}
-.niil-trail-progress-card>div:last-child{background:#EDEFE8!important}
+.niil-trail-progress-card>div:last-child{background:#ECEDE9!important}
 .niil-trail-progress-card>div:last-child>div{background:var(--niil-green)!important}
+
 .niil-trail-phase-card.niil-phase-0,
-.niil-trail-phase-card.niil-phase-foundation{background:var(--niil-green)!important;color:var(--niil-ink)!important}
-.niil-trail-phase-card.niil-phase-1{background:var(--niil-purple)!important;color:#fff!important}
-.niil-trail-phase-card.niil-phase-2{background:var(--niil-purple-soft)!important;color:var(--niil-purple)!important}
-.niil-trail-phase-card.niil-phase-3{background:#2A173B!important;color:#fff!important}
-.niil-trail-node>div:first-of-type{background:var(--niil-green-soft)!important;color:var(--niil-green-dark)!important;border-color:#fff!important}
-.niil-trail-node.is-done>div:first-of-type{background:var(--niil-green)!important;color:var(--niil-ink)!important}
-.niil-trail-node.is-current>div:first-of-type{background:var(--niil-card)!important;color:var(--niil-purple)!important;box-shadow:0 0 0 5px rgba(183,242,12,.30),0 8px 0 rgba(23,21,29,.10),0 16px 28px rgba(23,21,29,.08)!important}
-.niil-trail-node.is-current>span{background:var(--niil-orange)!important;box-shadow:none!important}
+.niil-trail-phase-card.niil-phase-foundation{
+  background:var(--niil-green)!important;color:var(--niil-ink)!important
+}
+.niil-trail-phase-card.niil-phase-1{
+  background:var(--niil-ink)!important;color:#fff!important
+}
+.niil-trail-phase-card.niil-phase-2{
+  background:var(--niil-green-soft)!important;color:var(--niil-ink)!important
+}
+.niil-trail-phase-card.niil-phase-3{
+  background:#242329!important;color:#fff!important
+}
+.niil-trail-node>div:first-of-type{
+  background:var(--niil-green-soft)!important;
+  color:var(--niil-green-dark)!important;
+  border-color:#fff!important;
+}
+.niil-trail-node.is-done>div:first-of-type{
+  background:var(--niil-green)!important;color:var(--niil-ink)!important
+}
+.niil-trail-node.is-current>div:first-of-type{
+  background:var(--niil-card)!important;
+  color:var(--niil-ink)!important;
+  box-shadow:0 0 0 5px rgba(183,242,12,.30),0 8px 0 rgba(23,21,29,.10),0 16px 28px rgba(23,21,29,.08)!important;
+}
+.niil-trail-node.is-current>span{
+  background:var(--niil-green)!important;
+  color:var(--niil-ink)!important;
+  box-shadow:none!important
+}
 .niil-trail-screen svg[preserveAspectRatio="none"] line{stroke:var(--niil-green)!important}
 
 /* FINANCEIRO */
 .fx2{
-  --blue:var(--niil-purple)!important;
-  --blue2:var(--niil-purple)!important;
+  --blue:var(--niil-green-dark)!important;
+  --blue2:var(--niil-green-dark)!important;
   --green:var(--niil-green-dark)!important;
-  --purple:var(--niil-purple-2)!important;
+  --purple:var(--niil-ink)!important;
   --fin-green:var(--niil-green)!important;
   --fin-green-dark:var(--niil-green-dark)!important;
   --fin-green-soft:var(--niil-green-soft)!important;
   --ink:var(--niil-ink)!important;
   --muted:var(--niil-muted)!important;
   --line:var(--niil-line)!important;
+  --bg:var(--niil-bg)!important;
   background:var(--niil-bg)!important;
+  color:var(--niil-ink)!important;
 }
-.fx2 .fx2-hero,.fx2 .fx2-surplus-card{background:var(--niil-green)!important;color:var(--niil-ink)!important;box-shadow:0 14px 30px rgba(23,21,29,.10)!important}
-.fx2 .fx2-hero:after{background:rgba(255,255,255,.24)!important}
-.fx2 .fx2-metric,.fx2 .fx2-card,.fx2 .fx2-row{background:var(--niil-card)!important}
-.fx2 .fx2-link,.fx2 .fx2-month-label{color:var(--niil-green-dark)!important}
-.fx2 .fx2-btn{background:var(--niil-green)!important;color:var(--niil-ink)!important;box-shadow:0 8px 18px rgba(23,21,29,.08)!important}
-.fx2 .fx2-btn.ghost{background:var(--niil-card)!important;color:var(--niil-purple)!important;border-color:var(--niil-purple-soft)!important}
-.fx2 .fx2-btn.soft{background:var(--niil-green-soft)!important;color:var(--niil-green-dark)!important}
-.fx2 .fx2-progress i,.fx2 .fx2-progress.blue i{background:var(--niil-green)!important}
-.fx2 .fx2-progress.purple i{background:var(--niil-purple)!important}
+.fx2 .fx2-shell{padding-left:16px!important;padding-right:16px!important}
+.fx2 .fx2-top{margin-bottom:14px!important}
+.fx2 .fx2-brandmark{
+  background:var(--niil-ink)!important;
+  color:var(--niil-green)!important;
+  box-shadow:0 8px 18px rgba(23,21,29,.12)!important;
+}
+.fx2 .fx2-brand small,
+.fx2 .fx2-link,
+.fx2 .fx2-month-label{color:var(--niil-green-dark)!important}
+.fx2 .fx2-subnav{
+  background:rgba(247,248,245,.94)!important;
+  border-bottom:1px solid rgba(231,228,234,.7)!important;
+}
+.fx2 .fx2-subnav button{
+  border-color:var(--niil-line)!important;
+  background:#fff!important;
+  color:var(--niil-ink-2)!important;
+}
+.fx2 .fx2-subnav button.active{
+  background:var(--niil-green-soft)!important;
+  border-color:#DDE8B8!important;
+  color:var(--niil-ink)!important;
+}
+.fx2 .fx2-hero,
+.fx2 .fx2-surplus-card{
+  background:var(--niil-green)!important;
+  color:var(--niil-ink)!important;
+  box-shadow:0 12px 26px rgba(23,21,29,.09)!important;
+}
+.fx2 .fx2-hero:after{display:none!important}
+.fx2 .fx2-metric,
+.fx2 .fx2-card,
+.fx2 .fx2-row,
 .fx2 .fx2-level,
 .fx2 .fx2-cardcredit,
 .fx2 .fx2-cardcredit.purple,
 .fx2 .fx2-onboarding,
 .fx2 .fx2-trail-card.completed,
-.fx2-surplus-source{background:var(--niil-card)!important}
-.fx2 .fx2-row-icon,.fx2 .fx2-pill{background:var(--niil-green-soft)!important;color:var(--niil-green-dark)!important}
+.fx2-surplus-source{
+  background:var(--niil-card)!important;
+  border-color:var(--niil-line)!important;
+}
+.fx2 .fx2-card,
+.fx2 .fx2-row{
+  box-shadow:0 7px 20px rgba(23,21,29,.035)!important
+}
+.fx2 .fx2-quick button,
+.fx2 .fx2-more-card{
+  background:#fff!important;
+  border-color:var(--niil-line)!important;
+  box-shadow:0 5px 15px rgba(23,21,29,.035)!important;
+}
+.fx2 .fx2-quick svg,
+.fx2 .fx2-more-card svg{color:var(--niil-green-dark)!important}
+.fx2 .fx2-btn{
+  background:var(--niil-green)!important;
+  color:var(--niil-ink)!important;
+  box-shadow:0 7px 16px rgba(23,21,29,.08)!important;
+}
+.fx2 .fx2-btn.ghost{
+  background:var(--niil-card)!important;
+  color:var(--niil-ink)!important;
+  border-color:var(--niil-line)!important;
+}
+.fx2 .fx2-btn.soft{
+  background:var(--niil-green-soft)!important;
+  color:var(--niil-ink)!important;
+}
+.fx2 .fx2-progress i,
+.fx2 .fx2-progress.blue i,
+.fx2 .fx2-progress.purple i{background:var(--niil-green)!important}
+.fx2 .fx2-row-icon,
+.fx2 .fx2-pill{
+  background:var(--niil-green-soft)!important;
+  color:var(--niil-green-dark)!important;
+}
+.fx2 .fx2-option.active{
+  border-color:var(--niil-green)!important;
+  box-shadow:0 0 0 3px rgba(183,242,12,.18)!important
+}
 .fx2 .fx2-mainnav-btn.active{background:var(--niil-green-soft)!important}
-.fx2 .fx2-mainnav-btn.green svg{color:var(--niil-green-dark)!important}
-.fx2 .fx2-mainnav-btn.purple svg{color:var(--niil-purple)!important}
-.fx2 .fx2-mainnav-btn.orange svg{color:var(--niil-orange)!important}
-.fx2 .fx2-alert{background:#FFF4EA!important;border-color:#FFD3B8!important;color:#7A3B14!important}
+.fx2 .fx2-mainnav-btn svg{color:var(--niil-ink)!important}
+.fx2 .fx2-mainnav-btn.active svg{color:var(--niil-green-dark)!important}
+.fx2 .fx2-field input,
+.fx2 .fx2-field select,
+.fx2 .fx2-field textarea{
+  background:#fff!important;
+  border-color:var(--niil-line)!important;
+}
+.fx2 .fx2-field input:focus,
+.fx2 .fx2-field select:focus,
+.fx2 .fx2-field textarea:focus{
+  border-color:var(--niil-green)!important;
+  box-shadow:0 0 0 3px rgba(183,242,12,.13)!important;
+}
+.fx2 .fx2-toggle button.active,
+.fx2 .fx2-file{
+  background:var(--niil-green-soft)!important;
+  border-color:#DDE8B8!important;
+  color:var(--niil-ink)!important;
+}
+.fx2 .fx2-alert{
+  background:#FFF4EA!important;
+  border-color:#FFD3B8!important;
+  color:#7A3B14!important
+}
 
 /* ONBOARDING / FINANCIAMENTO */
 .fx,.fxstart{background:var(--niil-bg)!important;color:var(--niil-ink)!important}
 .fxstart-hero,.fxstart-main{background:var(--niil-bg)!important}
-.fxstart-phase-card{background:var(--niil-green)!important;color:var(--niil-ink)!important;box-shadow:0 8px 0 rgba(23,21,29,.08),0 15px 30px rgba(23,21,29,.08)!important}
+.fxstart-phase-card{
+  background:var(--niil-green)!important;
+  color:var(--niil-ink)!important;
+  box-shadow:0 8px 0 rgba(23,21,29,.08),0 15px 30px rgba(23,21,29,.07)!important;
+}
 .fxstart-phase-card h2,.fxstart-phase-card p,.fxstart-phase-card small{color:var(--niil-ink)!important}
 .fxstart-progress i{background:var(--niil-green)!important}
 .fxstart-node.done .fxstart-node-core{background:var(--niil-green)!important;color:var(--niil-ink)!important}
-.fxstart-node.active .fxstart-node-core{background:var(--niil-card)!important;color:var(--niil-purple)!important}
-.fxstart-now{background:var(--niil-orange)!important;color:var(--niil-ink)!important}
-.fxstart-btn:not(.ghost):not(.soft){background:var(--niil-green)!important;color:var(--niil-ink)!important}
-.fxstart-btn.soft{background:var(--niil-green-soft)!important;color:var(--niil-green-dark)!important;border-color:#DDE8B8!important}
-.fxstart-btn.ghost,.fxstart-skip{color:var(--niil-purple)!important}
-.fxcommit-info,.fxcommit-metric.highlight,.fxcommit-legal>label{background:var(--niil-green-soft)!important}
+.fxstart-node.active .fxstart-node-core{
+  background:var(--niil-card)!important;
+  color:var(--niil-ink)!important;
+  box-shadow:0 0 0 4px rgba(183,242,12,.22)!important
+}
+.fxstart-now{background:var(--niil-green)!important;color:var(--niil-ink)!important}
+.fxstart-btn:not(.ghost):not(.soft){
+  background:var(--niil-green)!important;color:var(--niil-ink)!important
+}
+.fxstart-btn.soft{
+  background:var(--niil-green-soft)!important;
+  color:var(--niil-ink)!important;
+  border-color:#DDE8B8!important
+}
+.fxstart-btn.ghost,.fxstart-skip{color:var(--niil-ink)!important}
+.fxcommit-info,.fxcommit-metric.highlight,.fxcommit-legal>label{
+  background:var(--niil-green-soft)!important
+}
 .fxcommit-save,.fxcommit-progress i{background:var(--niil-green)!important}
-.fxcommit-save{color:var(--niil-ink)!important;box-shadow:0 7px 18px rgba(23,21,29,.08)!important}
+.fxcommit-save{
+  color:var(--niil-ink)!important;
+  box-shadow:0 7px 18px rgba(23,21,29,.08)!important
+}
 
-/* sem gradientes nos fundos-chave */
+/* Fundos-chave sempre chapados. */
 .niil-home-screen,
 .niil-home-life-inner,
 .niil-home-continue,
-.niil-home-orb,
-.niil-orb-runtime,
-.niil-orb-cloud,
-.niil-orb-glow,
 .niil-trail-hero,
 .niil-trail-phase-card,
 .niil-trail-node>div:first-of-type,
+.fx2 .fx2-brandmark,
 .fx2 .fx2-hero,
 .fx2 .fx2-surplus-card,
 .fx2 .fx2-btn,
@@ -133,3 +271,12 @@ html,body,#root{background:var(--niil-bg)!important;color:var(--niil-ink)!import
 .fxcommit-legal>label,
 .fxcommit-save,
 .fxcommit-progress i{background-image:none!important}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    scroll-behavior:auto!important;
+    animation-duration:.001ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.001ms!important;
+  }
+}
