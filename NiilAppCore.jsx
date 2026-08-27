@@ -23,6 +23,7 @@ import { supabase } from './supabase.js';
 import { carregarRemoto, salvarRemoto, aguardarSalvamentosRemotos } from './zoe.remote-store.js';
 import avatarExpressoes, { niilMascot } from './niil-mascot.data.js';
 import NiilOrb from './NiilOrb.jsx';
+import HomeNIILV3 from './HomeNIILV3.jsx';
 
 /* ══════════ FOTOS ══════════
    As imagens são comprimidas antes de salvar (lado maior 900px, jpeg 72%),
@@ -1565,7 +1566,7 @@ export default function NIILApp() {
     ];
     const metasSemana = [
       { nome: 'Beber 2L de água', valor: Math.min(7, dia.agua >= 2000 ? 1 : 0), meta: 7, cor: C.sky, icone: Droplets },
-      { nome: 'Treinar 3x na semana', valor: Math.min(3, dia.treino > 0 ? 1 : 0), meta: 3, cor: C.lilac, icone: Dumbbell },
+      { nome: 'Treinar 3x na semana', valor: Math.min(3, dia.treino > 0 ? 1 : 0), meta: 3, cor: C.green, icone: Dumbbell },
       { nome: 'Estudar inglês', valor: inglesFeitas, meta: 5, cor: C.green, icone: BookOpen }
     ];
     const secao = { background: C.card, borderRadius: 24, padding: 18, marginBottom: 14, border: `1px solid ${C.line}`, boxShadow: '0 9px 26px rgba(38,53,68,.055)' };
@@ -1574,33 +1575,20 @@ export default function NIILApp() {
     const ultimasNoites = noitesSono.slice(0,7).reverse();
     const horasSonoHome = sonoHoje ? Number(sonoHoje.tempoDormindoMin||0)/60 : Number(dia.sono||0);
     return (
-      <div style={{ padding: '18px 16px 120px', background: 'radial-gradient(circle at 50% 7%,rgba(168,255,0,.13),transparent 27%),radial-gradient(circle at 92% 18%,rgba(0,230,210,.10),transparent 24%),linear-gradient(180deg,#FCFFFD 0%,#F7FAF9 100%)' }}>
-        <div style={{marginBottom:22}}><HomeTopActions d={d} agendaAtiva={agendaAtiva} pontosDia={pontosDia} streak={streak} usuario={usuario} setAba={setAba} setData={setData} setSheet={setSheet} permissao={permissao} contaIcon={<NIILContaIcon tamanho={38}/>} /></div>
-
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ color: C.ink3, fontSize: 14 }}>Sua trilha principal</div>
-          <div style={{ color: C.ink, fontWeight: 900, fontSize: 31, marginTop: 1, letterSpacing: -.7 }}>Vida</div>
-          <div onClick={() => setAba('trilha')} style={{ width: 284, height: 284, margin: '14px auto 12px', borderRadius: '50%', padding: 11, background: `conic-gradient(from 222deg,#A8FF00 0%,#25DFA8 ${pctVida}%,#E8F0EC ${pctVida}% 86%,transparent 86%)`, boxShadow: '0 18px 48px rgba(7,91,89,.12)', cursor: 'pointer', position: 'relative' }}>
-            <div style={{ position: 'absolute', top: -9, left: '50%', transform: 'translateX(-50%)', zIndex: 2, minWidth: 66, height: 38, padding: '0 13px', borderRadius: 16, background: '#fff', display: 'grid', placeItems: 'center', color: C.petroleo, fontSize: 13, fontWeight: 900, boxShadow: '0 7px 18px rgba(15,58,56,.12)' }}>{pctVida}%</div>
-            <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle at 50% 42%,#FFFFFF 0%,#FBFFFD 58%,#F0FFF8 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
-              <div style={{ color: '#25B97F', fontSize: 11, fontWeight: 800, marginTop: 22, zIndex: 1 }}>Progresso geral</div>
-              <NiilOrb size={154} active={true} style={{ margin:'2px 0 0', zIndex:1 }} />
-              <div style={{ color: C.ink, fontWeight: 900, fontSize: 17, zIndex: 1 }}>{concluidas} <span style={{ color: C.ink3, fontWeight: 600 }}>/ {totalEtapas}</span></div>
-              <div style={{ color: C.ink3, fontSize: 11.5, marginTop: 1, zIndex: 1 }}>etapas concluídas</div>
-            </div>
-          </div>
-          <button onClick={() => { setAba('trilha'); if (etapaAtual) setEtapaAberta(etapaAtual.id); }} style={{ border: 'none', borderRadius: 17, background: 'linear-gradient(135deg,#36D98B,#17CBA8)', color: '#fff', padding: '14px 30px', minWidth: 224, fontFamily: 'inherit', fontWeight: 900, fontSize: 14, boxShadow: '0 10px 24px rgba(37,217,139,.24)' }}>Continuar trilha &nbsp; →</button>
-        </div>
-
-        <div style={{ color: C.ink3, fontSize: 13, textAlign: 'center', marginBottom: 12 }}>Outras trilhas que impulsionam você</div>
-        <div style={{ ...secao, display: 'flex', gap: 4, padding: '17px 8px', overflowX:'auto' }}>
-          {trilhas.map((t, i) => <button key={`${t.id}-${i}`} onClick={() => setAba(t.id)} style={{ minWidth:106,flex:1,border: 'none', borderLeft: i ? `1px solid ${C.line}` : 'none', background: 'transparent', fontFamily: 'inherit', padding: '0 7px', cursor: 'pointer' }}>
-            <div style={{ width: 62, height: 62, margin: '0 auto 8px', borderRadius: '50%', display: 'grid', placeItems: 'center', color: t.cor, background: `conic-gradient(${t.cor} ${Math.max(3, Math.min(100, t.pct))}%,${t.suave} 0)` }}><div style={{ width: 48, height: 48, borderRadius: '50%', background: t.suave, display: 'grid', placeItems: 'center' }}><t.icone size={24} /></div></div>
-            <div style={{ color: C.ink, fontSize: 13, fontWeight: 800 }}>{t.nome}</div>
-            <div style={{ color: C.ink3, fontSize: 10.5, margin: '4px 0 8px', whiteSpace: 'nowrap' }}>{t.valor}</div>
-            <Barra v={Math.max(0, t.pct)} max={100} cor={t.cor} h={4} />
-          </button>)}
-        </div>
+      <div className="niil-home-v3-shell">
+        <HomeNIILV3
+          d={d}
+          usuario={usuario}
+          pctVida={pctVida}
+          concluidas={concluidas}
+          totalEtapas={totalEtapas}
+          agendaAtiva={agendaAtiva}
+          setAba={setAba}
+          setData={setData}
+          setSheet={setSheet}
+          setFab={setFab}
+          toggleTarefaDe={toggleTarefaDe}
+        />
 
         <div style={secao}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 17 }}><strong style={{ color: C.ink, fontSize: 15 }}>Resumo de hoje</strong><button onClick={() => setAba('progresso')} style={{ border: 0, background: 'none', color: C.green, fontWeight: 800 }}>Ver tudo →</button></div>
@@ -1610,15 +1598,15 @@ export default function NIILApp() {
         </div>
 
         <div style={{...secao,cursor:'pointer'}} onClick={()=>setAba('sono')}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Moon size={19} color={C.lilac} /> Sono</strong><span style={{ color: C.lilac, fontSize: 12, fontWeight: 800 }}>Abrir sono →</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Moon size={19} color={C.green} /> Sono</strong><span style={{ color: C.green, fontSize: 12, fontWeight: 800 }}>Abrir sono →</span></div>
           <div style={{ display: 'flex', alignItems: 'end', gap: 16, marginTop: 15 }}>
             <div style={{ minWidth: 112 }}>
               <div style={{ fontSize: 25, fontWeight: 800, color: C.ink }}>{Math.floor(horasSonoHome)}h {Math.round((horasSonoHome%1)*60)}m</div>
               <div style={{ color: C.ink3, fontSize: 11 }}>{sonoHoje?'última noite registrada':'Sono de hoje'}</div>
-              {sonoHoje&&<div style={{marginTop:6,fontSize:10,color:C.lilac,fontWeight:800}}>{Math.round(sonoHoje.qualidade||0)}% qualidade · {Math.round(sonoHoje.eficiencia||0)}% eficiência</div>}
+              {sonoHoje&&<div style={{marginTop:6,fontSize:10,color:C.green,fontWeight:800}}>{Math.round(sonoHoje.qualidade||0)}% qualidade · {Math.round(sonoHoje.eficiencia||0)}% eficiência</div>}
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'end', flex: 1, height:56 }}>
-              {(ultimasNoites.length?ultimasNoites:Array.from({length:7},()=>null)).map((r,i)=>{const h=r?Number(r.tempoDormindoMin||0)/60:0;return <div key={r?.id||i} style={{ flex:1, textAlign:'center' }}><div style={{ height: 42, borderRadius: 9, background: `linear-gradient(to top,${C.lilac} ${Math.max(4,Math.min(100,h/10*100))}%,#EEF0F3 ${Math.max(4,Math.min(100,h/10*100))}%)` }} /><span style={{ fontSize: 8, color: C.ink3 }}>{r?new Date(r.data+'T12:00').getDate():''}</span></div>})}
+              {(ultimasNoites.length?ultimasNoites:Array.from({length:7},()=>null)).map((r,i)=>{const h=r?Number(r.tempoDormindoMin||0)/60:0;return <div key={r?.id||i} style={{ flex:1, textAlign:'center' }}><div style={{ height: 42, borderRadius: 9, background: `linear-gradient(to top,${C.green} ${Math.max(4,Math.min(100,h/10*100))}%,#EEF0F3 ${Math.max(4,Math.min(100,h/10*100))}%)` }} /><span style={{ fontSize: 8, color: C.ink3 }}>{r?new Date(r.data+'T12:00').getDate():''}</span></div>})}
             </div>
           </div>
         </div>
@@ -1629,13 +1617,13 @@ export default function NIILApp() {
         </div>
 
         <div style={secao}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Target size={19} color={C.lilac} /> Metas da semana</strong><span style={{ color: C.lilac, fontSize: 12, fontWeight: 800 }}>Ver todas →</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Target size={19} color={C.green} /> Metas da semana</strong><span style={{ color: C.green, fontSize: 12, fontWeight: 800 }}>Ver todas →</span></div>
           {metasSemana.map((m,i)=><div key={m.nome} style={{ display:'grid', gridTemplateColumns:'34px 1fr auto', alignItems:'center', gap:10, marginTop:i?14:0 }}><div style={{ width:34,height:34,borderRadius:'50%',background:`${m.cor}18`,display:'grid',placeItems:'center' }}><m.icone size={17} color={m.cor}/></div><div><div style={{ color:C.ink,fontSize:12.5,marginBottom:6 }}>{m.nome}</div><Barra v={m.valor} max={m.meta} cor={m.cor} h={5}/></div><div style={{ color:C.ink2,fontSize:11,fontWeight:700 }}>{m.valor}/{m.meta} dias</div></div>)}
         </div>
 
         <div style={secao}>
           <div style={{ display:'flex',justifyContent:'space-between',marginBottom:8 }}><strong style={{ display:'flex',gap:8,color:C.ink }}><CheckCircle2 size={19} color={C.green}/> Top hábitos</strong><span style={{ color:C.green,fontSize:12,fontWeight:800 }}>Ver todos →</span></div>
-          {[['Meditar',Compass],['Ler 20 páginas',BookOpen]].map(([nome,I],i)=><div key={nome} style={{ display:'flex',alignItems:'center',gap:11,padding:'13px 0',borderTop:i?`1px solid ${C.line}`:'none' }}><div style={{ width:36,height:36,borderRadius:'50%',background:i?'#F2E8FF':'#E4F7EF',display:'grid',placeItems:'center' }}><I size={17} color={i?C.lilac:C.green}/></div><span style={{ flex:1,color:C.ink,fontSize:13 }}>{nome}</span><div style={{ textAlign:'right',color:C.ink,fontWeight:800 }}>0<div style={{ color:C.ink3,fontSize:9,fontWeight:500 }}>dias seguidos</div></div><ChevronRight size={16} color={C.ink3}/></div>)}
+          {[['Meditar',Compass],['Ler 20 páginas',BookOpen]].map(([nome,I],i)=><div key={nome} style={{ display:'flex',alignItems:'center',gap:11,padding:'13px 0',borderTop:i?`1px solid ${C.line}`:'none' }}><div style={{ width:36,height:36,borderRadius:'50%',background:i?'#F1F8DA':'#E4F7EF',display:'grid',placeItems:'center' }}><I size={17} color={i?C.green:C.green}/></div><span style={{ flex:1,color:C.ink,fontSize:13 }}>{nome}</span><div style={{ textAlign:'right',color:C.ink,fontWeight:800 }}>0<div style={{ color:C.ink3,fontSize:9,fontWeight:500 }}>dias seguidos</div></div><ChevronRight size={16} color={C.ink3}/></div>)}
         </div>
       </div>
     );
