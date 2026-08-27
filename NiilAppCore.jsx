@@ -1606,7 +1606,7 @@ export default function NIILApp() {
               {sonoHoje&&<div style={{marginTop:6,fontSize:10,color:C.green,fontWeight:800}}>{Math.round(sonoHoje.qualidade||0)}% qualidade · {Math.round(sonoHoje.eficiencia||0)}% eficiência</div>}
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'end', flex: 1, height:56 }}>
-              {(ultimasNoites.length?ultimasNoites:Array.from({length:7},()=>null)).map((r,i)=>{const h=r?Number(r.tempoDormindoMin||0)/60:0;return <div key={r?.id||i} style={{ flex:1, textAlign:'center' }}><div style={{ height: 42, borderRadius: 9, background: `linear-gradient(to top,${C.green} ${Math.max(4,Math.min(100,h/10*100))}%,#EEF0F3 ${Math.max(4,Math.min(100,h/10*100))}%)` }} /><span style={{ fontSize: 8, color: C.ink3 }}>{r?new Date(r.data+'T12:00').getDate():''}</span></div>})}
+              {(ultimasNoites.length?ultimasNoites:Array.from({length:7},()=>null)).map((r,i)=>{const h=r?Number(r.tempoDormindoMin||0)/60:0;return <div key={r?.id||i} style={{ flex:1, textAlign:'center' }}><div style={{ height: Math.max(4,Math.min(42,h/10*42)), minHeight:4, borderRadius: 9, background: C.green }} /><span style={{ fontSize: 8, color: C.ink3 }}>{r?new Date(r.data+'T12:00').getDate():''}</span></div>})}
             </div>
           </div>
         </div>
