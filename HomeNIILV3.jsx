@@ -143,10 +143,10 @@ export default function HomeNIILV3({
       </button>
 
       <div className="niil-home-v3-quick" aria-label="Atalhos do início">
-        <button onClick={abrirAgenda}>
+        <button onClick={() => setAba?.('trilha')}>
           <span className="niil-home-v3-quick-icon active"><Target size={19} /></span>
           <b>Missão do dia</b>
-          <small>{totalMissao ? `${feitasMissao}/${totalMissao}` : 'Livre'}</small>
+          <small>{totalMissao ? `${feitasMissao}/${totalMissao}` : 'Abrir trilha'}</small>
         </button>
 
         {slots.map((curso, idx) => {
