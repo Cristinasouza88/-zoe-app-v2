@@ -1,9 +1,9 @@
 import React,{useMemo,useState}from'react';
-import{CalendarDays,ChevronLeft,ChevronRight,Flame,Trophy,Sparkles,BookOpen,Target,Check,Circle,Plus,X}from'lucide-react';
+import{CalendarDays,ChevronLeft,ChevronRight,Flame,Trophy,Sparkles,BookOpen,Target,Check,Circle,Plus,X,Dumbbell}from'lucide-react';
 import{C,hoje}from'./ui.jsx';
 import'./AgendaLeve.css';
 
-export default function AgendaLeve({d,data,setData,agendaAtiva,toggleTarefaDe,streak,setAba,up}){
+export default function AgendaLeve({d,data,setData,agendaAtiva,toggleTarefaDe,abrirTreino,streak,setAba,up}){
   const[mesAberto,setMesAberto]=useState(false);
   const base=new Date(data+'T12:00');
   const planoNIIL=d.jornada?.planoSemana;
@@ -46,14 +46,21 @@ export default function AgendaLeve({d,data,setData,agendaAtiva,toggleTarefaDe,st
     feito:!!marcas['niil-experimento'],I:Sparkles,cor:C.lilac,
     acao:()=>up(s=>({...s,agenda:{...s.agenda,[data]:{...(s.agenda[data]||{}),'niil-experimento':!(s.agenda[data]||{})['niil-experimento']}}}))
   });
-  eventosCursos.forEach(e=>itens.push({
-    id:'curso-'+e.id,tipo:'curso',titulo:e.titulo,detalhe:(e.modulo||'Curso')+' · '+e.hora,
-    feito:!!e.feito,I:BookOpen,cor:C.lilac,abrir:true,acao:()=>setAba('cursos')
-  }));
-  tarefas.forEach((t,i)=>itens.push({
-    id:'tarefa-'+i,tipo:'missao',titulo:t.t,detalhe:(t.hora||'Ao longo do dia')+' · '+t.p+' pontos',
-    feito:!!marcas[agendaAtiva.id+'-'+i],I:Target,cor:C.green,acao:()=>toggleTarefaDe(agendaAtiva,i)
-  }));
+  eventosCursos.forEach(e=>{
+    const treino=/academia|treino/i.test(e.titulo||'');
+    itens.push({
+      id:'curso-'+e.id,tipo:treino?'treino':'curso',titulo:e.titulo,detalhe:(e.modulo||'Curso')+' · '+e.hora,
+      feito:!!e.feito,I:treino?Dumbbell:BookOpen,cor:C.lilac,abrir:true,
+      acao:()=>treino?abrirTreino?.({origem:'curso',agendaCursoId:e.id,data:e.data,titulo:e.titulo}):setAba('cursos')
+    });
+  });
+  tarefas.forEach((t,i)=>{
+    const treino=t.tipo==='Treino'||/academia|treino/i.test(t.t||'');
+    itens.push({
+      id:'tarefa-'+i,tipo:treino?'treino':'missao',titulo:t.t,detalhe:(t.hora||'Ao longo do dia')+' · '+t.p+' pontos',
+      feito:!!marcas[agendaAtiva.id+'-'+i],I:treino?Dumbbell:Target,cor:C.green,acao:()=>toggleTarefaDe(agendaAtiva,i,data)
+    });
+  });
 
   const concluidas=itens.filter(x=>x.feito).length;
   const total=itens.length;

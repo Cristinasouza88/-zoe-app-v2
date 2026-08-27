@@ -29,7 +29,8 @@ export default function HomeNIILV3({
   setData,
   setSheet,
   setFab,
-  toggleTarefaDe
+  toggleTarefaDe,
+  abrirTreino
 }) {
   const hojeIso = new Date().toISOString().slice(0, 10);
   const cursos = d?.cursos || [];
@@ -55,6 +56,7 @@ export default function HomeNIILV3({
       hora: e.hora || 'Ao longo do dia',
       titulo: e.titulo,
       detalhe: cursoNome(cursos, e.cursoId),
+      agendaCursoId: e.id,
       feito: !!e.feito
     })), [d?.agendaCursos, cursos, hojeIso]);
 
@@ -71,7 +73,11 @@ export default function HomeNIILV3({
 
   const abrirItemAgenda = item => {
     if (item.origem === 'base' && agendaAtiva) {
-      toggleTarefaDe?.(agendaAtiva, item.indice);
+      toggleTarefaDe?.(agendaAtiva, item.indice, hojeIso);
+      return;
+    }
+    if (/academia|treino/i.test(item.titulo || '')) {
+      abrirTreino?.({ origem:'curso', agendaCursoId:item.agendaCursoId, data:hojeIso, titulo:item.titulo });
       return;
     }
     setAba?.('cursos');
@@ -143,10 +149,10 @@ export default function HomeNIILV3({
       </button>
 
       <div className="niil-home-v3-quick" aria-label="Atalhos do início">
-        <button onClick={abrirAgenda}>
+        <button onClick={() => setAba?.('trilha')}>
           <span className="niil-home-v3-quick-icon active"><Target size={19} /></span>
           <b>Missão do dia</b>
-          <small>{totalMissao ? `${feitasMissao}/${totalMissao}` : 'Livre'}</small>
+          <small>{totalMissao ? `${feitasMissao}/${totalMissao}` : 'Abrir trilha'}</small>
         </button>
 
         {slots.map((curso, idx) => {

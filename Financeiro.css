@@ -121,3 +121,66 @@
 .fx2-donut:after{background:#fff!important}
 .fx2-ring{background:#F3F9DB!important;border:6px solid #B7F20C!important}
 .fx2-ring:after{background:#fff!important}
+
+/* Navegação financeira conectada ao hub: rótulos visíveis e retorno explícito. */
+.fx2 .fx2-back{
+  min-height:42px!important;
+  width:max-content;
+  border:1px solid var(--line)!important;
+  background:#fff!important;
+  padding:8px 11px!important;
+  margin:0 0 14px!important;
+  border-radius:13px!important;
+  color:var(--ink)!important;
+  font-size:10px!important;
+  font-weight:850!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  box-shadow:0 5px 14px rgba(23,21,29,.035);
+}
+.fx2 .fx2-back svg{color:#6C9700!important}
+.fx2 .fx2-mainnav{
+  display:grid!important;
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  gap:4px!important;
+  margin:0 0 14px!important;
+  padding:5px!important;
+  background:#fff!important;
+  border:1px solid var(--line)!important;
+  border-radius:21px!important;
+  box-shadow:0 7px 20px rgba(23,21,29,.04)!important;
+}
+.fx2 .fx2-mainnav-btn{
+  width:auto!important;
+  height:58px!important;
+  min-width:0!important;
+  border:0!important;
+  background:transparent!important;
+  border-radius:16px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:4px!important;
+  padding:4px 2px!important;
+  box-shadow:none!important;
+}
+.fx2 .fx2-mainnav-btn svg{width:20px!important;height:20px!important;color:#5F5A66!important}
+.fx2 .fx2-mainnav-btn span{
+  display:block!important;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:7.5px!important;
+  line-height:1.05!important;
+  color:#8B8791!important;
+}
+.fx2 .fx2-mainnav-btn.active{background:#F3F9DB!important}
+.fx2 .fx2-mainnav-btn.active svg{color:#17151D!important}
+.fx2 .fx2-mainnav-btn.active span{color:#17151D!important;font-weight:850!important}
+@media(max-width:360px){
+  .fx2 .fx2-mainnav{gap:2px!important;padding:4px!important}
+  .fx2 .fx2-mainnav-btn{height:54px!important}
+  .fx2 .fx2-mainnav-btn span{font-size:6.8px!important}
+}

@@ -156,7 +156,7 @@ const AG8 = baseRotina([['A ciência de ficar rico', 'Livro', 30], ['Orçamento 
 const AG9 = baseRotina([['Metanoia', 'Livro', 30]]);
 const AG10 = baseRotina([['O poder da ação', 'Livro', 30]]);
 
-const agenda = (linhas) => linhas.map(([t, tipo, p, hora]) => ({ t, tipo, p, hora }));
+const agenda = (linhas) => linhas.map(([t, tipo, p, hora]) => ({ t, tipo: /academia|treino/i.test(t) ? 'Treino' : tipo, p, hora }));
 
 /* ─── etapas ───
    tipo: 'leitura' | 'ferramenta' | 'fichas' | 'agenda' | 'roda' | 'ritual'
@@ -532,7 +532,7 @@ export const VINCULOS = [
   { padrao: /ritual do acordar/i, ferramenta: 'ritual' },
   { padrao: /30 (coisas positivas|caracter)/i, ferramenta: 'caracteristicas' },
   { padrao: /ativa[çc][ãa]o|recursos 5x/i, ferramenta: 'ativacao40' },
-  { padrao: /academia/i, ferramenta: 'treino' },
+  { padrao: /academia|treino/i, ferramenta: 'treino' },
   { padrao: /gratid[ãa]o/i, ferramenta: 'gratidao' },
   { padrao: /or[çc]amento|planejamento financeiro/i, ferramenta: 'matrizDinheiro' }
 ];
