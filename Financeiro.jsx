@@ -18,7 +18,6 @@ import{
 }from'./financeiro.core.js';
 import{parseTransacao,pedirSugestoes}from'./ia.jsx';
 import FinanceiroStart from'./FinanceiroStart.jsx';
-import{Wordmark}from'./ui.jsx';
 
 const COLORS=['#B7F20C','#6C9700','#17151D','#8B8791','#FF8A3D','#C8D69A','#4F4D54'];
 const CRISTAIS_OFENSIVA={7:40,14:120,30:200,50:340};
@@ -212,7 +211,6 @@ export default function Financeiro({d={},up=()=>{},aviso=()=>{}}){
   const points=key=>serie.map((x,i)=>`${i*(100/Math.max(1,serie.length-1))},${96-(x[key]/maxSerie*84)}`).join(' ');
   const donutParts=(()=>{let total=0;return categorias.slice(0,7).map((c,i)=>{const ini=total;total+=c.pct;return`${COLORS[i%COLORS.length]} ${ini}% ${total}%`}).join(',')})();
 
-  const Header=()=> <div style={{display:'flex',alignItems:'center',padding:'2px 0 14px'}}><Wordmark altura={42} cor="#6C9700"/></div>;
   const Month=()=> <div className="fx2-month"><button onClick={()=>setMesRef(addMes(mesRef,-1))}><ChevronLeft size={18}/></button><span className="fx2-month-label">{rotuloMes(mesRef)} <CalendarDays size={18}/></span><button onClick={()=>setMesRef(addMes(mesRef,1))}><ChevronRight size={18}/></button></div>;
   const FinanceNav=()=>{const ativo=['receitas','despesas','remanejar'].includes(tela)?'visao':(['visao','trilha','painel','objetivos'].includes(tela)?tela:'mais');const itens=[['visao','Visão geral',Home,'green'],['trilha','Trilha',Route,'purple'],['painel','Painel',BarChart3,'blue'],['objetivos','Objetivo',Target,'orange'],['mais','Mais',MoreHorizontal,'pink']];return <nav className="fx2-mainnav" aria-label="Navegação financeira">{itens.map(([id,label,Icon,tone])=><button key={id} type="button" className={`fx2-mainnav-btn ${tone} ${ativo===id?'active':''}`} aria-label={label} title={label} onClick={()=>setTela(id)}><Icon size={30}/></button>)}</nav>};
 
@@ -271,5 +269,5 @@ export default function Financeiro({d={},up=()=>{},aviso=()=>{}}){
     return null;
   };
 
-  return <CurrencyContext.Provider value={fin.configuracao?.moedaBase||'BRL'}><div className="fx2"><div className="fx2-shell"><Header/>{diagnosticoConcluido&&!revisandoDiagnostico&&tela!=='visao'&&<FinanceNav/>}{render()}</div>{Modal()}</div></CurrencyContext.Provider>;
+  return <CurrencyContext.Provider value={fin.configuracao?.moedaBase||'BRL'}><div className="fx2"><div className="fx2-shell">{diagnosticoConcluido&&!revisandoDiagnostico&&tela!=='visao'&&<FinanceNav/>}{render()}</div>{Modal()}</div></CurrencyContext.Provider>;
 }
