@@ -4,8 +4,8 @@
   "description": "Sua vida, conectada.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#F8F6F2",
-  "theme_color": "#2F2545",
+  "background_color": "#F7F8F5",
+  "theme_color": "#17151D",
   "orientation": "portrait",
   "icons": [
     { "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
