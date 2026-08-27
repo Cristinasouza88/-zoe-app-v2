@@ -1,0 +1,157 @@
+:root{
+  --home-green:#B7F20C;
+  --home-green-dark:#6C9700;
+  --home-green-soft:#F1F8DA;
+  --home-ink:#17151D;
+  --home-ink-2:#333137;
+  --home-muted:#7D7A82;
+  --home-line:#E9E7EB;
+  --home-bg:#F7F7F4;
+  --home-card:#FFFFFF;
+  --home-dark:#151515;
+}
+
+.niil-home-v3-shell{
+  min-height:100vh;
+  padding:0 16px 120px;
+  background:var(--home-bg)!important;
+  color:var(--home-ink);
+}
+.niil-home-v3-first{padding-top:18px;margin:0 -16px 18px;padding-left:16px;padding-right:16px}
+.niil-home-v3-header{
+  display:grid;
+  grid-template-columns:52px 1fr 52px;
+  align-items:start;
+  gap:14px;
+  margin-bottom:18px;
+}
+.niil-home-v3-menu,
+.niil-home-v3-avatar{
+  width:50px;height:50px;border:0;border-radius:50%;
+  display:grid;place-items:center;cursor:pointer;
+  font-family:inherit;
+}
+.niil-home-v3-menu{background:var(--home-green);color:var(--home-ink)}
+.niil-home-v3-avatar{
+  position:relative;background:#fff;color:var(--home-ink);
+  border:2px solid var(--home-green);
+  font-size:18px;font-weight:650;
+}
+.niil-home-v3-avatar i{
+  position:absolute;right:-1px;bottom:1px;width:12px;height:12px;
+  border-radius:50%;background:var(--home-green);border:2px solid #fff;
+}
+.niil-home-v3-greeting{padding-top:5px;min-width:0}
+.niil-home-v3-greeting span,
+.niil-home-v3-greeting strong{display:block;letter-spacing:-1.1px;line-height:.98}
+.niil-home-v3-greeting span{font-size:31px;font-weight:300;color:var(--home-ink)}
+.niil-home-v3-greeting strong{font-size:39px;font-weight:520;color:var(--home-ink);margin-top:5px;overflow:hidden;text-overflow:ellipsis}
+
+.niil-home-v3-goal{
+  width:100%;border:0;border-radius:28px;background:var(--home-dark);
+  color:#fff;display:grid;grid-template-columns:minmax(128px,.85fr) minmax(185px,1.45fr);
+  gap:8px;min-height:250px;padding:22px 18px;text-align:left;cursor:pointer;
+  overflow:hidden;font-family:inherit;box-shadow:0 12px 28px rgba(23,21,29,.10);
+}
+.niil-home-v3-goal-copy{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;position:relative;z-index:2}
+.niil-home-v3-eyebrow{font-size:10px;font-weight:750;letter-spacing:1.5px;color:#BDBBC1;margin-bottom:10px}
+.niil-home-v3-goal-title{font-size:20px;line-height:1.22;font-weight:520;letter-spacing:-.35px}
+.niil-home-v3-goal-title strong{color:var(--home-green);font-size:30px;font-weight:720;white-space:nowrap}
+.niil-home-v3-goal-bar{width:100%;height:6px;border-radius:99px;background:#3B3B3B;margin-top:18px;overflow:hidden}
+.niil-home-v3-goal-bar i{display:block;height:100%;border-radius:99px;background:var(--home-green)}
+.niil-home-v3-goal-copy small{font-size:10px;color:#A9A7AC;margin-top:8px;line-height:1.35}
+.niil-home-v3-goal-link{margin-top:16px;display:inline-flex;align-items:center;gap:4px;color:#fff;font-size:11px;font-weight:700}
+.niil-home-v3-map{display:flex;align-items:center;justify-content:center;min-width:0}
+.niil-home-v3-map svg{width:100%;height:auto;overflow:visible}
+.niil-home-v3-map-grid path{fill:none;stroke:#292929;stroke-width:1}
+.niil-home-v3-route-base{fill:none;stroke:#5A5A5A;stroke-width:5;stroke-linecap:round;stroke-dasharray:4 8}
+.niil-home-v3-route-progress{fill:none;stroke:var(--home-green);stroke-width:5;stroke-linecap:round}
+.niil-home-v3-map-label{fill:#fff;font-size:13px;font-weight:700;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+
+.niil-home-v3-quick{
+  display:grid;grid-template-columns:repeat(5,minmax(58px,1fr));
+  gap:4px;margin-top:14px;padding:14px 8px;
+  border:1px solid var(--home-line);border-radius:24px;background:var(--home-card);
+  box-shadow:0 8px 22px rgba(23,21,29,.045);
+}
+.niil-home-v3-quick>button{
+  min-width:0;border:0;background:transparent;padding:4px 3px;
+  font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;
+}
+.niil-home-v3-quick>button+button{border-left:1px solid #F0EEF1}
+.niil-home-v3-quick-icon{
+  width:38px;height:38px;border-radius:13px;background:#F4F4F1;
+  display:grid;place-items:center;color:var(--home-ink);margin-bottom:7px;
+}
+.niil-home-v3-quick-icon.active{background:var(--home-green)}
+.niil-home-v3-quick b{
+  max-width:100%;font-size:9px;line-height:1.15;font-weight:760;color:var(--home-ink);
+  overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
+.niil-home-v3-quick small{font-size:8px;color:var(--home-muted);margin-top:3px;white-space:nowrap}
+
+.niil-home-v3-agenda{margin-top:22px}
+.niil-home-v3-section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:0 2px 10px}
+.niil-home-v3-section-head>div>span{display:block;font-size:23px;font-weight:480;letter-spacing:-.35px}
+.niil-home-v3-section-head>div>small{display:block;font-size:10px;color:var(--home-muted);margin-top:3px}
+.niil-home-v3-section-head>button{border:0;background:transparent;color:var(--home-green-dark);font:inherit;font-size:11px;font-weight:750;display:flex;align-items:center;gap:2px;cursor:pointer}
+
+.niil-home-v3-agenda-list{
+  border:1px solid var(--home-line);border-radius:24px;background:#fff;
+  padding:5px 14px;box-shadow:0 8px 22px rgba(23,21,29,.045);
+}
+.niil-home-v3-agenda-list>button{
+  width:100%;border:0;background:#fff;min-height:66px;padding:9px 0;
+  display:grid;grid-template-columns:52px 10px 34px 1fr 22px;align-items:center;gap:9px;
+  text-align:left;font-family:inherit;color:var(--home-ink);cursor:pointer;
+}
+.niil-home-v3-agenda-list>button+button{border-top:1px solid #F0EEF1}
+.niil-home-v3-agenda-list>button.done{opacity:.58}
+.niil-home-v3-agenda-list>button.done .niil-home-v3-agenda-copy b{text-decoration:line-through}
+.niil-home-v3-agenda-time{font-size:11px;color:var(--home-muted);text-align:right}
+.niil-home-v3-agenda-dot{width:7px;height:7px;border-radius:50%;background:var(--home-green)}
+.niil-home-v3-agenda-icon{width:34px;height:34px;border-radius:11px;background:var(--home-green-soft);display:grid;place-items:center;color:var(--home-ink)}
+.niil-home-v3-agenda-copy{min-width:0}
+.niil-home-v3-agenda-copy b{display:block;font-size:12px;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.niil-home-v3-agenda-copy small{display:block;font-size:9px;color:var(--home-muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.niil-home-v3-empty{
+  width:100%;border:1px solid var(--home-line);border-radius:22px;background:#fff;
+  min-height:76px;padding:14px;display:grid;grid-template-columns:32px 1fr 22px;
+  align-items:center;gap:10px;text-align:left;font:inherit;color:var(--home-ink);cursor:pointer;
+}
+.niil-home-v3-empty>span b{display:block;font-size:12px}
+.niil-home-v3-empty>span small{display:block;font-size:9px;color:var(--home-muted);margin-top:3px;line-height:1.35}
+
+.niil-home-v3-mission-progress{
+  margin-top:10px;border:1px solid var(--home-line);background:#fff;border-radius:16px;
+  padding:10px 12px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;
+}
+.niil-home-v3-mission-progress>span{font-size:9px;font-weight:760;color:var(--home-ink)}
+.niil-home-v3-mission-progress>div{height:6px;border-radius:99px;background:#ECEBE8;overflow:hidden}
+.niil-home-v3-mission-progress>div i{display:block;height:100%;background:var(--home-green);border-radius:99px}
+.niil-home-v3-mission-progress>strong{font-size:9px;color:var(--home-green-dark)}
+
+@media(max-width:390px){
+  .niil-home-v3-shell{padding-left:13px;padding-right:13px}
+  .niil-home-v3-first{margin-left:-13px;margin-right:-13px;padding-left:13px;padding-right:13px}
+  .niil-home-v3-header{grid-template-columns:46px 1fr 46px;gap:10px}
+  .niil-home-v3-menu,.niil-home-v3-avatar{width:44px;height:44px}
+  .niil-home-v3-greeting span{font-size:27px}
+  .niil-home-v3-greeting strong{font-size:34px}
+  .niil-home-v3-goal{grid-template-columns:122px 1fr;min-height:232px;padding:18px 14px;border-radius:24px}
+  .niil-home-v3-goal-title{font-size:17px}
+  .niil-home-v3-goal-title strong{font-size:26px}
+  .niil-home-v3-quick{padding-left:4px;padding-right:4px;gap:1px}
+  .niil-home-v3-quick-icon{width:34px;height:34px}
+  .niil-home-v3-quick b{font-size:8px}
+  .niil-home-v3-agenda-list>button{grid-template-columns:44px 8px 30px 1fr 18px;gap:7px}
+  .niil-home-v3-agenda-icon{width:30px;height:30px}
+}
+
+@media(max-width:340px){
+  .niil-home-v3-goal{grid-template-columns:1fr;gap:2px}
+  .niil-home-v3-map{margin-top:-8px}
+  .niil-home-v3-goal-copy small{display:none}
+  .niil-home-v3-quick{overflow-x:auto;grid-template-columns:repeat(5,64px);justify-content:start}
+}
