@@ -124,3 +124,6 @@ button,input,select,textarea{font-family:-apple-system,BlinkMacSystemFont,"Segoe
 .fx2-overlay{touch-action:manipulation;overscroll-behavior:contain}
 .fx2-sheet{touch-action:auto;isolation:isolate}
 .fx2-link,.fx2-btn,.fx2-goal button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+
+/* Telas internas usam navegação e títulos; sem wordmark decorativo no topo. */
+.niil-runtime-brand{display:none!important}
