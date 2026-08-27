@@ -108,12 +108,9 @@ function GoogleIcon() {
 function NIILContaIcon({ tamanho = 36 }) {
   return (
     <svg width={tamanho} height={tamanho} viewBox="0 0 40 40" aria-hidden="true">
-      <rect x="2" y="2" width="36" height="36" rx="13" fill="#A8FF00" />
-      <ellipse cx="14.5" cy="18" rx="4.3" ry="5.2" fill="#fff" />
-      <ellipse cx="25.5" cy="18" rx="4.3" ry="5.2" fill="#fff" />
-      <circle cx="15.4" cy="19" r="2.1" fill="#075B59" />
-      <circle cx="24.6" cy="19" r="2.1" fill="#075B59" />
-      <path d="M14 26.2c1.8 2.6 4 3.8 6 3.8s4.2-1.2 6-3.8" fill="none" stroke="#075B59" strokeWidth="2.3" strokeLinecap="round" />
+      <rect x="2" y="2" width="36" height="36" rx="13" fill="#B7F20C" />
+      <circle cx="20" cy="15.5" r="5.2" fill="#17151D" />
+      <path d="M11.5 31c1.4-6 4.8-9 8.5-9s7.1 3 8.5 9" fill="none" stroke="#17151D" strokeWidth="3" strokeLinecap="round" />
     </svg>
   );
 }
@@ -1542,11 +1539,11 @@ export default function NIILApp() {
     const metaAnual = d.financeiro?.metaAnual || METAANUAL_PADRAO;
     const economizado = (d.financeiro?.transacoes || []).reduce((a, t) => a + (t.tipo === 'entrada' ? t.valor : -t.valor), 0);
     const pctVida = Math.min(100, Math.round((concluidas / totalEtapas) * 100));
-    const trilhasCursos = cursosFixados.length ? cursosFixados.map(c=>{const feitas=c.aulas.filter(a=>a.feito).length;return {id:'cursos',nome:c.nome,icone:BookOpen,cor:'#A86BF4',suave:'#F0E5FF',valor:`${feitas} / ${c.aulas.length}`,pct:c.aulas.length?(feitas/c.aulas.length)*100:0}}) : [{ id: 'cursos', nome: 'Meus cursos', icone: BookOpen, cor: '#A86BF4', suave: '#F0E5FF', valor: cursos.length ? `${aulasCursosFeitas} / ${aulasCursos}` : 'Adicionar curso', pct: aulasCursos ? (aulasCursosFeitas / aulasCursos) * 100 : 0 }];
+    const trilhasCursos = cursosFixados.length ? cursosFixados.map(c=>{const feitas=c.aulas.filter(a=>a.feito).length;return {id:'cursos',nome:c.nome,icone:BookOpen,cor:'#17151D',suave:'#F3F9DB',valor:`${feitas} / ${c.aulas.length}`,pct:c.aulas.length?(feitas/c.aulas.length)*100:0}}) : [{ id: 'cursos', nome: 'Meus cursos', icone: BookOpen, cor: '#17151D', suave: '#F3F9DB', valor: cursos.length ? `${aulasCursosFeitas} / ${aulasCursos}` : 'Adicionar curso', pct: aulasCursos ? (aulasCursosFeitas / aulasCursos) * 100 : 0 }];
     const trilhas = [
       ...trilhasCursos,
-      { id: 'ingles', nome: 'Inglês', icone: Languages, cor: '#5B9CF6', suave: '#E3F0FF', valor: `${inglesFeitas} / ${FASES_INGLES.length}`, pct: (inglesFeitas / FASES_INGLES.length) * 100 },
-      { id: 'financeiro', nome: 'Finanças', icone: Wallet, cor: '#43BE8C', suave: '#DFF7EC', valor: formatoMoeda(economizado), pct: metaAnual.alvo ? (economizado / metaAnual.alvo) * 100 : 0 }
+      { id: 'ingles', nome: 'Inglês', icone: Languages, cor: '#6C9700', suave: '#F3F9DB', valor: `${inglesFeitas} / ${FASES_INGLES.length}`, pct: (inglesFeitas / FASES_INGLES.length) * 100 },
+      { id: 'financeiro', nome: 'Finanças', icone: Wallet, cor: '#B7F20C', suave: '#F3F9DB', valor: formatoMoeda(economizado), pct: metaAnual.alvo ? (economizado / metaAnual.alvo) * 100 : 0 }
     ];
     const humores = [
       { n: 2, rosto: '⌢', nome: 'Muito mal', cor: '#F19A86' },
