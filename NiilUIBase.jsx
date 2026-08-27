@@ -3,66 +3,101 @@ import { X } from 'lucide-react';
 
 /* ══════════ STORAGE ══════════ */
 const memoria = {};
+const NIIL_DB='niil-persist-v2',NIIL_STORE='kv';
+let niilDbPromise=null;
+
+const abrirNIILDb=()=>{
+  if(typeof indexedDB==='undefined')return Promise.resolve(null);
+  if(niilDbPromise)return niilDbPromise;
+  niilDbPromise=new Promise((resolve,reject)=>{
+    const req=indexedDB.open(NIIL_DB,1);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(NIIL_STORE))db.createObjectStore(NIIL_STORE);
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+  return niilDbPromise;
+};
+
+const idbGet=async k=>{
+  const db=await abrirNIILDb();
+  if(!db)return null;
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(NIIL_STORE,'readonly');
+    const req=tx.objectStore(NIIL_STORE).get(k);
+    req.onsuccess=()=>resolve(req.result??null);
+    req.onerror=()=>reject(req.error);
+  });
+};
+
+const idbSet=async(k,v)=>{
+  const db=await abrirNIILDb();
+  if(!db)return false;
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(NIIL_STORE,'readwrite');
+    tx.objectStore(NIIL_STORE).put(v,k);
+    tx.oncomplete=()=>resolve(true);
+    tx.onerror=()=>reject(tx.error);
+    tx.onabort=()=>reject(tx.error);
+  });
+};
+
 export const store = {
   async get(k) {
-    // No navegador do app, window.storage pode existir como armazenamento auxiliar
-    // e não sobreviver a um reload. localStorage é a fonte persistente principal.
+    // IndexedDB é a fonte principal porque suporta estados grandes, como planilhas importadas.
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const v = window.localStorage.getItem(k);
-        if (v != null) {
-          const parsed = JSON.parse(v);
-          memoria[k] = parsed;
-          return parsed;
+      const v=await idbGet(k);
+      if(v!==null&&v!==undefined){memoria[k]=v;return v}
+    } catch(e){console.warn('NIIL: falha ao ler IndexedDB',e)}
+
+    // Migra automaticamente dados antigos do localStorage para IndexedDB.
+    try {
+      if(typeof window!=='undefined'&&window.localStorage){
+        const raw=window.localStorage.getItem(k);
+        if(raw!=null){
+          const v=JSON.parse(raw);
+          memoria[k]=v;
+          try{await idbSet(k,v)}catch{}
+          return v;
         }
       }
-    } catch (e) {
-      console.warn('NIIL: falha ao ler localStorage', e);
-    }
+    } catch(e){console.warn('NIIL: falha ao ler localStorage',e)}
 
     try {
-      if (typeof window !== 'undefined' && window.storage) {
-        const r = await window.storage.get(k, false);
-        if (r?.value != null) {
-          const parsed = JSON.parse(r.value);
-          memoria[k] = parsed;
-          // Migra automaticamente qualquer dado antigo para o armazenamento persistente.
-          try { window.localStorage?.setItem(k, JSON.stringify(parsed)); } catch {}
-          return parsed;
+      if(typeof window!=='undefined'&&window.storage){
+        const r=await window.storage.get(k,false);
+        if(r?.value!=null){
+          const v=JSON.parse(r.value);
+          memoria[k]=v;
+          try{await idbSet(k,v)}catch{}
+          return v;
         }
       }
-    } catch (e) {
-      console.warn('NIIL: falha ao ler window.storage', e);
-    }
+    } catch(e){console.warn('NIIL: falha ao ler storage auxiliar',e)}
 
-    return memoria[k] ?? null;
+    return memoria[k]??null;
   },
 
-  async set(k, v) {
-    memoria[k] = v;
-    const serializado = JSON.stringify(v);
-    let gravou = false;
+  async set(k,v) {
+    memoria[k]=v;
+    let ok=false;
 
-    // Sempre grava primeiro no localStorage, que é o que precisa sobreviver ao F5.
+    // A gravação principal acontece em IndexedDB, evitando o limite pequeno do localStorage.
+    try { ok=await idbSet(k,v) }
+    catch(e){console.error('NIIL: falha ao gravar IndexedDB',e)}
+
+    // Mantém cópias auxiliares quando couberem; falha de quota não invalida o salvamento principal.
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem(k, serializado);
-        gravou = window.localStorage.getItem(k) === serializado;
-      }
-    } catch (e) {
-      console.error('NIIL: não foi possível gravar no localStorage', e);
-    }
+      if(typeof window!=='undefined'&&window.localStorage)window.localStorage.setItem(k,JSON.stringify(v));
+    } catch(e){console.warn('NIIL: localStorage cheio; IndexedDB preservou os dados',e)}
 
-    // Mantém window.storage apenas como cópia auxiliar, nunca como única fonte.
     try {
-      if (typeof window !== 'undefined' && window.storage) {
-        await window.storage.set(k, serializado, false);
-      }
-    } catch (e) {
-      console.warn('NIIL: cópia auxiliar em window.storage falhou', e);
-    }
+      if(typeof window!=='undefined'&&window.storage)await window.storage.set(k,JSON.stringify(v),false);
+    } catch {}
 
-    return gravou;
+    return ok;
   }
 };
 
