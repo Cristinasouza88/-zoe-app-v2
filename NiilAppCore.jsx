@@ -13,6 +13,8 @@ import Conquistas from './Conquistas.jsx';
 import Cursos from './Cursos.jsx';
 import Sono from './Sono.jsx';
 import AgendaLeve from './AgendaLeve.jsx';
+import HomeTopActions from './HomeTopActions.jsx';
+import HubNIIL from './HubNIIL.jsx';
 import JornadaSistemica from './JornadaSistemica.jsx';
 import { FASES as FASES_INGLES } from './ingles.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
@@ -329,7 +331,6 @@ export default function NIILApp() {
   const [sessoesAbertas, setSessoesAbertas] = useState({});
   const [coach, setCoach] = useState(null);
   const [fab, setFab] = useState(false);
-  const [maisAberto, setMaisAberto] = useState(false);
   const [sheet, setSheet] = useState(null);
   const [toast, setToast] = useState('');
   const [refAtiva, setRefAtiva] = useState('Café da manhã');
@@ -1572,15 +1573,7 @@ export default function NIILApp() {
     const horasSonoHome = sonoHoje ? Number(sonoHoje.tempoDormindoMin||0)/60 : Number(dia.sono||0);
     return (
       <div style={{ padding: '18px 16px 120px', background: 'radial-gradient(circle at 50% 7%,rgba(168,255,0,.13),transparent 27%),radial-gradient(circle at 92% 18%,rgba(0,230,210,.10),transparent 24%),linear-gradient(180deg,#FCFFFD 0%,#F7FAF9 100%)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 22 }}>
-          <button onClick={() => setSheet('perfil')} aria-label="Abrir menu da conta" style={{ width: 42, height: 42, border: 'none', borderRadius: 15, background: '#fff', color: C.ink, boxShadow: '0 5px 16px rgba(24,42,65,.08)', display: 'grid', placeItems: 'center', overflow: 'hidden', padding: 2 }}><NIILContaIcon tamanho={38} /></button>
-          <div style={{ flex: 1, marginLeft: 10, fontSize: 17, fontWeight: 800, color: C.ink }}>Olá, {d.perfil.nome || usuario.nome} <span aria-hidden="true">👋</span></div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: C.green, fontWeight: 800 }}><Heart size={18} /> {pontosDia}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: C.ink, fontWeight: 800 }}><Flame size={18} /> {streak}</div>
-            <button onClick={permissao} style={{ position: 'relative', width: 42, height: 42, border: 'none', borderRadius: 15, background: '#fff', color: C.ink, boxShadow: '0 5px 16px rgba(24,42,65,.08)' }}><Bell size={19} /><span style={{ position: 'absolute', right: -2, top: -3, minWidth: 18, height: 18, borderRadius: 99, background: '#F15A3C', color: '#fff', fontSize: 10, display: 'grid', placeItems: 'center', border: '2px solid #fff' }}>2</span></button>
-          </div>
-        </div>
+        <div style={{marginBottom:22}}><HomeTopActions d={d} agendaAtiva={agendaAtiva} pontosDia={pontosDia} streak={streak} usuario={usuario} setAba={setAba} setData={setData} setSheet={setSheet} permissao={permissao} contaIcon={<NIILContaIcon tamanho={38}/>} /></div>
 
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <div style={{ color: C.ink3, fontSize: 14 }}>Sua trilha principal</div>
@@ -2010,46 +2003,13 @@ export default function NIILApp() {
     );
   };
 
-  /* ══════════ QUICK ADD ══════════ */
-  const QuickAdd = () => fab ? (
-    <div onClick={() => setFab(false)} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(242,245,244,.95)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 22 }}>
-      <div onClick={e => e.stopPropagation()}>
-        <div style={{ textAlign: 'center', marginBottom: 20, fontSize: 15, fontWeight: 800, color: C.ink }}>Registrar agora</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11, marginBottom: 14 }}>
-          {[
-            ['💧', 'Água', () => { setDia({ agua: dia.agua + 250 }); aviso('+250 ml'); setFab(false); }],
-            ['🏋️', 'Treino', () => { setFab(false); setSheet('treino'); }],
-            ['🍽️', 'Refeição', () => { setFab(false); setAba('comida'); }],
-            ['🎯', 'Minha etapa', () => { setFab(false); setAba('trilha'); if (etapaAtual) setEtapaAberta(etapaAtual.id); }],
-            ['📷', 'Foto do diário', () => { setFab(false); setAba('diario'); }],
-            ['📖', 'Livro ou lembrete', () => { setFab(false); setAba('extras'); }]
-          ].map(([ic, n, fn], i) => (
-            <Card key={n} cls="niil-surge" onClick={fn} style={{ textAlign: 'center', padding: 20, cursor: 'pointer', animationDelay: `${i * 45}ms` }}>
-              <div style={{ fontSize: 28, marginBottom: 7 }}>{ic}</div>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>{n}</div>
-            </Card>
-          ))}
-        </div>
-        <Card cls="niil-surge" onClick={() => {
-          if (d.jejum) { up(s => ({ ...s, jejum: null })); aviso('Jejum encerrado'); }
-          else { up(s => ({ ...s, jejum: { inicio: Date.now(), metaHoras: 16 } })); aviso('Jejum iniciado'); }
-          setFab(false);
-        }} style={{ textAlign: 'center', cursor: 'pointer', padding: 15, animationDelay: '280ms' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 700, color: C.ink, fontSize: 14.5 }}>
-            <Timer size={18} color={C.gold} /> {d.jejum ? 'Encerrar jejum' : 'Começar jejum'}
-          </span>
-        </Card>
-      </div>
-      <button onClick={() => setFab(false)} style={{ position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)', width: 58, height: 58, borderRadius: 99, border: 'none', background: C.green, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(7,91,89,.34)' }}><X size={25} /></button>
-    </div>
-  ) : null;
+  /* ══════════ HUB CENTRAL ══════════ */
+  const QuickAdd = () => fab ? <HubNIIL fechar={()=>setFab(false)} dia={dia} setDia={setDia} aviso={aviso} setSheet={setSheet} setAba={setAba} up={up} d={d} /> : null;
 
   const NAV = [
     { id: 'inicio', n: 'Início', i: Home },
     { id: 'trilha', n: 'Trilha', i: Route },
-    { id: 'agenda', n: 'Agenda', i: CalendarDays },
     { id: 'fab', n: '', i: Plus },
-    { id: 'cursos', n: 'Cursos', i: BookOpen },
     { id: 'financeiro', n: 'Financeiro', i: Wallet }
   ];
 
@@ -2072,28 +2032,6 @@ export default function NIILApp() {
         {aba === 'conquistas' && <Conquistas d={d} up={up} aviso={aviso} />}
 
         {QuickAdd()}
-
-        <Sheet aberto={maisAberto} fechar={() => setMaisAberto(false)} titulo="Mais">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            {[
-              ['sono', 'Sono', Moon, C.lilac],
-              ['diario', 'Feed', Camera, C.sky],
-              ['progresso', 'Performance', TrendingUp, C.green],
-              ['conquistas', 'Conquistas', Trophy, C.gold],
-              ['extras', 'Apoio', Compass, C.lilac]
-            ].map(([id, nome, Icone, cor]) => (
-              <button key={id} onClick={() => { setAba(id); setMaisAberto(false); }} style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10, padding: 16,
-                borderRadius: 16, border: `1.5px solid ${C.line}`, background: '#FAFCFB', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left'
-              }}>
-                <div style={{ width: 36, height: 36, borderRadius: 12, background: cor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icone size={18} color={sobre(cor)} />
-                </div>
-                <span style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>{nome}</span>
-              </button>
-            ))}
-          </div>
-        </Sheet>
 
         <Sheet aberto={sheet === 'perfil'} fechar={() => setSheet(null)} titulo="Sua conta">
           <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '2px 2px 18px', borderBottom: `1px solid ${C.line}` }}>
@@ -2177,7 +2115,7 @@ export default function NIILApp() {
           <div className="niil-surge" style={{ position: 'fixed', bottom: 100, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: C.petroleo, color: '#fff', padding: '12px 20px', borderRadius: 14, fontSize: 13.5, fontWeight: 700, boxShadow: '0 8px 24px rgba(11,20,22,.28)', maxWidth: '90vw' }}>{toast}</div>
         )}
 
-        <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 520, background: C.card, borderTop: `1px solid ${C.line}`, display: 'flex', alignItems: 'center', justifyContent: 'space-around', height: 74, paddingBottom: 8, zIndex: 70 }}>
+        <div style={{ position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:520,background:C.card,borderTop:`1px solid ${C.line}`,display:'grid',gridTemplateColumns:'1fr 1fr 74px 1fr',alignItems:'center',height:74,padding:'0 12px 8px',zIndex:70 }}>
           {NAV.map(n => {
             if (n.id === 'fab') return (
               <button key="fab" onClick={() => setFab(true)} style={{ width: 54, height: 54, borderRadius: 99, border: 'none', background: C.petroleo, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: -20, boxShadow: '0 6px 18px rgba(7,91,89,.34)' }}><Plus size={26} /></button>
@@ -2193,9 +2131,7 @@ export default function NIILApp() {
           })}
         </div>
 
-        {!['extras', 'diario', 'progresso', 'conquistas', 'sono'].includes(aba) && !fab && (
-          <button onClick={() => setMaisAberto(true)} style={{ position: 'fixed', bottom: 92, right: 16, width: 48, height: 48, borderRadius: 16, border: 'none', background: C.petroleo, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 16px rgba(11,20,22,.26)', zIndex: 60 }}><Compass size={21} /></button>
-        )}
+
       </div>
     </>
   );
