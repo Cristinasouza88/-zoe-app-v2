@@ -1582,7 +1582,7 @@ export default function NIILApp() {
             <div style={{ position: 'absolute', top: -9, left: '50%', transform: 'translateX(-50%)', zIndex: 2, minWidth: 66, height: 38, padding: '0 13px', borderRadius: 16, background: '#fff', display: 'grid', placeItems: 'center', color: C.petroleo, fontSize: 13, fontWeight: 900, boxShadow: '0 7px 18px rgba(15,58,56,.12)' }}>{pctVida}%</div>
             <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle at 50% 42%,#FFFFFF 0%,#FBFFFD 58%,#F0FFF8 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
               <div style={{ color: '#25B97F', fontSize: 11, fontWeight: 800, marginTop: 22, zIndex: 1 }}>Progresso geral</div>
-              <NiilOrb size={176} active={true} style={{ margin:'-5px 0 -6px', zIndex:1 }} />
+              <NiilOrb size={154} active={true} style={{ margin:'2px 0 0', zIndex:1 }} />
               <div style={{ color: C.ink, fontWeight: 900, fontSize: 17, zIndex: 1 }}>{concluidas} <span style={{ color: C.ink3, fontWeight: 600 }}>/ {totalEtapas}</span></div>
               <div style={{ color: C.ink3, fontSize: 11.5, marginTop: 1, zIndex: 1 }}>etapas concluídas</div>
             </div>
