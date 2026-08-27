@@ -1,52 +1,65 @@
 import React from 'react';
-import { X, Droplets, Dumbbell, Utensils, Moon, Camera, Bell, BookOpen, Trophy, Compass, CalendarDays, Timer } from 'lucide-react';
-import { C } from './ui.jsx';
+import { X, Moon, Utensils, Camera, Shirt } from 'lucide-react';
 
-export default function HubNIIL({fechar,dia,setDia,aviso,setSheet,setAba,up,d}){
-  const registrar=[
-    [Droplets,'Água','+250 ml',C.sky,()=>{setDia({agua:(dia.agua||0)+250});aviso('+250 ml');fechar()}],
-    [Dumbbell,'Treino','movimento',C.lilac,()=>{fechar();setSheet('treino')}],
-    [Utensils,'Refeição','alimentação',C.green,()=>{fechar();setAba('comida')}],
-    [Moon,'Sono','registrar noite',C.lilac,()=>{fechar();setAba('sono')}],
-    [Camera,'Foto','diário',C.sky,()=>{fechar();setAba('diario')}],
-    [Bell,'Lembrete','organizar depois',C.gold,()=>{fechar();setAba('extras')}]
-  ];
-  const navegar=[
-    ['cursos','Cursos',BookOpen,C.lilac],
-    ['sono','Sono',Moon,C.lilac],
-    ['diario','Feed',Camera,C.sky],
-    ['conquistas','Conquistas',Trophy,C.gold],
-    ['extras','Apoio',Compass,C.lilac],
-    ['agenda','Agenda',CalendarDays,C.green]
+const PALETA={
+  roxoEscuro:'#2F2545',
+  roxoClaro:'#9B8DD3',
+  verdeEscuro:'#075B59',
+  verdeLima:'#A8FF00',
+  laranja:'#FF6B4D',
+  cloud:'#F8F6F2',
+  ink:'#2C2834',
+  muted:'#817A89',
+  line:'#E4DFE6'
+};
+
+export default function HubNIIL({fechar,setAba}){
+  const modulos=[
+    {id:'sono',nome:'Sono',Icone:Moon,cor:PALETA.roxoEscuro},
+    {id:'comida',nome:'Refeição',Icone:Utensils,cor:PALETA.verdeEscuro},
+    {id:'diario',nome:'Feed',Icone:Camera,cor:PALETA.roxoClaro},
+    {id:'guarda-roupa',nome:'Guarda-roupa',Icone:Shirt,cor:PALETA.laranja}
   ];
 
-  return <div onClick={fechar} style={{position:'fixed',inset:0,zIndex:80,background:'rgba(47,37,69,.26)',backdropFilter:'blur(7px)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-    <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:520,maxHeight:'88vh',overflowY:'auto',background:'#F8F6F2',borderRadius:'28px 28px 0 0',padding:'12px 16px 28px',boxShadow:'0 -18px 50px rgba(47,37,69,.18)'}}>
-      <div style={{width:42,height:5,borderRadius:99,background:'#D4CED7',margin:'0 auto 14px'}}/>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
-        <div><div style={{fontSize:9,fontWeight:900,letterSpacing:1,color:C.lilac}}>HUB NIIL</div><h2 style={{margin:'4px 0 0',fontSize:22,color:C.ink}}>O que você quer fazer?</h2></div>
-        <button onClick={fechar} style={{width:38,height:38,border:0,borderRadius:14,background:'#EEE9F1',color:C.ink,display:'grid',placeItems:'center'}}><X size={19}/></button>
+  return <div className="hubx-overlay" onClick={fechar}>
+    <style>{`
+      @keyframes hubxIn{from{transform:translateY(100%)}to{transform:none}}
+      @keyframes hubxPop{from{opacity:0;transform:scale(.88) translateY(8px)}to{opacity:1;transform:none}}
+      .hubx-overlay{position:fixed;inset:0;z-index:90;background:rgba(47,37,69,.24);backdrop-filter:blur(7px);display:flex;align-items:flex-end;justify-content:center}
+      .hubx-sheet{width:min(520px,100%);background:${PALETA.cloud};border-radius:30px 30px 0 0;padding:12px 18px 34px;box-shadow:0 -20px 60px rgba(47,37,69,.18);animation:hubxIn .35s cubic-bezier(.22,.9,.36,1) both}
+      .hubx-handle{width:42px;height:5px;border-radius:99px;background:#D2CDD5;margin:0 auto 15px}
+      .hubx-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+      .hubx-head span{font-size:10px;font-weight:900;letter-spacing:1.15px;color:${PALETA.roxoClaro}}
+      .hubx-head h2{font-size:24px;line-height:1.06;margin:4px 0 0;color:${PALETA.ink};letter-spacing:-.025em}
+      .hubx-close{width:40px;height:40px;border:0;border-radius:14px;background:#ECE8F0;color:${PALETA.ink};display:grid;place-items:center}
+      .hubx-label{font-size:10px;font-weight:900;letter-spacing:1.1px;color:${PALETA.ink};margin:0 0 14px}
+      .hubx-modules{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+      .hubx-module{border:0;background:transparent;padding:0;font:inherit;color:${PALETA.ink};min-width:0;animation:hubxPop .4s cubic-bezier(.2,.9,.3,1) both}
+      .hubx-module:active .hubx-disc{transform:scale(.93)}
+      .hubx-disc{width:min(86px,20vw);height:min(86px,20vw);max-width:86px;max-height:86px;border-radius:50%;margin:0 auto 9px;display:grid;place-items:center;position:relative;box-shadow:0 8px 20px rgba(47,37,69,.12);transition:transform .14s ease;border:3px solid rgba(255,255,255,.72)}
+      .hubx-disc:after{content:"";position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:${PALETA.verdeLima};border:3px solid #fff;box-shadow:0 2px 7px rgba(47,37,69,.12)}
+      .hubx-disc svg{color:#fff;stroke-width:2.1}
+      .hubx-module b{display:block;font-size:11px;font-weight:850;line-height:1.15;white-space:normal}
+      .hubx-note{margin-top:22px;padding-top:14px;border-top:1px solid ${PALETA.line};font-size:9px;line-height:1.45;color:${PALETA.muted};text-align:center}
+      @media(max-width:360px){.hubx-modules{gap:5px}.hubx-module b{font-size:9.5px}.hubx-disc{width:70px;height:70px}}
+      @media(prefers-reduced-motion:reduce){.hubx-sheet,.hubx-module{animation:none!important}.hubx-disc{transition:none!important}}
+    `}</style>
+    <div className="hubx-sheet" onClick={e=>e.stopPropagation()}>
+      <div className="hubx-handle"/>
+      <div className="hubx-head">
+        <div><span>HUB NIIL</span><h2>O que você quer fazer?</h2></div>
+        <button className="hubx-close" onClick={fechar} aria-label="Fechar"><X size={19}/></button>
       </div>
 
-      <div style={{fontSize:10,fontWeight:900,letterSpacing:.9,color:C.lilac,margin:'0 2px 9px'}}>REGISTRAR AGORA</div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9,marginBottom:18}}>
-        {registrar.map(([Icone,nome,sub,cor,fn],i)=><button key={nome} onClick={fn} className="niil-surge" style={{animationDelay:(i*35)+'ms',minHeight:78,border:'1px solid #E4DFE6',borderRadius:18,background:'#fff',padding:12,display:'grid',gridTemplateColumns:'38px 1fr',gap:9,alignItems:'center',textAlign:'left',fontFamily:'inherit'}}>
-          <span style={{width:38,height:38,borderRadius:13,background:cor+'18',color:cor,display:'grid',placeItems:'center'}}><Icone size={18}/></span>
-          <span><b style={{display:'block',fontSize:12.5,color:C.ink}}>{nome}</b><small style={{display:'block',fontSize:8.5,color:C.ink3,marginTop:2}}>{sub}</small></span>
+      <div className="hubx-label">MÓDULOS</div>
+      <div className="hubx-modules">
+        {modulos.map((m,i)=><button key={m.id} className="hubx-module" style={{animationDelay:(i*55)+'ms'}} onClick={()=>{setAba(m.id);fechar()}}>
+          <span className="hubx-disc" style={{background:m.cor}}><m.Icone size={31}/></span>
+          <b>{m.nome}</b>
         </button>)}
       </div>
 
-      <div style={{fontSize:10,fontWeight:900,letterSpacing:.9,color:C.lilac,margin:'0 2px 9px'}}>IR PARA</div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:12}}>
-        {navegar.map(([id,nome,Icone,cor])=><button key={id} onClick={()=>{setAba(id);fechar()}} style={{border:'1px solid #E4DFE6',borderRadius:17,background:'#fff',padding:'12px 7px',display:'grid',placeItems:'center',gap:6,fontFamily:'inherit',color:C.ink}}>
-          <span style={{width:34,height:34,borderRadius:12,background:cor+'16',color:cor,display:'grid',placeItems:'center'}}><Icone size={17}/></span>
-          <span style={{fontSize:9.5,fontWeight:800}}>{nome}</span>
-        </button>)}
-      </div>
-
-      <button onClick={()=>{if(d.jejum){up(s=>({...s,jejum:null}));aviso('Jejum encerrado')}else{up(s=>({...s,jejum:{inicio:Date.now(),metaHoras:16}}));aviso('Jejum iniciado')}fechar()}} style={{width:'100%',border:'1px solid #E4DFE6',borderRadius:16,background:'#fff',padding:13,fontFamily:'inherit',color:C.ink,display:'flex',alignItems:'center',justifyContent:'center',gap:8,fontWeight:800,fontSize:11}}>
-        <Timer size={17} color={C.gold}/>{d.jejum?'Encerrar jejum':'Começar jejum'}
-      </button>
+      <div className="hubx-note">Acesso rápido aos registros pessoais que complementam sua jornada.</div>
     </div>
   </div>;
 }
