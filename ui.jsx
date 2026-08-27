@@ -2,14 +2,14 @@ import React from 'react';
 import * as Base from './NiilUIBase.jsx';
 
 Object.assign(Base.C,{
-  bg:'#F7F8F5',card:'#FFFFFF',petroleo:'#B7F20C',petroleoEsc:'#6C9700',carvao:'#17151D',
+  bg:'#F7F8F5',card:'#FFFFFF',petroleo:'#17151D',petroleoEsc:'#6C9700',carvao:'#17151D',
   ink:'#17151D',ink2:'#5F5A66',ink3:'#8B8791',line:'#E7E4EA',
   azul:'#17151D',aqua:'#F3F9DB',aquaSuave:'#F3F9DB',
   lima:'#B7F20C',limaSuave:'#F3F9DB',lilas:'#B7F20C',roxo:'#17151D',roxoEletrico:'#6C9700',
   laranja:'#FF8A3D'
 });
 Object.defineProperties(Base.C,{
-  green:{get(){return this.petroleo},configurable:true},
+  green:{get(){return this.lima},configurable:true},
   greenDark:{get(){return this.petroleoEsc},configurable:true},
   mint:{get(){return this.aquaSuave},configurable:true},
   sky:{get(){return this.petroleoEsc},configurable:true},
