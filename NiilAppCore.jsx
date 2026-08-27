@@ -20,7 +20,6 @@ import { FASES as FASES_INGLES } from './ingles.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 import { supabase } from './supabase.js';
 import { carregarRemoto, salvarRemoto, aguardarSalvamentosRemotos } from './zoe.remote-store.js';
-import avatarExpressoes, { niilMascot } from './niil-mascot.data.js';
 import HomeNIILV3 from './HomeNIILV3.jsx';
 
 /* ══════════ FOTOS ══════════
@@ -323,8 +322,6 @@ export default function NIILApp() {
     () => window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery')
   );
   const [d, setD] = useState(inicial);
-  const avatarId = 'niil';
-  const avatarImagem = niilMascot;
   const [aba, setAba] = useState('inicio');
   const [data, setData] = useState(hoje());
   const [etapaAberta, setEtapaAberta] = useState(null);
@@ -736,7 +733,7 @@ export default function NIILApp() {
   /* ══════════ FERRAMENTAS DENTRO DA ETAPA ══════════ */
   const Ferramenta = ({ id, etapa }) => {
     if (['checkinEmocional', 'rodaInicial', 'escolhaPrioridade', 'matrizGanhosPerdas', 'mapaMental', 'experimentoSemana', 'ativarAgenda', 'checkpointRoda'].includes(id)) {
-      return <JornadaSistemica id={id} d={d} up={up} campo={campo} setCampo={setCampo} aviso={aviso} avatar={avatarImagem} />;
+      return <JornadaSistemica id={id} d={d} up={up} campo={campo} setCampo={setCampo} aviso={aviso} />;
     }
     switch (id) {
 
