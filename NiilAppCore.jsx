@@ -21,6 +21,7 @@ import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 import { supabase } from './supabase.js';
 import { carregarRemoto, salvarRemoto, aguardarSalvamentosRemotos } from './zoe.remote-store.js';
 import HomeNIILV3 from './HomeNIILV3.jsx';
+import TreinoSheet from './TreinoSheet.jsx';
 
 /* ══════════ FOTOS ══════════
    As imagens são comprimidas antes de salvar (lado maior 900px, jpeg 72%),
@@ -280,12 +281,12 @@ function Login({ onEntrar }) {
         <Campo label="E-mail" type="email" placeholder="voce@email.com" value={email} onChange={e => setEmail(e.target.value)} />
         <Campo label="Senha" type="password" placeholder="Mínimo de 6 caracteres" value={senha} onChange={e => setSenha(e.target.value)} onKeyDown={e => e.key === 'Enter' && submeter()} />
         {modo === 'entrar' && (
-          <button onClick={recuperarSenha} disabled={enviando} style={{ background: 'none', border: 'none', padding: 0, margin: '-4px 0 14px', color: C.greenDarkDark, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={recuperarSenha} disabled={enviando} style={{ background: 'none', border: 'none', padding: 0, margin: '-4px 0 14px', color: C.greenDark, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             Esqueci minha senha
           </button>
         )}
         {erro && <p style={{ color: C.coral, fontSize: 13, fontWeight: 600, margin: '0 0 12px' }}>{erro}</p>}
-        {mensagem && <p style={{ color: C.greenDarkDark, fontSize: 13, fontWeight: 600, lineHeight: 1.45, margin: '0 0 12px' }}>{mensagem}</p>}
+        {mensagem && <p style={{ color: C.greenDark, fontSize: 13, fontWeight: 600, lineHeight: 1.45, margin: '0 0 12px' }}>{mensagem}</p>}
         <Btn onClick={submeter} disabled={enviando} style={{ width: '100%', padding: 15, fontSize: 15 }}>
           {enviando ? 'Aguarde...' : modo === 'criar' ? 'Criar minha conta' : 'Entrar'}
         </Btn>
@@ -308,7 +309,8 @@ const inicial = {
   metasSOL: [], redes: [], cartas: {}, gratidoes: [], fotos: [], cursos: [], agendaCursos: [],
   jornada: { checkins: [], mapaNos: [], planoSemana: null },
   sono: { objetivoHoras: 8, registros: [], despertador: { ativo:false, hora:'07:00', janelaMin:30, dias:[1,2,3,4,5] }, integracoes:{} },
-  guardaRoupa: { pecas: [] }
+  guardaRoupa: { pecas: [] },
+  treinos: []
 };
 
 /* ══════════ APP ══════════ */
@@ -326,6 +328,7 @@ export default function NIILApp() {
   const [coach, setCoach] = useState(null);
   const [fab, setFab] = useState(false);
   const [sheet, setSheet] = useState(null);
+  const [treinoCtx, setTreinoCtx] = useState(null);
   const [toast, setToast] = useState('');
   const [refAtiva, setRefAtiva] = useState('Café da manhã');
   const [periodo, setPeriodo] = useState('semana');
@@ -479,6 +482,63 @@ export default function NIILApp() {
   });
   const aviso = m => { setToast(m); setTimeout(() => setToast(''), 2300); };
 
+  const abrirTreino = (ctx = {}) => {
+    setTreinoCtx({
+      origem: ctx.origem || 'agenda',
+      data: ctx.data || data,
+      etapaId: ctx.etapaId ?? null,
+      indice: ctx.indice ?? null,
+      agendaCursoId: ctx.agendaCursoId ?? null,
+      titulo: ctx.titulo || 'Treino'
+    });
+    setSheet('treino');
+  };
+
+  const salvarTreino = registro => {
+    const ctx = treinoCtx || {};
+    const dataTreino = ctx.data || data;
+    const salvo = {
+      id: `treino-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+      data: dataTreino,
+      criadoEm: new Date().toISOString(),
+      origem: ctx.origem || 'manual',
+      origemEtapaId: ctx.etapaId ?? null,
+      origemIndice: ctx.indice ?? null,
+      origemAgendaCursoId: ctx.agendaCursoId ?? null,
+      ...registro
+    };
+
+    up(s => {
+      const diaBase = { kcal:0, agua:0, passos:0, sono:0, humor:0, treino:0, refeicoes:[], ...(s.dias?.[dataTreino] || {}) };
+      let agenda = s.agenda || {};
+      if (ctx.etapaId != null && ctx.indice != null) {
+        const k = `${ctx.etapaId}-${ctx.indice}`;
+        agenda = { ...agenda, [dataTreino]: { ...(agenda[dataTreino] || {}), [k]: true } };
+      }
+      const agendaCursos = ctx.agendaCursoId
+        ? (s.agendaCursos || []).map(e => e.id === ctx.agendaCursoId ? { ...e, feito:true } : e)
+        : (s.agendaCursos || []);
+
+      return {
+        ...s,
+        agenda,
+        agendaCursos,
+        treinos: [salvo, ...(s.treinos || [])],
+        dias: {
+          ...(s.dias || {}),
+          [dataTreino]: {
+            ...diaBase,
+            treino: Number(diaBase.treino || 0) + Number(registro.calorias || 0),
+            passos: Number(diaBase.passos || 0) + Number(registro.passos || 0)
+          }
+        }
+      };
+    });
+    setTreinoCtx(null);
+    setSheet(null);
+    aviso('Treino e repetições salvos');
+  };
+
   const entrar = async u => {
     setCarregando(true);
     setUsuario(u);
@@ -602,24 +662,31 @@ export default function NIILApp() {
     agendaAtiva.tarefas.reduce((a, t, i) => a + (marcasDia[`${agendaAtiva.id}-${i}`] ? t.p : 0), 0),
     [marcasDia, agendaAtiva]);
 
-  /* preenchimento cruzado: marcar tarefa na agenda preenche a ferramenta ligada */
-  const toggleTarefaDe = (etapa, i) => {
+  /* preenchimento cruzado: tarefas de treino abrem o registro; as demais alternam a conclusão. */
+  const toggleTarefaDe = (etapa, i, dataAlvo = data) => {
     const t = etapa.tarefas[i];
     const k = `${etapa.id}-${i}`;
-    const marcas = d.agenda[data] || {};
+    const marcas = d.agenda[dataAlvo] || {};
     const novoValor = !marcas[k];
     const v = VINCULOS.find(x => x.padrao.test(t.t));
+    const ehTreino = t?.tipo === 'Treino' || v?.ferramenta === 'treino' || /academia|treino/i.test(t?.t || '');
+
+    if (ehTreino && novoValor) {
+      abrirTreino({ origem:'agenda', data:dataAlvo, etapaId:etapa.id, indice:i, titulo:t.t });
+      return;
+    }
+
     up(s => {
-      let n = { ...s, agenda: { ...s.agenda, [data]: { ...(s.agenda[data] || {}), [k]: novoValor } } };
+      let n = { ...s, agenda: { ...s.agenda, [dataAlvo]: { ...(s.agenda[dataAlvo] || {}), [k]: novoValor } } };
       if (v && novoValor && v.ferramenta === 'ritual') {
         const m = {}; RITUAL_ACORDAR.forEach(r => m[r.n] = true);
-        n = { ...n, ritual: { ...n.ritual, [data]: m } };
+        n = { ...n, ritual: { ...n.ritual, [dataAlvo]: m } };
       }
       return n;
     });
     if (v && novoValor && v.ferramenta === 'ritual') aviso('Ritual do dia preenchido junto');
   };
-  const toggleTarefa = (i) => agendaAtiva && toggleTarefaDe(agendaAtiva, i);
+  const toggleTarefa = (i) => agendaAtiva && toggleTarefaDe(agendaAtiva, i, data);
 
   /* preenchimento automático inverso: completar ritual marca a tarefa */
   const marcarTarefaPorNome = (regex) => {
@@ -1006,7 +1073,7 @@ export default function NIILApp() {
           {etapa.passos.map((p, i) => (
             <Card key={i} style={{ marginBottom: 10 }}>
               <div style={{ display: 'flex', gap: 10, marginBottom: 9 }}>
-                <div style={{ width: 25, height: 25, borderRadius: 8, background: C.mint, color: C.greenDarkDark, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>{i + 1}</div>
+                <div style={{ width: 25, height: 25, borderRadius: 8, background: C.mint, color: C.greenDark, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>{i + 1}</div>
                 <p style={{ margin: 0, fontSize: 13.5, color: C.ink, lineHeight: 1.5, fontWeight: 600 }}>{p}</p>
               </div>
               <Area value={campo(`comp-${i}`)} onChange={e => setCampo(`comp-${i}`, e.target.value)} style={{ marginBottom: 0, minHeight: 72 }} />
@@ -1040,7 +1107,7 @@ export default function NIILApp() {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 800, color: C.ink, fontSize: 14 }}>{r.nome}</div>
                     <div style={{ fontSize: 12, color: C.ink2, marginTop: 3 }}>{r.pessoas}</div>
-                    {r.estrategia && <div style={{ marginTop: 7, display: 'inline-block', padding: '4px 9px', background: C.mint, borderRadius: 8, fontSize: 11, fontWeight: 700, color: C.greenDarkDark }}>{r.estrategia}</div>}
+                    {r.estrategia && <div style={{ marginTop: 7, display: 'inline-block', padding: '4px 9px', background: C.mint, borderRadius: 8, fontSize: 11, fontWeight: 700, color: C.greenDark }}>{r.estrategia}</div>}
                   </div>
                   <button onClick={() => up(s => ({ ...s, redes: s.redes.filter(x => x.id !== r.id) }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.ink3 }}><Trash2 size={15} /></button>
                 </div>
@@ -1334,7 +1401,7 @@ export default function NIILApp() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 16, flexWrap: 'wrap' }}>
                   {e.ciclo.map((c, i) => (
                     <React.Fragment key={c}>
-                      <div className="niil-surge" style={{ padding: '8px 12px', background: C.mint, borderRadius: 11, fontSize: 12, fontWeight: 800, color: C.greenDarkDark, animationDelay: `${i * 130}ms` }}>{c}</div>
+                      <div className="niil-surge" style={{ padding: '8px 12px', background: C.mint, borderRadius: 11, fontSize: 12, fontWeight: 800, color: C.greenDark, animationDelay: `${i * 130}ms` }}>{c}</div>
                       {i < e.ciclo.length - 1 && <ChevronRight size={14} color={C.ink3} />}
                     </React.Fragment>
                   ))}
@@ -1442,7 +1509,7 @@ export default function NIILApp() {
                         </div>
                         <div style={{ width: 138, marginTop: 11, padding: '7px 8px', borderRadius: 11, background: atual ? '#fff' : 'rgba(255,255,255,.86)', boxShadow: atual ? '0 6px 18px rgba(20,43,48,.09)' : 'none', textAlign: 'center' }}>
                           <div style={{ fontSize: 10.5, fontWeight: 850, lineHeight: 1.25, color: lib ? C.ink : C.ink3 }}>{e.titulo}</div>
-                          {ok && d.etapas[e.id]?.data && <div style={{ fontSize: 8.5, color: C.greenDarkDark, marginTop: 3 }}>{new Date(d.etapas[e.id].data + 'T12:00').toLocaleDateString('pt-BR')}</div>}
+                          {ok && d.etapas[e.id]?.data && <div style={{ fontSize: 8.5, color: C.greenDark, marginTop: 3 }}>{new Date(d.etapas[e.id].data + 'T12:00').toLocaleDateString('pt-BR')}</div>}
                         </div>
                       </div>
                     );
@@ -1570,6 +1637,7 @@ export default function NIILApp() {
           setSheet={setSheet}
           setFab={setFab}
           toggleTarefaDe={toggleTarefaDe}
+          abrirTreino={abrirTreino}
         />
 
         <div style={secao}>
@@ -1964,7 +2032,7 @@ export default function NIILApp() {
                   {x.resenha && <div style={{ fontSize: 12.5, color: C.ink2, marginTop: 7, lineHeight: 1.5 }}>{x.resenha}</div>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
-                  {x.nota && <span style={{ padding: '3px 8px', background: C.mint, borderRadius: 8, fontSize: 11.5, fontWeight: 800, color: C.greenDarkDark }}>{x.nota}</span>}
+                  {x.nota && <span style={{ padding: '3px 8px', background: C.mint, borderRadius: 8, fontSize: 11.5, fontWeight: 800, color: C.greenDark }}>{x.nota}</span>}
                   <button onClick={() => up(s => ({ ...s, biblioteca: s.biblioteca.filter(y => y.id !== x.id) }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.ink3 }}><Trash2 size={14} /></button>
                 </div>
               </div>
@@ -1992,7 +2060,7 @@ export default function NIILApp() {
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif', color: C.ink, maxWidth: 520, margin: '0 auto', position: 'relative' }}>
         {aba === 'inicio' && Inicio()}
         {aba === 'trilha' && Trilha()}
-        {aba === 'agenda' && <AgendaLeve d={d} data={data} setData={setData} agendaAtiva={agendaAtiva} toggleTarefaDe={toggleTarefaDe} streak={streak} setAba={setAba} up={up} />}
+        {aba === 'agenda' && <AgendaLeve d={d} data={data} setData={setData} agendaAtiva={agendaAtiva} toggleTarefaDe={toggleTarefaDe} abrirTreino={abrirTreino} streak={streak} setAba={setAba} up={up} />}
         {aba === 'comida' && Comida()}
         {aba === 'progresso' && Progresso()}
         {aba === 'diario' && Diario()}
@@ -2029,16 +2097,13 @@ export default function NIILApp() {
           <div style={{ textAlign: 'center', color: C.ink3, fontSize: 10.5, marginTop: 18 }}>NIIL · versão 1.0.0</div>
         </Sheet>
 
-        <Sheet aberto={sheet === 'treino'} fechar={() => setSheet(null)} titulo="Registrar treino">
-          <Campo label="Calorias queimadas" type="number" inputMode="numeric" id="tk" />
-          <Campo label="Passos" type="number" inputMode="numeric" id="tp" />
-          <Btn style={{ width: '100%' }} onClick={() => {
-            const k = +(document.getElementById('tk')?.value || 0), p = +(document.getElementById('tp')?.value || 0);
-            setDia({ treino: dia.treino + k, passos: dia.passos + p });
-            marcarTarefaPorNome(/academia/i);
-            setSheet(null); aviso('Treino registrado');
-          }}>Salvar</Btn>
-        </Sheet>
+        <TreinoSheet
+          aberto={sheet === 'treino'}
+          fechar={() => { setSheet(null); setTreinoCtx(null); }}
+          contexto={treinoCtx}
+          historico={d.treinos || []}
+          onSalvar={salvarTreino}
+        />
 
         {/* seletor de imagem escondido */}
         <input ref={inputFoto} type="file" accept="image/*" onChange={receberFoto} style={{ display: 'none' }} />
@@ -2052,9 +2117,9 @@ export default function NIILApp() {
               <div style={{ background: 'rgba(255,255,255,.96)', color: C.ink, borderRadius: 24, padding: 20, boxShadow: '0 18px 45px rgba(0,0,0,.18)' }}>
                 <p style={{ fontSize: 14, lineHeight: 1.65, margin: '0 0 17px', color: C.ink2 }}>{coach.texto}</p>
                 {coach.tipo === 'sessao' && <><div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Antes de seguir, leve estas reflexões:</div>
-                {coach.reflexoes.map((q, i) => <div key={q} style={{ marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 700, color: C.greenDarkDark }}>{i + 1}. {q}</label><textarea value={campo(`coach-${coach.bloco.id}-${i}`)} onChange={ev => setCampo(`coach-${coach.bloco.id}-${i}`, ev.target.value)} placeholder="Escreva o que vier com sinceridade" style={{ width: '100%', minHeight: 62, marginTop: 6, borderRadius: 12, border: `1.5px solid ${C.line}`, padding: 11, resize: 'vertical', fontFamily: 'inherit', color: C.ink, outline: 'none' }} /></div>)}</>}
+                {coach.reflexoes.map((q, i) => <div key={q} style={{ marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 700, color: C.greenDark }}>{i + 1}. {q}</label><textarea value={campo(`coach-${coach.bloco.id}-${i}`)} onChange={ev => setCampo(`coach-${coach.bloco.id}-${i}`, ev.target.value)} placeholder="Escreva o que vier com sinceridade" style={{ width: '100%', minHeight: 62, marginTop: 6, borderRadius: 12, border: `1.5px solid ${C.line}`, padding: 11, resize: 'vertical', fontFamily: 'inherit', color: C.ink, outline: 'none' }} /></div>)}</>}
               </div>
-              <button onClick={() => { const ultimo = coach.tipo === 'etapa' ? coach.etapaId : coach.bloco.etapas[coach.bloco.etapas.length - 1].id; setCoach(null); abrirProximaEtapa(ultimo); }} style={{ width: '100%', marginTop: 18, border: 0, borderRadius: 16, background: '#fff', color: C.greenDarkDark, padding: 16, fontSize: 15, fontWeight: 900, fontFamily: 'inherit', boxShadow: '0 6px 0 rgba(0,0,0,.16)' }}>{coach.tipo === 'etapa' ? 'CONTINUAR' : 'CONTINUAR PARA A PRÓXIMA SESSÃO'}</button>
+              <button onClick={() => { const ultimo = coach.tipo === 'etapa' ? coach.etapaId : coach.bloco.etapas[coach.bloco.etapas.length - 1].id; setCoach(null); abrirProximaEtapa(ultimo); }} style={{ width: '100%', marginTop: 18, border: 0, borderRadius: 16, background: '#fff', color: C.greenDark, padding: 16, fontSize: 15, fontWeight: 900, fontFamily: 'inherit', boxShadow: '0 6px 0 rgba(0,0,0,.16)' }}>{coach.tipo === 'etapa' ? 'CONTINUAR' : 'CONTINUAR PARA A PRÓXIMA SESSÃO'}</button>
             </div>
           </div>
         )}
