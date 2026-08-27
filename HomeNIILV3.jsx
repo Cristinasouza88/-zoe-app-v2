@@ -29,7 +29,8 @@ export default function HomeNIILV3({
   setData,
   setSheet,
   setFab,
-  toggleTarefaDe
+  toggleTarefaDe,
+  abrirTreino
 }) {
   const hojeIso = new Date().toISOString().slice(0, 10);
   const cursos = d?.cursos || [];
@@ -55,6 +56,7 @@ export default function HomeNIILV3({
       hora: e.hora || 'Ao longo do dia',
       titulo: e.titulo,
       detalhe: cursoNome(cursos, e.cursoId),
+      agendaCursoId: e.id,
       feito: !!e.feito
     })), [d?.agendaCursos, cursos, hojeIso]);
 
@@ -71,7 +73,11 @@ export default function HomeNIILV3({
 
   const abrirItemAgenda = item => {
     if (item.origem === 'base' && agendaAtiva) {
-      toggleTarefaDe?.(agendaAtiva, item.indice);
+      toggleTarefaDe?.(agendaAtiva, item.indice, hojeIso);
+      return;
+    }
+    if (/academia|treino/i.test(item.titulo || '')) {
+      abrirTreino?.({ origem:'curso', agendaCursoId:item.agendaCursoId, data:hojeIso, titulo:item.titulo });
       return;
     }
     setAba?.('cursos');
