@@ -12,6 +12,7 @@ import Ingles from './Ingles.jsx';
 import Conquistas from './Conquistas.jsx';
 import Cursos from './Cursos.jsx';
 import Sono from './Sono.jsx';
+import AgendaLeve from './AgendaLeve.jsx';
 import JornadaSistemica from './JornadaSistemica.jsx';
 import { FASES as FASES_INGLES } from './ingles.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
@@ -2058,7 +2059,7 @@ export default function NIILApp() {
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif', color: C.ink, maxWidth: 520, margin: '0 auto', position: 'relative' }}>
         {aba === 'inicio' && Inicio()}
         {aba === 'trilha' && Trilha()}
-        {aba === 'agenda' && Agenda()}
+        {aba === 'agenda' && <AgendaLeve d={d} data={data} setData={setData} agendaAtiva={agendaAtiva} toggleTarefaDe={toggleTarefaDe} streak={streak} setAba={setAba} up={up} />}
         {aba === 'comida' && Comida()}
         {aba === 'progresso' && Progresso()}
         {aba === 'diario' && Diario()}
