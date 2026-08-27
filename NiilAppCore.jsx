@@ -2107,17 +2107,50 @@ export default function NIILApp() {
           <div className="niil-surge" style={{ position: 'fixed', bottom: 100, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: C.petroleo, color: '#fff', padding: '12px 20px', borderRadius: 14, fontSize: 13.5, fontWeight: 700, boxShadow: '0 8px 24px rgba(11,20,22,.28)', maxWidth: '90vw' }}>{toast}</div>
         )}
 
-        <div style={{ position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:520,background:C.card,borderTop:`1px solid ${C.line}`,display:'grid',gridTemplateColumns:'1fr 1fr 74px 1fr 1fr',alignItems:'center',height:74,padding:'0 12px 8px',zIndex:70 }}>
+        <div className="niil-bottom-nav" style={{
+          position:'fixed',
+          bottom:'calc(8px + env(safe-area-inset-bottom))',
+          left:'50%',
+          transform:'translateX(-50%)',
+          width:'calc(100% - 24px)',
+          maxWidth:496,
+          background:'#FFFFFF',
+          border:`1px solid ${C.line}`,
+          borderRadius:24,
+          display:'grid',
+          gridTemplateColumns:'1fr 1fr 70px 1fr 1fr',
+          alignItems:'center',
+          minHeight:68,
+          padding:'6px 10px',
+          zIndex:500,
+          boxShadow:'0 12px 34px rgba(23,21,29,.14)'
+        }}>
           {NAV.map(n => {
             if (n.id === 'fab') return (
-              <button key="fab" onClick={() => setFab(true)} style={{ width: 54, height: 54, borderRadius: 99, border: 'none', background: C.petroleo, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: -20, boxShadow: '0 6px 18px rgba(7,91,89,.34)' }}><Plus size={26} /></button>
+              <button
+                key="fab"
+                aria-label="Adicionar"
+                onClick={() => setFab(true)}
+                style={{
+                  width:54,height:54,borderRadius:99,border:'none',
+                  background:C.green,color:C.ink,cursor:'pointer',
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  margin:'-18px auto 0',
+                  boxShadow:'0 8px 20px rgba(23,21,29,.14)'
+                }}
+              ><Plus size={26} strokeWidth={2.4}/></button>
             );
             const on = aba === n.id, I = n.i;
             return (
               <button key={n.id} onClick={() => { setAba(n.id); setEtapaAberta(null); }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: on ? C.greenDark : C.ink3, fontFamily: 'inherit', padding: '6px 4px' }}>
-                <I size={20} />
-                <span style={{ fontSize: 10, fontWeight: 700 }}>{n.n}</span>
+                style={{
+                  minHeight:50,background:on?C.limaSuave:'transparent',border:'none',borderRadius:16,
+                  cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',
+                  justifyContent:'center',gap:3,color:on?C.ink:C.ink3,
+                  fontFamily:'inherit',padding:'6px 4px'
+                }}>
+                <I size={20} strokeWidth={on?2.4:2} />
+                <span style={{ fontSize:10,fontWeight:on?800:650 }}>{n.n}</span>
               </button>
             );
           })}
