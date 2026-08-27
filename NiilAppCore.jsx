@@ -13,7 +13,6 @@ import Conquistas from './Conquistas.jsx';
 import Cursos from './Cursos.jsx';
 import Sono from './Sono.jsx';
 import AgendaLeve from './AgendaLeve.jsx';
-import HomeTopActions from './HomeTopActions.jsx';
 import HubNIIL from './HubNIIL.jsx';
 import GuardaRoupa from './GuardaRoupa.jsx';
 import JornadaSistemica from './JornadaSistemica.jsx';
@@ -21,8 +20,6 @@ import { FASES as FASES_INGLES } from './ingles.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 import { supabase } from './supabase.js';
 import { carregarRemoto, salvarRemoto, aguardarSalvamentosRemotos } from './zoe.remote-store.js';
-import avatarExpressoes, { niilMascot } from './niil-mascot.data.js';
-import NiilOrb from './NiilOrb.jsx';
 import HomeNIILV3 from './HomeNIILV3.jsx';
 
 /* ══════════ FOTOS ══════════
@@ -111,12 +108,9 @@ function GoogleIcon() {
 function NIILContaIcon({ tamanho = 36 }) {
   return (
     <svg width={tamanho} height={tamanho} viewBox="0 0 40 40" aria-hidden="true">
-      <rect x="2" y="2" width="36" height="36" rx="13" fill="#A8FF00" />
-      <ellipse cx="14.5" cy="18" rx="4.3" ry="5.2" fill="#fff" />
-      <ellipse cx="25.5" cy="18" rx="4.3" ry="5.2" fill="#fff" />
-      <circle cx="15.4" cy="19" r="2.1" fill="#075B59" />
-      <circle cx="24.6" cy="19" r="2.1" fill="#075B59" />
-      <path d="M14 26.2c1.8 2.6 4 3.8 6 3.8s4.2-1.2 6-3.8" fill="none" stroke="#075B59" strokeWidth="2.3" strokeLinecap="round" />
+      <rect x="2" y="2" width="36" height="36" rx="13" fill="#B7F20C" />
+      <circle cx="20" cy="15.5" r="5.2" fill="#17151D" />
+      <path d="M11.5 31c1.4-6 4.8-9 8.5-9s7.1 3 8.5 9" fill="none" stroke="#17151D" strokeWidth="3" strokeLinecap="round" />
     </svg>
   );
 }
@@ -260,7 +254,6 @@ function Login({ onEntrar }) {
 
   return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: -140, right: -110, width: 320, height: 320, borderRadius: '50%', filter: 'blur(80px)', opacity: .2, background: `conic-gradient(from 40deg, ${C.lima}, ${C.aqua}, ${C.azul}, ${C.lima})` }} />
       <div className="niil-surge" style={{ textAlign: 'center', marginBottom: 30, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Wordmark altura={58} />
         <p style={{ color: C.ink2, fontSize: 13.5, marginTop: 16 }}>Sua vida extraordinária, um dia por vez</p>
@@ -287,12 +280,12 @@ function Login({ onEntrar }) {
         <Campo label="E-mail" type="email" placeholder="voce@email.com" value={email} onChange={e => setEmail(e.target.value)} />
         <Campo label="Senha" type="password" placeholder="Mínimo de 6 caracteres" value={senha} onChange={e => setSenha(e.target.value)} onKeyDown={e => e.key === 'Enter' && submeter()} />
         {modo === 'entrar' && (
-          <button onClick={recuperarSenha} disabled={enviando} style={{ background: 'none', border: 'none', padding: 0, margin: '-4px 0 14px', color: C.greenDark, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={recuperarSenha} disabled={enviando} style={{ background: 'none', border: 'none', padding: 0, margin: '-4px 0 14px', color: C.greenDarkDark, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             Esqueci minha senha
           </button>
         )}
         {erro && <p style={{ color: C.coral, fontSize: 13, fontWeight: 600, margin: '0 0 12px' }}>{erro}</p>}
-        {mensagem && <p style={{ color: C.greenDark, fontSize: 13, fontWeight: 600, lineHeight: 1.45, margin: '0 0 12px' }}>{mensagem}</p>}
+        {mensagem && <p style={{ color: C.greenDarkDark, fontSize: 13, fontWeight: 600, lineHeight: 1.45, margin: '0 0 12px' }}>{mensagem}</p>}
         <Btn onClick={submeter} disabled={enviando} style={{ width: '100%', padding: 15, fontSize: 15 }}>
           {enviando ? 'Aguarde...' : modo === 'criar' ? 'Criar minha conta' : 'Entrar'}
         </Btn>
@@ -326,8 +319,6 @@ export default function NIILApp() {
     () => window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery')
   );
   const [d, setD] = useState(inicial);
-  const avatarId = 'niil';
-  const avatarImagem = niilMascot;
   const [aba, setAba] = useState('inicio');
   const [data, setData] = useState(hoje());
   const [etapaAberta, setEtapaAberta] = useState(null);
@@ -739,7 +730,7 @@ export default function NIILApp() {
   /* ══════════ FERRAMENTAS DENTRO DA ETAPA ══════════ */
   const Ferramenta = ({ id, etapa }) => {
     if (['checkinEmocional', 'rodaInicial', 'escolhaPrioridade', 'matrizGanhosPerdas', 'mapaMental', 'experimentoSemana', 'ativarAgenda', 'checkpointRoda'].includes(id)) {
-      return <JornadaSistemica id={id} d={d} up={up} campo={campo} setCampo={setCampo} aviso={aviso} avatar={avatarImagem} />;
+      return <JornadaSistemica id={id} d={d} up={up} campo={campo} setCampo={setCampo} aviso={aviso} />;
     }
     switch (id) {
 
@@ -818,7 +809,7 @@ export default function NIILApp() {
             <Card style={{ marginBottom: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>Preenchidas</span>
-                <span style={{ fontSize: 13, fontWeight: 800, color: C.green }}>{preenchidas} de 30</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: C.greenDark }}>{preenchidas} de 30</span>
               </div>
               <Barra v={preenchidas} max={30} cor={C.lima} />
             </Card>
@@ -851,7 +842,7 @@ export default function NIILApp() {
                 return <button key={k} onClick={() => {
                   up(s => ({ ...s, ativacao40: { ...s.ativacao40, marcas: { ...s.ativacao40.marcas, [k]: !s.ativacao40.marcas[k] } } }));
                   if (!on && n + 1 >= 40) marcarTarefaPorNome(/ativa[çc][ãa]o/i);
-                }} style={{ aspectRatio: '1', borderRadius: 10, cursor: 'pointer', fontSize: 10, fontWeight: 700, fontFamily: 'inherit', border: on ? 'none' : `1.5px solid ${C.line}`, background: on ? C.lilac : C.card, color: on ? '#fff' : C.ink3 }}>{k}</button>;
+                }} style={{ aspectRatio: '1', borderRadius: 10, cursor: 'pointer', fontSize: 10, fontWeight: 700, fontFamily: 'inherit', border: on ? 'none' : `1.5px solid ${C.line}`, background: on ? C.lilac : C.card, color: on ? C.ink : C.ink3 }}>{k}</button>;
               })}
             </div>
             <Btn variante="outline" cor={C.ink2} style={{ width: '100%', marginTop: 14 }} onClick={() => up(s => ({ ...s, ativacao40: { ...s.ativacao40, marcas: {} } }))}>Zerar para amanhã</Btn>
@@ -872,7 +863,7 @@ export default function NIILApp() {
               {Array.from({ length: 100 }, (_, i) => i + 1).map(k => {
                 const on = d.desafio100[k];
                 return <button key={k} onClick={() => up(s => ({ ...s, desafio100: { ...s.desafio100, [k]: !s.desafio100[k] } }))}
-                  style={{ aspectRatio: '1', borderRadius: 99, cursor: 'pointer', fontSize: 9, fontWeight: 700, fontFamily: 'inherit', border: on ? 'none' : `1.5px solid ${C.line}`, background: on ? C.green : C.card, color: on ? '#fff' : C.ink3 }}>{k}</button>;
+                  style={{ aspectRatio: '1', borderRadius: 99, cursor: 'pointer', fontSize: 9, fontWeight: 700, fontFamily: 'inherit', border: on ? 'none' : `1.5px solid ${C.line}`, background: on ? C.green : C.card, color: on ? C.ink : C.ink3 }}>{k}</button>;
               })}
             </div>
           </div>
@@ -905,7 +896,7 @@ export default function NIILApp() {
               <Card key={m.id} style={{ marginBottom: 9, padding: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: C.green, textTransform: 'uppercase', letterSpacing: .5 }}>{m.pilar}</div>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: C.greenDark, textTransform: 'uppercase', letterSpacing: .5 }}>{m.pilar}</div>
                     <div style={{ fontWeight: 700, color: C.ink, fontSize: 14, marginTop: 3 }}>{m.oQue}</div>
                     <div style={{ fontSize: 12, color: C.ink3, marginTop: 3 }}>{[m.quem, m.quando, m.recursos].filter(Boolean).join(' · ')}</div>
                   </div>
@@ -936,7 +927,7 @@ export default function NIILApp() {
             <div style={{ display: 'grid', gridTemplateColumns: '34px 1fr 1fr', gap: 6, marginBottom: 8, position: 'sticky', top: 0, background: C.bg, paddingBottom: 4 }}>
               <div />
               <div style={{ fontSize: 11, fontWeight: 800, color: C.ink2, textAlign: 'center' }}>Atual</div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: C.green, textAlign: 'center' }}>Extraordinária</div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: C.greenDark, textAlign: 'center' }}>Extraordinária</div>
             </div>
             {horas.map(h => (
               <div key={h} style={{ display: 'grid', gridTemplateColumns: '34px 1fr 1fr', gap: 6, marginBottom: 5 }}>
@@ -960,7 +951,7 @@ export default function NIILApp() {
             </Card>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
               <div style={{ fontSize: 11, fontWeight: 800, color: C.coral, textAlign: 'center' }}>DIAGNÓSTICO</div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: C.green, textAlign: 'center' }}>SOLUÇÃO</div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: C.greenDark, textAlign: 'center' }}>SOLUÇÃO</div>
             </div>
             {linhas.map(([lbl, k]) => (
               <div key={k} style={{ marginBottom: 12 }}>
@@ -1015,7 +1006,7 @@ export default function NIILApp() {
           {etapa.passos.map((p, i) => (
             <Card key={i} style={{ marginBottom: 10 }}>
               <div style={{ display: 'flex', gap: 10, marginBottom: 9 }}>
-                <div style={{ width: 25, height: 25, borderRadius: 8, background: C.mint, color: C.greenDark, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>{i + 1}</div>
+                <div style={{ width: 25, height: 25, borderRadius: 8, background: C.mint, color: C.greenDarkDark, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>{i + 1}</div>
                 <p style={{ margin: 0, fontSize: 13.5, color: C.ink, lineHeight: 1.5, fontWeight: 600 }}>{p}</p>
               </div>
               <Area value={campo(`comp-${i}`)} onChange={e => setCampo(`comp-${i}`, e.target.value)} style={{ marginBottom: 0, minHeight: 72 }} />
@@ -1049,7 +1040,7 @@ export default function NIILApp() {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 800, color: C.ink, fontSize: 14 }}>{r.nome}</div>
                     <div style={{ fontSize: 12, color: C.ink2, marginTop: 3 }}>{r.pessoas}</div>
-                    {r.estrategia && <div style={{ marginTop: 7, display: 'inline-block', padding: '4px 9px', background: C.mint, borderRadius: 8, fontSize: 11, fontWeight: 700, color: C.greenDark }}>{r.estrategia}</div>}
+                    {r.estrategia && <div style={{ marginTop: 7, display: 'inline-block', padding: '4px 9px', background: C.mint, borderRadius: 8, fontSize: 11, fontWeight: 700, color: C.greenDarkDark }}>{r.estrategia}</div>}
                   </div>
                   <button onClick={() => up(s => ({ ...s, redes: s.redes.filter(x => x.id !== r.id) }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.ink3 }}><Trash2 size={15} /></button>
                 </div>
@@ -1231,7 +1222,7 @@ export default function NIILApp() {
                   if (!on && n + 1 >= 9) marcarTarefaPorNome(/ritual do acordar/i);
                 }} style={{ padding: 14, marginBottom: 8, cursor: 'pointer', borderRadius: 16, background: on ? C.mint : C.card, border: `1.5px solid ${on ? C.green : C.line}` }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <div style={{ width: 26, height: 26, borderRadius: 9, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: on ? C.green : '#F2F5F4', color: on ? '#fff' : C.ink3, fontSize: 12, fontWeight: 800 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 9, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: on ? C.green : '#F2F5F4', color: on ? C.ink : C.ink3, fontSize: 12, fontWeight: 800 }}>
                       {on ? <Check size={14} strokeWidth={3} /> : r.n}
                     </div>
                     <div style={{ flex: 1 }}>
@@ -1287,7 +1278,7 @@ export default function NIILApp() {
                       {t.hora && <span style={{ fontSize: 10.5, color: C.ink3 }}>· {t.hora}</span>}
                     </div>
                   </div>
-                  <div style={{ padding: '4px 9px', borderRadius: 8, fontSize: 12.5, fontWeight: 800, background: on ? C.green : '#F2F5F4', color: on ? '#fff' : C.ink3 }}>{t.p}</div>
+                  <div style={{ padding: '4px 9px', borderRadius: 8, fontSize: 12.5, fontWeight: 800, background: on ? C.green : '#F2F5F4', color: on ? C.ink : C.ink3 }}>{t.p}</div>
                 </div>
               );
             })}
@@ -1343,7 +1334,7 @@ export default function NIILApp() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 16, flexWrap: 'wrap' }}>
                   {e.ciclo.map((c, i) => (
                     <React.Fragment key={c}>
-                      <div className="niil-surge" style={{ padding: '8px 12px', background: C.mint, borderRadius: 11, fontSize: 12, fontWeight: 800, color: C.greenDark, animationDelay: `${i * 130}ms` }}>{c}</div>
+                      <div className="niil-surge" style={{ padding: '8px 12px', background: C.mint, borderRadius: 11, fontSize: 12, fontWeight: 800, color: C.greenDarkDark, animationDelay: `${i * 130}ms` }}>{c}</div>
                       {i < e.ciclo.length - 1 && <ChevronRight size={14} color={C.ink3} />}
                     </React.Fragment>
                   ))}
@@ -1395,12 +1386,12 @@ export default function NIILApp() {
     if (etapaAberta) return DetalheEtapa();
     return (
       <div style={{ paddingBottom: 120 }}>
-        <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 14px' }}>
-          <div style={{ display:'flex',alignItems:'center',minHeight:94 }}><div style={{ flex:1 }}><h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Minha trilha</h1><p style={{ fontSize: 13, color: C.ink2, margin: 0 }}>Uma missão por vez. Eu sigo com você.</p></div><img src={avatarImagem} alt="NIIL" style={{ width:88,height:96,objectFit:'contain',objectPosition:'center',filter:'drop-shadow(0 8px 12px rgba(55,28,105,.18))' }}/></div>
+        <div style={{ background: C.bg, padding: '18px 18px 14px' }}>
+          <div style={{ display:'flex',alignItems:'center',minHeight:94,gap:14 }}><div style={{ flex:1 }}><h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Minha trilha</h1><p style={{ fontSize: 13, color: C.ink2, margin: 0 }}>Uma missão por vez. O caminho se organiza conforme você avança.</p></div><div aria-hidden="true" style={{ width:76,height:76,borderRadius:22,background:C.lima,color:C.ink,display:'grid',placeItems:'center',flex:'0 0 auto' }}><Route size={31}/></div></div>
           <Card>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>Progresso da jornada</span>
-              <span style={{ fontSize: 13, fontWeight: 800, color: C.green }}>{concluidas} de {totalEtapas}</span>
+              <span style={{ fontSize: 13, fontWeight: 800, color: C.greenDark }}>{concluidas} de {totalEtapas}</span>
             </div>
             <Barra v={concluidas} max={totalEtapas} cor={C.lima} h={10} />
           </Card>
@@ -1408,6 +1399,7 @@ export default function NIILApp() {
 
         <div style={{ padding: '18px 14px' }}>
           {TRILHA.map((b, bi) => {
+            const corBloco = bi % 2 === 0 ? C.lima : C.ink;
             const feitasB = b.etapas.filter(e => feito(e.id)).length;
             const blocoLiberado = b.etapas.some(e => liberada(e.id));
             const completo = feitasB === b.etapas.length;
@@ -1415,15 +1407,9 @@ export default function NIILApp() {
             const aberto = sessoesAbertas[b.id] ?? (!completo || contemAtual);
             const posicoes = [50, 68, 58, 34, 25, 43, 67, 72, 51, 29, 35, 61];
             const alturaMapa = b.etapas.length * 116 + 18;
-            const emocoes = ['acolher', 'refletir', 'incentivar', 'celebrar'];
-            const aparicoesNIIL = [1, 4, 7].filter(i => i < b.etapas.length).map((indice, j) => ({
-              indice,
-              emocao: emocoes[(bi + j) % emocoes.length],
-              lado: posicoes[indice % posicoes.length] > 50 ? 'left' : 'right'
-            }));
             return (
               <div key={b.id} style={{ marginBottom: 28, opacity: blocoLiberado ? 1 : .62 }}>
-                <button onClick={() => blocoLiberado && setSessoesAbertas(a => ({ ...a, [b.id]: !aberto }))} style={{ width: '100%', minHeight: 92, display: 'flex', alignItems: 'center', gap: 12, border: 0, borderRadius: 23, background: blocoLiberado ? b.cor : '#DDE3E3', color: blocoLiberado ? sobre(b.cor) : C.ink3, padding: '16px 17px', fontFamily: 'inherit', textAlign: 'left', cursor: blocoLiberado ? 'pointer' : 'default', boxShadow: blocoLiberado ? `0 8px 0 ${b.cor}42,0 15px 30px ${b.cor}20` : '0 7px 0 #C9D0D0' }}>
+                <button onClick={() => blocoLiberado && setSessoesAbertas(a => ({ ...a, [b.id]: !aberto }))} style={{ width: '100%', minHeight: 92, display: 'flex', alignItems: 'center', gap: 12, border: 0, borderRadius: 23, background: blocoLiberado ? corBloco : '#DDE3E3', color: blocoLiberado ? sobre(corBloco) : C.ink3, padding: '16px 17px', fontFamily: 'inherit', textAlign: 'left', cursor: blocoLiberado ? 'pointer' : 'default', boxShadow: blocoLiberado ? `0 8px 0 ${corBloco}42,0 15px 30px ${corBloco}20` : '0 7px 0 #C9D0D0' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 10.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1, opacity: .8 }}>{b.bloco}</div>
                     <div style={{ fontSize: 18, fontWeight: 900, marginTop: 4, lineHeight: 1.2 }}>{b.nome}</div>
@@ -1436,13 +1422,9 @@ export default function NIILApp() {
 
                 {aberto && <div style={{ position: 'relative', height: alturaMapa, marginTop: 16, overflow: 'hidden' }}>
                   <svg viewBox={`0 0 100 ${alturaMapa}`} preserveAspectRatio="none" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
-                    <polyline points={b.etapas.map((_, i) => `${posicoes[i % posicoes.length]},${i * 116 + 42}`).join(' ')} fill="none" stroke="#DDE5E3" strokeWidth="2.2" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
-                    {b.etapas.slice(0, -1).map((e, i) => feito(e.id) && <line key={e.id} x1={posicoes[i % posicoes.length]} y1={i * 116 + 42} x2={posicoes[(i + 1) % posicoes.length]} y2={(i + 1) * 116 + 42} stroke={b.cor} strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />)}
+                    <polyline points={b.etapas.map((_, i) => `${posicoes[i % posicoes.length]},${i * 116 + 42}`).join(' ')} fill="none" stroke="#E7E4EA" strokeWidth="2.2" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+                    {b.etapas.slice(0, -1).map((e, i) => feito(e.id) && <line key={e.id} x1={posicoes[i % posicoes.length]} y1={i * 116 + 42} x2={posicoes[(i + 1) % posicoes.length]} y2={(i + 1) * 116 + 42} stroke={corBloco} strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />)}
                   </svg>
-                  {blocoLiberado && aparicoesNIIL.map((ap, j) => (
-                    <img key={`${b.id}-niil-${ap.indice}`} src={avatarExpressoes[ap.emocao][avatarId]} alt={`NIIL em modo ${ap.emocao}`}
-                      style={{ position: 'absolute', top: ap.indice * 116 - 28, [ap.lado]: 4, width: avatarId === 'essencial' ? 86 : 96, height: 108, objectFit: 'contain', objectPosition: `${ap.lado} center`, filter: 'drop-shadow(0 8px 12px rgba(55,28,105,.16))', zIndex: 3, transform: j % 2 ? 'rotate(2deg)' : 'rotate(-2deg)' }} />
-                  ))}
                   {b.etapas.map((e, i) => {
                     const lib = liberada(e.id), ok = feito(e.id), atual = etapaAtual && etapaAtual.id === e.id;
                     const x = posicoes[i % posicoes.length];
@@ -1454,13 +1436,13 @@ export default function NIILApp() {
                           position: 'absolute', top: i * 116, left: `${x}%`, transform: 'translateX(-50%)', width: 144,
                           display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: lib ? 'pointer' : 'default', opacity: lib ? 1 : .5, zIndex: 2
                         }}>
-                        {atual && <span style={{ position: 'absolute', top: -13, padding: '4px 10px', borderRadius: 9, background: C.lima, color: C.petroleo, fontSize: 9, fontWeight: 950, letterSpacing: .5, boxShadow: '0 4px 10px rgba(7,91,89,.12)' }}>AGORA</span>}
-                        <div style={{ width: atual ? 82 : 74, height: atual ? 82 : 74, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', background: ok ? b.cor : '#E1E6E5', color: ok ? sobre(b.cor) : '#A8B1B1', border: atual ? '8px solid #fff' : '6px solid #fff', boxShadow: atual ? `0 0 0 5px ${b.cor}50,0 10px 0 rgba(120,132,132,.32),0 16px 28px ${b.cor}25` : '0 7px 0 rgba(46,61,67,.16)', transition: 'transform .2s ease' }}>
+                        {atual && <span style={{ position: 'absolute', top: -13, padding: '4px 10px', borderRadius: 9, background: C.lima, color: C.ink, fontSize: 9, fontWeight: 950, letterSpacing: .5, boxShadow: '0 4px 10px rgba(7,91,89,.12)' }}>AGORA</span>}
+                        <div style={{ width: atual ? 82 : 74, height: atual ? 82 : 74, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', background: ok ? corBloco : '#E1E6E5', color: ok ? sobre(corBloco) : '#A8B1B1', border: atual ? '8px solid #fff' : '6px solid #fff', boxShadow: atual ? `0 0 0 5px ${corBloco}50,0 10px 0 rgba(120,132,132,.32),0 16px 28px ${corBloco}25` : '0 7px 0 rgba(46,61,67,.16)', transition: 'transform .2s ease' }}>
                           {ok ? <Check size={28} strokeWidth={3} /> : lib ? <IconeEtapa size={25} /> : <Lock size={22} />}
                         </div>
                         <div style={{ width: 138, marginTop: 11, padding: '7px 8px', borderRadius: 11, background: atual ? '#fff' : 'rgba(255,255,255,.86)', boxShadow: atual ? '0 6px 18px rgba(20,43,48,.09)' : 'none', textAlign: 'center' }}>
                           <div style={{ fontSize: 10.5, fontWeight: 850, lineHeight: 1.25, color: lib ? C.ink : C.ink3 }}>{e.titulo}</div>
-                          {ok && d.etapas[e.id]?.data && <div style={{ fontSize: 8.5, color: C.greenDark, marginTop: 3 }}>{new Date(d.etapas[e.id].data + 'T12:00').toLocaleDateString('pt-BR')}</div>}
+                          {ok && d.etapas[e.id]?.data && <div style={{ fontSize: 8.5, color: C.greenDarkDark, marginTop: 3 }}>{new Date(d.etapas[e.id].data + 'T12:00').toLocaleDateString('pt-BR')}</div>}
                         </div>
                       </div>
                     );
@@ -1505,14 +1487,14 @@ export default function NIILApp() {
     const realizadas = tarefas.filter((_, i) => marcas[`${agendaAtiva?.id}-${i}`]).length;
     return (
       <div style={{ padding: '20px 16px 120px', minHeight: '100vh', background: '#F7FAF9' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}><CalendarDays size={24} color={C.green} /><h1 style={{ margin: 0, color: C.ink, fontSize: 24 }}>Minha agenda</h1></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}><CalendarDays size={24} color={C.greenDark} /><h1 style={{ margin: 0, color: C.ink, fontSize: 24 }}>Minha agenda</h1></div>
         <p style={{ margin: '4px 0 18px 34px', color: C.ink3, fontSize: 12.5 }}>Agenda e missões organizadas pela NIIL</p>
-        <Card style={{marginBottom:14,background:'linear-gradient(135deg,#0A6963,#15977E)',color:'#fff',padding:16}}><div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center'}}><div><Flame size={21} color={C.lima}/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{streak}</div><div style={{fontSize:9,opacity:.78}}>dias de ofensiva</div></div><div style={{borderLeft:'1px solid rgba(255,255,255,.2)',borderRight:'1px solid rgba(255,255,255,.2)'}}><Trophy size={21} color="#FFD759"/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{fasesConcluidas}</div><div style={{fontSize:9,opacity:.78}}>fases vencidas</div></div><div><Sparkles size={21} color="#DDB4FF"/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{reflexoesCursos}</div><div style={{fontSize:9,opacity:.78}}>reflexões</div></div></div></Card>
+        <Card style={{marginBottom:14,background:C.ink,color:'#fff',padding:16}}><div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center'}}><div><Flame size={21} color={C.lima}/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{streak}</div><div style={{fontSize:9,opacity:.78}}>dias de ofensiva</div></div><div style={{borderLeft:'1px solid rgba(255,255,255,.2)',borderRight:'1px solid rgba(255,255,255,.2)'}}><Trophy size={21} color="#FFD759"/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{fasesConcluidas}</div><div style={{fontSize:9,opacity:.78}}>fases vencidas</div></div><div><Sparkles size={21} color="#B7F20C"/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{reflexoesCursos}</div><div style={{fontSize:9,opacity:.78}}>reflexões</div></div></div></Card>
         <Card style={{ marginBottom: 16, padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}><button onClick={() => { const x=new Date(base); x.setMonth(x.getMonth()-1); setData(x.toISOString().slice(0,10)); }} style={{ border:0,background:'transparent' }}><ChevronLeft size={20}/></button><strong style={{ color:C.ink, textTransform:'capitalize' }}>{base.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</strong><button onClick={() => { const x=new Date(base); x.setMonth(x.getMonth()+1); setData(x.toISOString().slice(0,10)); }} style={{ border:0,background:'transparent' }}><ChevronRight size={20}/></button></div>
           <div style={{ display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:4,marginBottom:5 }}>{['S','T','Q','Q','S','S','D'].map((x,i)=><div key={i} style={{ textAlign:'center',fontSize:9,fontWeight:800,color:C.ink3 }}>{x}</div>)}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4 }}>
-            {dias.map(x => { const temMissao=Object.values(d.agenda[x.iso]||{}).some(Boolean)||(d.agendaCursos||[]).some(e=>e.data===x.iso); return <button key={x.iso} onClick={() => setData(x.iso)} style={{ position:'relative',border: 0, borderRadius: 11, aspectRatio:'1', background: data === x.iso ? C.green : x.iso===hoje()?C.mint:'transparent', color: data === x.iso ? '#fff' : x.atual?C.ink:C.ink3, opacity:x.atual?1:.4, fontFamily: 'inherit', fontWeight:700 }}><span>{x.n}</span>{temMissao&&<span style={{ position:'absolute',bottom:4,left:'50%',transform:'translateX(-50%)',width:4,height:4,borderRadius:9,background:data===x.iso?'#fff':C.lilac }}/>}</button>})}
+            {dias.map(x => { const temMissao=Object.values(d.agenda[x.iso]||{}).some(Boolean)||(d.agendaCursos||[]).some(e=>e.data===x.iso); return <button key={x.iso} onClick={() => setData(x.iso)} style={{ position:'relative',border: 0, borderRadius: 11, aspectRatio:'1', background: data === x.iso ? C.green : x.iso===hoje()?C.mint:'transparent', color: data === x.iso ? C.ink : x.atual?C.ink:C.ink3, opacity:x.atual?1:.4, fontFamily: 'inherit', fontWeight:700 }}><span>{x.n}</span>{temMissao&&<span style={{ position:'absolute',bottom:4,left:'50%',transform:'translateX(-50%)',width:4,height:4,borderRadius:9,background:data===x.iso?C.ink:C.greenDark }}/>}</button>})}
           </div>
           </Card>
         <Card style={{ marginBottom: 14, background: C.petroleo, color: '#fff' }}>
@@ -1533,7 +1515,7 @@ export default function NIILApp() {
         {tarefas.length ? tarefas.map((t, i) => {
           const on = !!marcas[`${agendaAtiva.id}-${i}`];
           return <div key={i} onClick={() => toggleTarefaDe(agendaAtiva, i)} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: 14, marginBottom: 8, borderRadius: 16, background: on ? C.mint : '#fff', border: `1.5px solid ${on ? C.green : C.line}`, cursor: 'pointer' }}>
-            <div style={{ width: 26, height: 26, borderRadius: 9, display: 'grid', placeItems: 'center', background: on ? C.green : '#F2F5F4', color: on ? '#fff' : C.ink3 }}>{on ? <Check size={15} /> : <Circle size={14} />}</div>
+            <div style={{ width: 26, height: 26, borderRadius: 9, display: 'grid', placeItems: 'center', background: on ? C.green : '#F2F5F4', color: on ? C.ink : C.ink3 }}>{on ? <Check size={15} /> : <Circle size={14} />}</div>
             <div style={{ flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink, textDecoration: on ? 'line-through' : 'none' }}>{t.t}</div><div style={{ fontSize: 10.5, color: C.ink3, marginTop: 3 }}>{t.hora || 'Ao longo do dia'} · {t.p} pontos</div></div>
           </div>;
         }) : <Card><div style={{ textAlign: 'center', color: C.ink3, padding: 18 }}>Conclua as primeiras etapas para a NIIL liberar sua agenda.</div></Card>}
@@ -1551,11 +1533,11 @@ export default function NIILApp() {
     const metaAnual = d.financeiro?.metaAnual || METAANUAL_PADRAO;
     const economizado = (d.financeiro?.transacoes || []).reduce((a, t) => a + (t.tipo === 'entrada' ? t.valor : -t.valor), 0);
     const pctVida = Math.min(100, Math.round((concluidas / totalEtapas) * 100));
-    const trilhasCursos = cursosFixados.length ? cursosFixados.map(c=>{const feitas=c.aulas.filter(a=>a.feito).length;return {id:'cursos',nome:c.nome,icone:BookOpen,cor:'#A86BF4',suave:'#F0E5FF',valor:`${feitas} / ${c.aulas.length}`,pct:c.aulas.length?(feitas/c.aulas.length)*100:0}}) : [{ id: 'cursos', nome: 'Meus cursos', icone: BookOpen, cor: '#A86BF4', suave: '#F0E5FF', valor: cursos.length ? `${aulasCursosFeitas} / ${aulasCursos}` : 'Adicionar curso', pct: aulasCursos ? (aulasCursosFeitas / aulasCursos) * 100 : 0 }];
+    const trilhasCursos = cursosFixados.length ? cursosFixados.map(c=>{const feitas=c.aulas.filter(a=>a.feito).length;return {id:'cursos',nome:c.nome,icone:BookOpen,cor:'#17151D',suave:'#F3F9DB',valor:`${feitas} / ${c.aulas.length}`,pct:c.aulas.length?(feitas/c.aulas.length)*100:0}}) : [{ id: 'cursos', nome: 'Meus cursos', icone: BookOpen, cor: '#17151D', suave: '#F3F9DB', valor: cursos.length ? `${aulasCursosFeitas} / ${aulasCursos}` : 'Adicionar curso', pct: aulasCursos ? (aulasCursosFeitas / aulasCursos) * 100 : 0 }];
     const trilhas = [
       ...trilhasCursos,
-      { id: 'ingles', nome: 'Inglês', icone: Languages, cor: '#5B9CF6', suave: '#E3F0FF', valor: `${inglesFeitas} / ${FASES_INGLES.length}`, pct: (inglesFeitas / FASES_INGLES.length) * 100 },
-      { id: 'financeiro', nome: 'Finanças', icone: Wallet, cor: '#43BE8C', suave: '#DFF7EC', valor: formatoMoeda(economizado), pct: metaAnual.alvo ? (economizado / metaAnual.alvo) * 100 : 0 }
+      { id: 'ingles', nome: 'Inglês', icone: Languages, cor: '#6C9700', suave: '#F3F9DB', valor: `${inglesFeitas} / ${FASES_INGLES.length}`, pct: (inglesFeitas / FASES_INGLES.length) * 100 },
+      { id: 'financeiro', nome: 'Finanças', icone: Wallet, cor: '#B7F20C', suave: '#F3F9DB', valor: formatoMoeda(economizado), pct: metaAnual.alvo ? (economizado / metaAnual.alvo) * 100 : 0 }
     ];
     const humores = [
       { n: 2, rosto: '⌢', nome: 'Muito mal', cor: '#F19A86' },
@@ -1591,14 +1573,14 @@ export default function NIILApp() {
         />
 
         <div style={secao}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 17 }}><strong style={{ color: C.ink, fontSize: 15 }}>Resumo de hoje</strong><button onClick={() => setAba('progresso')} style={{ border: 0, background: 'none', color: C.green, fontWeight: 800 }}>Ver tudo →</button></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 17 }}><strong style={{ color: C.ink, fontSize: 15 }}>Resumo de hoje</strong><button onClick={() => setAba('progresso')} style={{ border: 0, background: 'none', color: C.greenDark, fontWeight: 800 }}>Ver tudo →</button></div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)' }}>
             {[{ I: Flame, cor: C.coral, v: dia.treino, l: 'kcal queimadas' }, { I: Heart, cor: C.green, v: pontosDia, l: 'pontos' }, { I: Zap, cor: C.gold, v: Math.round((dia.humor || 0) * 3), l: 'min de foco' }].map((x, i) => <div key={x.l} style={{ textAlign: 'center', borderLeft: i ? `1px solid ${C.line}` : 'none' }}><x.I size={17} color={x.cor} /><div style={{ color: C.ink, fontWeight: 800, fontSize: 23, marginTop: 5 }}>{x.v}</div><div style={{ color: C.ink3, fontSize: 10 }}>{x.l}</div></div>)}
           </div>
         </div>
 
         <div style={{...secao,cursor:'pointer'}} onClick={()=>setAba('sono')}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Moon size={19} color={C.green} /> Sono</strong><span style={{ color: C.green, fontSize: 12, fontWeight: 800 }}>Abrir sono →</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Moon size={19} color={C.greenDark} /> Sono</strong><span style={{ color: C.greenDark, fontSize: 12, fontWeight: 800 }}>Abrir sono →</span></div>
           <div style={{ display: 'flex', alignItems: 'end', gap: 16, marginTop: 15 }}>
             <div style={{ minWidth: 112 }}>
               <div style={{ fontSize: 25, fontWeight: 800, color: C.ink }}>{Math.floor(horasSonoHome)}h {Math.round((horasSonoHome%1)*60)}m</div>
@@ -1612,17 +1594,17 @@ export default function NIILApp() {
         </div>
 
         <div style={secao}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Smile size={19} color={C.green} /> Humor de hoje</strong><span style={{ color: C.green, fontSize: 12, fontWeight: 800 }}>Registrar humor →</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Smile size={19} color={C.greenDark} /> Humor de hoje</strong><span style={{ color: C.greenDark, fontSize: 12, fontWeight: 800 }}>Registrar humor →</span></div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 5 }}>{humores.map(h => <button key={h.n} onClick={() => setDia({ humor: h.n })} style={{ border: 0, background: 'transparent', fontFamily: 'inherit' }}><div style={{ width: 42, height: 42, margin: 'auto', borderRadius: '50%', display: 'grid', placeItems: 'center', background: `${h.cor}22`, color: h.cor, border: dia.humor === h.n ? `2px solid ${h.cor}` : '2px solid transparent', fontSize: 20, fontWeight: 800 }}>{h.rosto}</div><div style={{ color: C.ink2, fontSize: 9.5, marginTop: 5 }}>{h.nome}</div></button>)}</div>
         </div>
 
         <div style={secao}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Target size={19} color={C.green} /> Metas da semana</strong><span style={{ color: C.green, fontSize: 12, fontWeight: 800 }}>Ver todas →</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Target size={19} color={C.greenDark} /> Metas da semana</strong><span style={{ color: C.greenDark, fontSize: 12, fontWeight: 800 }}>Ver todas →</span></div>
           {metasSemana.map((m,i)=><div key={m.nome} style={{ display:'grid', gridTemplateColumns:'34px 1fr auto', alignItems:'center', gap:10, marginTop:i?14:0 }}><div style={{ width:34,height:34,borderRadius:'50%',background:`${m.cor}18`,display:'grid',placeItems:'center' }}><m.icone size={17} color={m.cor}/></div><div><div style={{ color:C.ink,fontSize:12.5,marginBottom:6 }}>{m.nome}</div><Barra v={m.valor} max={m.meta} cor={m.cor} h={5}/></div><div style={{ color:C.ink2,fontSize:11,fontWeight:700 }}>{m.valor}/{m.meta} dias</div></div>)}
         </div>
 
         <div style={secao}>
-          <div style={{ display:'flex',justifyContent:'space-between',marginBottom:8 }}><strong style={{ display:'flex',gap:8,color:C.ink }}><CheckCircle2 size={19} color={C.green}/> Top hábitos</strong><span style={{ color:C.green,fontSize:12,fontWeight:800 }}>Ver todos →</span></div>
+          <div style={{ display:'flex',justifyContent:'space-between',marginBottom:8 }}><strong style={{ display:'flex',gap:8,color:C.ink }}><CheckCircle2 size={19} color={C.greenDark}/> Top hábitos</strong><span style={{ color:C.green,fontSize:12,fontWeight:800 }}>Ver todos →</span></div>
           {[['Meditar',Compass],['Ler 20 páginas',BookOpen]].map(([nome,I],i)=><div key={nome} style={{ display:'flex',alignItems:'center',gap:11,padding:'13px 0',borderTop:i?`1px solid ${C.line}`:'none' }}><div style={{ width:36,height:36,borderRadius:'50%',background:i?'#F1F8DA':'#E4F7EF',display:'grid',placeItems:'center' }}><I size={17} color={i?C.green:C.green}/></div><span style={{ flex:1,color:C.ink,fontSize:13 }}>{nome}</span><div style={{ textAlign:'right',color:C.ink,fontWeight:800 }}>0<div style={{ color:C.ink3,fontSize:9,fontWeight:500 }}>dias seguidos</div></div><ChevronRight size={16} color={C.ink3}/></div>)}
         </div>
       </div>
@@ -1635,7 +1617,7 @@ export default function NIILApp() {
     const jejumH = d.jejum ? (Date.now() - d.jejum.inicio) / 3600000 : 0;
     return (
       <div style={{ paddingBottom: 120 }}>
-        <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 12px' }}>
+        <div style={{ background: C.bg, padding: '18px 18px 12px' }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 14px' }}>Alimentação</h1>
           <Card cls="niil-surge">
             <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', marginBottom: 13 }}>
@@ -1727,7 +1709,7 @@ export default function NIILApp() {
     const rodasFeitas = Object.keys(d.rodas).map(Number).sort();
     return (
       <div style={{ paddingBottom: 120 }}>
-        <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 14px' }}>
+        <div style={{ background: C.bg, padding: '18px 18px 14px' }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 14px' }}>Progresso</h1>
           <div style={{ display: 'flex', background: 'rgba(255,255,255,.7)', borderRadius: 13, padding: 4 }}>
             {[['semana', 'Semana'], ['mes', 'Mês'], ['tri', '3 meses']].map(([k, l]) => (
@@ -1798,7 +1780,7 @@ export default function NIILApp() {
 
     return (
       <div style={{ paddingBottom: 120 }}>
-        <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 14px' }}>
+        <div style={{ background: C.bg, padding: '18px 18px 14px' }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Diário de fotos</h1>
           <p style={{ fontSize: 13, color: C.ink2, margin: '0 0 14px' }}>Registre hoje para comparar depois</p>
           <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 3 }}>
@@ -1908,7 +1890,7 @@ export default function NIILApp() {
     const a = forms.alarme, b = forms.biblioteca, tipo = forms.tipoMidia;
     return (
       <div style={{ paddingBottom: 120 }}>
-        <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 14px' }}>
+        <div style={{ background: C.bg, padding: '18px 18px 14px' }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: 0 }}>Apoio</h1>
           <p style={{ fontSize: 13, color: C.ink2, margin: '4px 0 0' }}>Lembretes e sua biblioteca</p>
         </div>
@@ -1922,7 +1904,7 @@ export default function NIILApp() {
               {DIAS_ORD.map((idx, i) => {
                 const on = a.dias.includes(idx);
                 return <button key={i} onClick={() => setForm('alarme', { dias: on ? a.dias.filter(x => x !== idx) : [...a.dias, idx] })}
-                  style={{ flex: 1, padding: 9, borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 12, fontFamily: 'inherit', background: on ? C.green : '#F2F5F4', color: on ? '#fff' : C.ink3 }}>{DIAS_LBL[i]}</button>;
+                  style={{ flex: 1, padding: 9, borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 12, fontFamily: 'inherit', background: on ? C.green : '#F2F5F4', color: on ? C.ink : C.ink3 }}>{DIAS_LBL[i]}</button>;
               })}
             </div>
             <div style={{ display: 'flex', gap: 9 }}>
@@ -1982,7 +1964,7 @@ export default function NIILApp() {
                   {x.resenha && <div style={{ fontSize: 12.5, color: C.ink2, marginTop: 7, lineHeight: 1.5 }}>{x.resenha}</div>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
-                  {x.nota && <span style={{ padding: '3px 8px', background: C.mint, borderRadius: 8, fontSize: 11.5, fontWeight: 800, color: C.greenDark }}>{x.nota}</span>}
+                  {x.nota && <span style={{ padding: '3px 8px', background: C.mint, borderRadius: 8, fontSize: 11.5, fontWeight: 800, color: C.greenDarkDark }}>{x.nota}</span>}
                   <button onClick={() => up(s => ({ ...s, biblioteca: s.biblioteca.filter(y => y.id !== x.id) }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.ink3 }}><Trash2 size={14} /></button>
                 </div>
               </div>
@@ -2062,17 +2044,17 @@ export default function NIILApp() {
         <input ref={inputFoto} type="file" accept="image/*" onChange={receberFoto} style={{ display: 'none' }} />
 
         {coach && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 110, background: `linear-gradient(160deg,${coach.bloco.cor},${C.petroleo})`, padding: '28px 20px', overflowY: 'auto', color: '#fff' }}>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 110, background: C.ink, padding: '28px 20px', overflowY: 'auto', color: '#fff' }}>
             <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ width: 240, height: 245, margin: '4px auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFEFA', borderRadius: '47% 53% 44% 56% / 55% 45% 55% 45%', boxShadow: '0 16px 32px rgba(21,12,58,.2)' }}><img src={avatarImagem} alt="NIIL celebrando" style={{ height: avatarId === 'essencial' ? 220 : 190, maxWidth: 205, objectFit: 'contain' }} /></div>
+              <div aria-hidden="true" style={{ width:86,height:86,margin:'18px auto 12px',display:'grid',placeItems:'center',background:C.lima,color:C.ink,borderRadius:28,boxShadow:'0 12px 26px rgba(0,0,0,.14)' }}><CheckCircle2 size={42} strokeWidth={2.4}/></div>
               <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: 1.4, opacity: .75 }}>NIIL · SUA COACH</div>
               <h1 style={{ textAlign: 'center', fontSize: 27, lineHeight: 1.18, margin: '8px 0 18px' }}>{coach.titulo}</h1>
               <div style={{ background: 'rgba(255,255,255,.96)', color: C.ink, borderRadius: 24, padding: 20, boxShadow: '0 18px 45px rgba(0,0,0,.18)' }}>
                 <p style={{ fontSize: 14, lineHeight: 1.65, margin: '0 0 17px', color: C.ink2 }}>{coach.texto}</p>
                 {coach.tipo === 'sessao' && <><div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Antes de seguir, leve estas reflexões:</div>
-                {coach.reflexoes.map((q, i) => <div key={q} style={{ marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 700, color: coach.bloco.cor }}>{i + 1}. {q}</label><textarea value={campo(`coach-${coach.bloco.id}-${i}`)} onChange={ev => setCampo(`coach-${coach.bloco.id}-${i}`, ev.target.value)} placeholder="Escreva o que vier com sinceridade" style={{ width: '100%', minHeight: 62, marginTop: 6, borderRadius: 12, border: `1.5px solid ${C.line}`, padding: 11, resize: 'vertical', fontFamily: 'inherit', color: C.ink, outline: 'none' }} /></div>)}</>}
+                {coach.reflexoes.map((q, i) => <div key={q} style={{ marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 700, color: C.greenDarkDark }}>{i + 1}. {q}</label><textarea value={campo(`coach-${coach.bloco.id}-${i}`)} onChange={ev => setCampo(`coach-${coach.bloco.id}-${i}`, ev.target.value)} placeholder="Escreva o que vier com sinceridade" style={{ width: '100%', minHeight: 62, marginTop: 6, borderRadius: 12, border: `1.5px solid ${C.line}`, padding: 11, resize: 'vertical', fontFamily: 'inherit', color: C.ink, outline: 'none' }} /></div>)}</>}
               </div>
-              <button onClick={() => { const ultimo = coach.tipo === 'etapa' ? coach.etapaId : coach.bloco.etapas[coach.bloco.etapas.length - 1].id; setCoach(null); abrirProximaEtapa(ultimo); }} style={{ width: '100%', marginTop: 18, border: 0, borderRadius: 16, background: '#fff', color: coach.bloco.cor, padding: 16, fontSize: 15, fontWeight: 900, fontFamily: 'inherit', boxShadow: '0 6px 0 rgba(0,0,0,.16)' }}>{coach.tipo === 'etapa' ? 'CONTINUAR' : 'CONTINUAR PARA A PRÓXIMA SESSÃO'}</button>
+              <button onClick={() => { const ultimo = coach.tipo === 'etapa' ? coach.etapaId : coach.bloco.etapas[coach.bloco.etapas.length - 1].id; setCoach(null); abrirProximaEtapa(ultimo); }} style={{ width: '100%', marginTop: 18, border: 0, borderRadius: 16, background: '#fff', color: C.greenDarkDark, padding: 16, fontSize: 15, fontWeight: 900, fontFamily: 'inherit', boxShadow: '0 6px 0 rgba(0,0,0,.16)' }}>{coach.tipo === 'etapa' ? 'CONTINUAR' : 'CONTINUAR PARA A PRÓXIMA SESSÃO'}</button>
             </div>
           </div>
         )}

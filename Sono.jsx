@@ -1,10 +1,9 @@
 import React,{useMemo,useState}from'react';
 import{ArrowLeft,Moon,Clock3,BarChart3,History,AlarmClock,Target,ChevronLeft,ChevronRight,Trash2,Save,Watch,Mic2,Smartphone,Smile,Info,Sunrise,Flame,Edit3,Sparkles,Check,Plus,CalendarDays}from'lucide-react';
 import{Wordmark}from'./ui.jsx';
-import{niilMascot}from'./niil-mascot.data.js';
 import'./Sono.css';
 
-const P={plum:'#2F2545',lilac:'#9B8DD3',mist:'#DDD6F2',lime:'#C9E56C',cloud:'#F8F6F2',ink:'#2C2834',muted:'#817A89',line:'#E4DFE6',white:'#FFFFFF'};
+const P={plum:'#17151D',lilac:'#6C9700',mist:'#F3F9DB',lime:'#B7F20C',cloud:'#F7F8F5',ink:'#17151D',muted:'#8B8791',line:'#E7E4EA',white:'#FFFFFF'};
 const pad=n=>String(n).padStart(2,'0');
 const hoje=()=>new Date().toISOString().slice(0,10);
 const fmtData=iso=>new Intl.DateTimeFormat('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}).format(new Date(iso+'T12:00'));
@@ -101,7 +100,7 @@ export default function Sono({d,up,aviso,voltar}){
 
     <section className="sn-intro">
       <div><span>SONO</span><h1>Como foi sua noite?</h1><p>Menos números soltos. Mais contexto para entender seu ritmo.</p></div>
-      <img src={niilMascot} alt="NIIL" className="sn-mascot"/>
+      <div className="sn-intro-icon"><Moon size={38}/></div>
     </section>
 
     <nav className="sn-tabs">
@@ -135,7 +134,7 @@ export default function Sono({d,up,aviso,voltar}){
           <div className="sn-title"><div><span>FASES DO SONO</span><h2>Quando tivermos uma fonte real</h2></div><Watch size={19}/></div>
           {atual?.fases?.length?<div className="sn-phases">{atual.fases.map((f,i)=><div key={i} className={`phase ${f.tipo}`} style={{flex:Math.max(1,f.minutos||1)}} title={`${f.tipo}: ${f.minutos} min`}/>)}</div>:<div className="sn-native-note"><div className="sn-native-icon"><Watch size={20}/></div><div><b>Eu não vou inventar seu REM ou sono profundo.</b><p>Esses dados entram quando vierem de Apple Health, Health Connect, wearable ou monitoramento nativo do NIIL.</p></div></div>}
         </section>
-      </>:<section className="sn-empty sn-enter"><img src={niilMascot} alt="" /><div><span>PRIMEIRA NOITE</span><strong>Vamos começar pelo básico.</strong><p>Registre quando foi para a cama e quando acordou. Depois eu começo a construir sua tendência.</p><button onClick={novaNoite}><Plus size={17}/>Registrar noite</button></div></section>}
+      </>:<section className="sn-empty sn-enter"><div className="sn-empty-icon"><Moon size={22}/></div><div><span>PRIMEIRA NOITE</span><strong>Vamos começar pelo básico.</strong><p>Registre quando foi para a cama e quando acordou. Depois eu começo a construir sua tendência.</p><button onClick={novaNoite}><Plus size={17}/>Registrar noite</button></div></section>}
 
       <section className="sn-goal-card sn-enter delay3">
         <div className="sn-goal-head"><div><Target size={19}/><span><b>Meta de sono</b><small>{objetivoHoras}h por noite</small></span></div><strong>{atual?Math.min(100,Math.round((atual.tempoDormindoMin||0)/(objetivoHoras*60)*100)):0}%</strong></div>
@@ -146,7 +145,7 @@ export default function Sono({d,up,aviso,voltar}){
 
     {tab==='historico'&&<main className="sn-main">
       <section className="sn-section-head"><div><span>HISTÓRICO</span><h2>Seu ritmo ao longo do tempo</h2></div><button onClick={novaNoite}><Plus size={16}/>Nova noite</button></section>
-      {!registros.length?<section className="sn-empty compact"><img src={niilMascot} alt=""/><div><strong>Seu histórico começa na primeira noite.</strong><button onClick={novaNoite}>Registrar agora</button></div></section>:<div className="sn-history">{registros.map((r,i)=><article className="sn-history-row sn-enter" style={{animationDelay:`${Math.min(i,6)*55}ms`}} key={r.id}><div className="sn-day-score"><strong>{Math.round(r.qualidade||0)}%</strong><span>{fmtData(r.data)}</span></div><div className="sn-hinfo"><b>{fmtMin(r.tempoDormindoMin)}</b><small>{r.foiCama} → {r.acordou} · eficiência {r.eficiencia||0}%</small></div><button onClick={()=>editarAtual(r)}>Abrir</button><button className="danger" onClick={()=>excluir(r.id)} aria-label="Excluir"><Trash2 size={15}/></button></article>)}</div>}
+      {!registros.length?<section className="sn-empty compact"><div className="sn-empty-icon"><Moon size={22}/></div><div><strong>Seu histórico começa na primeira noite.</strong><button onClick={novaNoite}>Registrar agora</button></div></section>:<div className="sn-history">{registros.map((r,i)=><article className="sn-history-row sn-enter" style={{animationDelay:`${Math.min(i,6)*55}ms`}} key={r.id}><div className="sn-day-score"><strong>{Math.round(r.qualidade||0)}%</strong><span>{fmtData(r.data)}</span></div><div className="sn-hinfo"><b>{fmtMin(r.tempoDormindoMin)}</b><small>{r.foiCama} → {r.acordou} · eficiência {r.eficiencia||0}%</small></div><button onClick={()=>editarAtual(r)}>Abrir</button><button className="danger" onClick={()=>excluir(r.id)} aria-label="Excluir"><Trash2 size={15}/></button></article>)}</div>}
     </main>}
 
     {tab==='estatisticas'&&<main className="sn-main">

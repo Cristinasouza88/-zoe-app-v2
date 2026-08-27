@@ -1,124 +1,126 @@
 :root{
-  --niil-plum:#2F2545;
-  --niil-lilac:#9B8DD3;
-  --niil-mist:#DDD6F2;
-  --niil-lime:#C9E56C;
-  --niil-cloud:#F8F6F2;
-  --niil-ink:#2C2834;
-  --niil-muted:#817A89;
-  --niil-line:#E4DFE6;
+  --niil-plum:#17151D;
+  --niil-lilac:#6C9700;
+  --niil-mist:#F3F9DB;
+  --niil-lime:#B7F20C;
+  --niil-cloud:#F7F8F5;
+  --niil-ink:#17151D;
+  --niil-muted:#8B8791;
+  --niil-line:#E7E4EA;
   --niil-white:#FFFFFF;
-  --niil-soft:#F1EEF7;
+  --niil-soft:#F3F9DB;
 }
+
+/* Camada de compatibilidade do legado.
+   Mantém seletores antigos funcionando sem reintroduzir a identidade roxa,
+   mascotes, orbs ou fundos em degradê. */
 
 html,body,#root{background:var(--niil-cloud)!important;color:var(--niil-ink)!important}
 button,input,select,textarea{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 
-/* Financeiro: mesmo sistema visual do produto NIIL */
-.fx,.fxstart{background:var(--niil-cloud)!important;color:var(--niil-ink)!important}
-.fxstart-hero,.fxstart-main{background:transparent!important}
-.fxstart-progress-card,.fxstart-box,.fxstart-item,.fxstart-summary>*,.fx-card{background:var(--niil-white)!important;border-color:var(--niil-line)!important;box-shadow:0 8px 24px rgba(47,37,69,.055)!important}
-.fxstart-phase-card{background:var(--niil-plum)!important;color:#fff!important;box-shadow:0 8px 0 rgba(47,37,69,.18),0 15px 30px rgba(47,37,69,.10)!important}
-.fxstart-phase-card h2,.fxstart-phase-card p,.fxstart-phase-card small{color:#fff!important}
-.fxstart-progress i{background:var(--niil-lilac)!important}
-.fxstart-node.done .fxstart-node-core{background:var(--niil-lilac)!important;color:#fff!important}
-.fxstart-node.active .fxstart-node-core{background:var(--niil-soft)!important;color:var(--niil-plum)!important}
-.fxstart-node-ring{background:conic-gradient(var(--niil-lilac) var(--ring),var(--niil-line) 0)!important}
-.fxstart-now{background:var(--niil-lime)!important;color:var(--niil-plum)!important}
-.fxstart-btn:not(.ghost):not(.soft){background:var(--niil-plum)!important;color:#fff!important}
-.fxstart-btn.soft{background:var(--niil-soft)!important;color:var(--niil-plum)!important;border-color:var(--niil-mist)!important}
-.fxstart-btn.ghost,.fxstart-skip{color:var(--niil-plum)!important;border-color:var(--niil-line)!important}
-.fxstart-sheet{background:var(--niil-cloud)!important}
-.fxstart-sheet-head{background:var(--niil-cloud)!important;border-color:var(--niil-line)!important}
-.fxstart-sheet-head h3,.fxstart-box h4,.fxstart-item b{color:var(--niil-plum)!important}
-.fxstart-field span,.fxstart-note,.fxstart-item small{color:var(--niil-muted)!important}
-.fxstart-field input,.fxstart-field select,.fxstart-field textarea{background:#fff!important;color:var(--niil-ink)!important;border-color:var(--niil-line)!important}
-.fxstart-money-preview strong{color:var(--niil-plum)!important}
-
-/* Trilha NIIL — identidade oficial */
-.niil-trail-screen{background:var(--niil-cloud)!important;color:var(--niil-ink)!important}
-.niil-trail-hero{
-  position:relative!important;overflow:hidden!important;
-  background:radial-gradient(circle at 92% 10%,rgba(155,141,211,.17),transparent 28%),radial-gradient(circle at 15% 0%,rgba(221,214,242,.58),transparent 38%),linear-gradient(180deg,#FCFBF9 0%,var(--niil-cloud) 100%)!important;
-  padding:18px 18px 16px!important;
-}
-.niil-runtime-brand{width:88px;height:42px;display:flex;align-items:center;margin:0 0 12px 0}
+/* Runtime brand */
+.niil-runtime-brand{width:88px;height:42px;display:flex;align-items:center;margin:0 0 12px}
 .niil-runtime-wordmark{width:88px;height:auto;display:block;overflow:visible}
-.niil-trail-heading-row{min-height:98px!important;align-items:center!important;position:relative!important;z-index:1}
-.niil-trail-heading-row h1{color:var(--niil-plum)!important;font-size:30px!important;letter-spacing:-.8px!important;line-height:1.05!important;font-weight:850!important;margin-bottom:8px!important}
-.niil-trail-heading-row p{color:#746D7C!important;font-size:13.5px!important;line-height:1.45!important}
-.niil-trail-heading-mascot{display:none!important}
-.niil-orb-runtime{
-  flex:0 0 auto;width:84px;height:84px;border-radius:50%;position:relative;overflow:hidden;isolation:isolate;margin-left:14px;
-  background:radial-gradient(circle at 37% 34%,rgba(248,246,242,.98) 0 8%,rgba(221,214,242,.84) 21%,rgba(221,214,242,.22) 39%,transparent 54%),radial-gradient(circle at 73% 68%,rgba(155,141,211,.55),transparent 50%),linear-gradient(145deg,#7868DE 0%,#9B8DD3 54%,#DDD6F2 100%);
-  box-shadow:0 12px 30px rgba(47,37,69,.16),inset 0 0 0 1px rgba(255,255,255,.72),0 0 0 5px rgba(255,255,255,.34);animation:niilOrbBreath 5.5s ease-in-out infinite;
-}
-.niil-orb-cloud{position:absolute;left:17%;right:17%;top:31%;height:37%;border-radius:48% 52% 46% 54% / 54% 42% 58% 46%;background:radial-gradient(ellipse at center,rgba(255,255,255,.94) 0%,rgba(248,246,242,.82) 38%,rgba(221,214,242,.52) 66%,rgba(221,214,242,0) 100%);filter:blur(5px);animation:niilCloudDrift 7s ease-in-out infinite}
-.niil-orb-glow{position:absolute;inset:8%;border-radius:50%;background:radial-gradient(circle at 24% 25%,rgba(255,255,255,.44),transparent 22%),radial-gradient(circle at 78% 72%,rgba(97,80,202,.20),transparent 38%);mix-blend-mode:screen;animation:niilOrbGlow 4.8s ease-in-out infinite}
-.niil-orb-signal{position:absolute;right:18%;top:18%;width:6px;height:6px;border-radius:50%;background:var(--niil-lime);box-shadow:0 0 12px rgba(201,229,108,.75)}
-.niil-trail-progress-card{background:rgba(255,255,255,.94)!important;border:1px solid rgba(221,214,242,.72)!important;border-radius:20px!important;padding:17px!important;box-shadow:0 10px 28px rgba(47,37,69,.07)!important}
-.niil-trail-progress-card span:first-child{color:var(--niil-plum)!important;font-size:13.5px!important}
-.niil-trail-progress-card span:last-child{color:#7468D9!important;font-size:13.5px!important}
-.niil-trail-progress-card>div:last-child{background:#EEEAF6!important;border-radius:99px!important}
-.niil-trail-progress-card>div:last-child>div{background:var(--niil-lime)!important}
-.niil-trail-phase-card{color:var(--niil-plum)!important;border:1px solid rgba(255,255,255,.8)!important;border-radius:22px!important;box-shadow:0 8px 0 rgba(47,37,69,.08),0 18px 36px rgba(47,37,69,.08)!important;min-height:96px!important}
-.niil-trail-phase-card.niil-phase-0,.niil-trail-phase-card.niil-phase-foundation{background:linear-gradient(135deg,#D7EF86 0%,var(--niil-lime) 58%,#BBD956 100%)!important}
-.niil-trail-phase-card.niil-phase-1{background:linear-gradient(135deg,#B8ACE5,var(--niil-lilac))!important;color:#fff!important}
-.niil-trail-phase-card.niil-phase-2{background:linear-gradient(135deg,#EEEAF7,var(--niil-mist))!important;color:var(--niil-plum)!important}
-.niil-trail-phase-card.niil-phase-3{background:linear-gradient(135deg,#44385F,var(--niil-plum))!important;color:#fff!important}
-.niil-trail-phase-card>div:last-child{background:rgba(255,255,255,.26)!important}
-.niil-trail-screen svg[preserveAspectRatio="none"] polyline{stroke:var(--niil-mist)!important;stroke-width:2.2!important}
-.niil-trail-screen svg[preserveAspectRatio="none"] line{stroke:var(--niil-lilac)!important}
-.niil-trail-node{opacity:1!important;width:146px!important}
-.niil-trail-node>div:first-of-type{background:#F1EEF8!important;color:#9A91BF!important;border:6px solid rgba(255,255,255,.96)!important;box-shadow:0 0 0 1px rgba(155,141,211,.17),0 7px 0 rgba(99,86,150,.10),0 12px 24px rgba(47,37,69,.07)!important}
-.niil-trail-node>div:nth-of-type(2){background:rgba(255,255,255,.9)!important;border:1px solid rgba(221,214,242,.58)!important;border-radius:12px!important;box-shadow:0 5px 15px rgba(47,37,69,.045)!important;backdrop-filter:blur(8px)}
-.niil-trail-node>div:nth-of-type(2)>div:first-child{color:var(--niil-plum)!important;font-size:10.8px!important}
-.niil-trail-node.is-locked{opacity:.68!important}
-.niil-trail-node.is-done>div:first-of-type{background:var(--niil-lilac)!important;color:#fff!important}
-.niil-trail-node.is-current>div:first-of-type{width:82px!important;height:82px!important;background:linear-gradient(145deg,#F5F2FB,#E8E1F5)!important;color:#7468D9!important;border:7px solid #fff!important;box-shadow:0 0 0 5px rgba(155,141,211,.25),0 8px 0 rgba(93,79,153,.18),0 16px 30px rgba(47,37,69,.10)!important}
-.niil-trail-node.is-current>span{top:-9px!important;width:34px!important;min-width:34px!important;height:6px!important;padding:0!important;overflow:hidden!important;font-size:0!important;color:transparent!important;border-radius:99px!important;background:var(--niil-lime)!important;box-shadow:0 2px 8px rgba(201,229,108,.5)!important}
-.niil-trail-mascot{object-fit:contain!important;filter:drop-shadow(0 10px 14px rgba(47,37,69,.16))!important;transform:none!important}
 
-/* Home NIIL — remove visual legado verde e usa a identidade oficial */
-.niil-home-screen{
-  min-height:100vh!important;
-  background:radial-gradient(circle at 15% 3%,rgba(221,214,242,.72),transparent 28%),radial-gradient(circle at 92% 17%,rgba(155,141,211,.13),transparent 27%),linear-gradient(180deg,#FCFBF9 0%,var(--niil-cloud) 72%,#F4F0F8 100%)!important;
+/* Elementos de personagem/objeto visual aposentados */
+.niil-orb-runtime,
+.niil-home-orb,
+.niil-home-mascot,
+.niil-trail-mascot,
+.niil-trail-heading-mascot,
+.fxstart-mascot{display:none!important}
+
+/* Financeiro legado */
+.fx,.fxstart{background:var(--niil-cloud)!important;color:var(--niil-ink)!important}
+.fxstart-hero,.fxstart-main{background:var(--niil-cloud)!important}
+.fxstart-progress-card,.fxstart-box,.fxstart-item,.fxstart-summary>*,.fx-card{
+  background:var(--niil-white)!important;
+  border-color:var(--niil-line)!important;
+  box-shadow:0 8px 24px rgba(23,21,29,.045)!important;
+}
+.fxstart-phase-card{
+  background:var(--niil-lime)!important;
   color:var(--niil-ink)!important;
+  box-shadow:0 8px 0 rgba(23,21,29,.08),0 15px 30px rgba(23,21,29,.07)!important;
 }
-.niil-home-header{position:relative;z-index:2}
-.niil-home-account{background-color:#fff!important;border:1px solid rgba(221,214,242,.72)!important;box-shadow:0 6px 18px rgba(47,37,69,.08)!important}
-.niil-home-account svg{opacity:0!important}
-.niil-home-main>div:first-child{color:#746D7C!important}
-.niil-home-main>div:nth-child(2){color:var(--niil-plum)!important}
-.niil-home-life-ring{box-shadow:0 20px 50px rgba(47,37,69,.12)!important}
-.niil-home-percent{color:var(--niil-plum)!important;background:rgba(255,255,255,.96)!important;border:1px solid rgba(221,214,242,.62)!important;box-shadow:0 8px 20px rgba(47,37,69,.09)!important}
-.niil-home-life-inner{background:radial-gradient(circle at 50% 35%,#FFFFFF 0%,#FBFAFD 56%,#F1EDF8 100%)!important}
-.niil-home-progress-label{color:#7468D9!important}
-.niil-home-mascot{width:180px!important;height:154px!important;object-fit:contain!important;filter:drop-shadow(0 12px 16px rgba(47,37,69,.17))!important}
-.niil-home-mascot-hidden{display:none!important}
-.niil-home-orb{
-  width:168px!important;height:168px!important;margin:18px auto 20px!important;flex:none!important;
-  background:radial-gradient(circle at 28% 26%,rgba(255,255,255,.74) 0 8%,rgba(255,255,255,.20) 19%,transparent 34%),radial-gradient(circle at 72% 72%,rgba(74,57,177,.30),transparent 44%),linear-gradient(145deg,#7464EC 0%,#8778E2 38%,#A99EE0 68%,#DDD6F2 100%)!important;
-  box-shadow:0 17px 34px rgba(47,37,69,.17),inset 0 0 0 1px rgba(255,255,255,.74),0 0 0 4px rgba(255,255,255,.30)!important;
-  animation:niilHomeOrbFloat 5.2s ease-in-out infinite,niilHomeOrbPulse 3.6s ease-in-out infinite!important;
+.fxstart-phase-card h2,.fxstart-phase-card p,.fxstart-phase-card small{color:var(--niil-ink)!important}
+.fxstart-progress i{background:var(--niil-lime)!important}
+.fxstart-node.done .fxstart-node-core{background:var(--niil-lime)!important;color:var(--niil-ink)!important}
+.fxstart-node.active .fxstart-node-core{background:var(--niil-white)!important;color:var(--niil-ink)!important}
+.fxstart-node-ring{background:var(--niil-lime)!important}
+.fxstart-now{background:var(--niil-lime)!important;color:var(--niil-ink)!important}
+.fxstart-btn:not(.ghost):not(.soft){background:var(--niil-lime)!important;color:var(--niil-ink)!important}
+.fxstart-btn.soft{background:var(--niil-soft)!important;color:var(--niil-ink)!important;border-color:#DDE8B8!important}
+.fxstart-btn.ghost,.fxstart-skip{color:var(--niil-ink)!important;border-color:var(--niil-line)!important}
+.fxstart-sheet,.fxstart-sheet-head{background:var(--niil-cloud)!important}
+.fxstart-sheet-head{border-color:var(--niil-line)!important}
+.fxstart-sheet-head h3,.fxstart-box h4,.fxstart-item b{color:var(--niil-ink)!important}
+.fxstart-field span,.fxstart-note,.fxstart-item small{color:var(--niil-muted)!important}
+.fxstart-field input,.fxstart-field select,.fxstart-field textarea{
+  background:#fff!important;color:var(--niil-ink)!important;border-color:var(--niil-line)!important
 }
-.niil-home-orb .niil-orb-cloud{left:14%;right:14%;top:31%;height:38%;filter:blur(8px);background:radial-gradient(ellipse at center,rgba(255,255,255,.98) 0%,rgba(248,246,242,.90) 34%,rgba(221,214,242,.65) 58%,rgba(221,214,242,0) 100%);animation:niilHomeCloud 6.8s ease-in-out infinite!important}
-.niil-home-orb .niil-orb-glow{animation:niilOrbGlow 4.8s ease-in-out infinite!important}
-.niil-home-orb .niil-orb-signal{display:none}
-.niil-home-continue{background:linear-gradient(135deg,#44385F,var(--niil-plum))!important;color:#fff!important;box-shadow:0 11px 25px rgba(47,37,69,.22)!important}
-.niil-home-other-title{color:#746D7C!important}
-.niil-home-screen [style*="color: rgb(37, 185, 127)"],.niil-home-screen [style*="color:#25B97F"]{color:#7468D9!important}
 
-/* Financeiro modal: estabilidade no iPhone/Safari */
+/* Trilha principal — geometria e comportamento permanecem intactos */
+.niil-trail-screen,.niil-trail-hero{background:var(--niil-cloud)!important;color:var(--niil-ink)!important}
+.niil-trail-hero{padding:18px 18px 16px!important}
+.niil-trail-heading-row{min-height:98px!important;align-items:center!important;position:relative!important;z-index:1}
+.niil-trail-heading-row h1{
+  color:var(--niil-ink)!important;font-size:30px!important;letter-spacing:-.8px!important;
+  line-height:1.05!important;font-weight:850!important;margin-bottom:8px!important
+}
+.niil-trail-heading-row p{color:var(--niil-muted)!important;font-size:13.5px!important;line-height:1.45!important}
+.niil-trail-progress-card{
+  background:#fff!important;border:1px solid var(--niil-line)!important;border-radius:20px!important;
+  padding:17px!important;box-shadow:0 10px 28px rgba(23,21,29,.045)!important
+}
+.niil-trail-progress-card span:first-child{color:var(--niil-ink)!important}
+.niil-trail-progress-card span:last-child{color:var(--niil-lilac)!important}
+.niil-trail-progress-card>div:last-child{background:#ECEDE9!important;border-radius:99px!important}
+.niil-trail-progress-card>div:last-child>div{background:var(--niil-lime)!important}
+.niil-trail-phase-card{
+  border:1px solid rgba(255,255,255,.8)!important;border-radius:22px!important;
+  box-shadow:0 8px 0 rgba(23,21,29,.07),0 18px 36px rgba(23,21,29,.06)!important;min-height:96px!important
+}
+.niil-trail-phase-card.niil-phase-0,.niil-trail-phase-card.niil-phase-foundation{background:var(--niil-lime)!important;color:var(--niil-ink)!important}
+.niil-trail-phase-card.niil-phase-1{background:var(--niil-ink)!important;color:#fff!important}
+.niil-trail-phase-card.niil-phase-2{background:var(--niil-soft)!important;color:var(--niil-ink)!important}
+.niil-trail-phase-card.niil-phase-3{background:#242329!important;color:#fff!important}
+.niil-trail-phase-card>div:last-child{background:rgba(255,255,255,.24)!important}
+.niil-trail-screen svg[preserveAspectRatio="none"] polyline{stroke:var(--niil-line)!important;stroke-width:2.2!important}
+.niil-trail-screen svg[preserveAspectRatio="none"] line{stroke:var(--niil-lime)!important}
+.niil-trail-node{opacity:1!important;width:146px!important}
+.niil-trail-node>div:first-of-type{
+  background:var(--niil-soft)!important;color:var(--niil-lilac)!important;border:6px solid #fff!important;
+  box-shadow:0 0 0 1px rgba(183,242,12,.15),0 7px 0 rgba(23,21,29,.08),0 12px 24px rgba(23,21,29,.05)!important
+}
+.niil-trail-node>div:nth-of-type(2){
+  background:#fff!important;border:1px solid var(--niil-line)!important;border-radius:12px!important;
+  box-shadow:0 5px 15px rgba(23,21,29,.035)!important
+}
+.niil-trail-node>div:nth-of-type(2)>div:first-child{color:var(--niil-ink)!important}
+.niil-trail-node.is-locked{opacity:.68!important}
+.niil-trail-node.is-done>div:first-of-type{background:var(--niil-lime)!important;color:var(--niil-ink)!important}
+.niil-trail-node.is-current>div:first-of-type{
+  width:82px!important;height:82px!important;background:#fff!important;color:var(--niil-ink)!important;
+  border:7px solid #fff!important;box-shadow:0 0 0 5px rgba(183,242,12,.28),0 8px 0 rgba(23,21,29,.10),0 16px 30px rgba(23,21,29,.08)!important
+}
+.niil-trail-node.is-current>span{
+  top:-9px!important;width:34px!important;min-width:34px!important;height:6px!important;padding:0!important;
+  overflow:hidden!important;font-size:0!important;color:transparent!important;border-radius:99px!important;
+  background:var(--niil-lime)!important;box-shadow:none!important
+}
+
+/* Home legada: a Home V3 é a principal, estes seletores só evitam regressão */
+.niil-home-screen{min-height:100vh!important;background:var(--niil-cloud)!important;color:var(--niil-ink)!important}
+.niil-home-account{background:#fff!important;border:1px solid var(--niil-line)!important;box-shadow:0 6px 18px rgba(23,21,29,.06)!important}
+.niil-home-main>div:first-child{color:var(--niil-muted)!important}
+.niil-home-main>div:nth-child(2){color:var(--niil-ink)!important}
+.niil-home-percent{color:var(--niil-ink)!important;background:#fff!important;border:1px solid var(--niil-line)!important}
+.niil-home-life-inner{background:#fff!important}
+.niil-home-progress-label{color:var(--niil-lilac)!important}
+.niil-home-continue{background:var(--niil-lime)!important;color:var(--niil-ink)!important;box-shadow:0 8px 18px rgba(23,21,29,.08)!important}
+
+/* Safari/iPhone */
 .fx2-overlay{touch-action:manipulation;overscroll-behavior:contain}
 .fx2-sheet{touch-action:auto;isolation:isolate}
 .fx2-link,.fx2-btn,.fx2-goal button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-
-@keyframes niilOrbBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
-@keyframes niilCloudDrift{0%,100%{transform:translate(-3%,-2%) scale(1)}50%{transform:translate(6%,4%) scale(1.06)}}
-@keyframes niilOrbGlow{0%,100%{opacity:.70;transform:rotate(-2deg) scale(.98)}50%{opacity:1;transform:rotate(3deg) scale(1.04)}}
-@keyframes niilHomeOrbFloat{0%,100%{transform:translateY(0) rotate(-.5deg)}50%{transform:translateY(-7px) rotate(.7deg)}}
-@keyframes niilHomeOrbPulse{0%,100%{filter:saturate(1) brightness(1)}50%{filter:saturate(1.07) brightness(1.045)}}
-@keyframes niilHomeCloud{0%,100%{transform:translate(-4%,-2%) scale(.97) rotate(-2deg);opacity:.84}50%{transform:translate(7%,4%) scale(1.08) rotate(2deg);opacity:1}}
-@media(prefers-reduced-motion:reduce){.niil-orb-runtime,.niil-orb-cloud,.niil-orb-glow,.niil-home-orb{animation:none!important}}
-[style*="#A8FF00"],[style*="rgb(168, 255, 0)"]{--legacy-lime:var(--niil-lime)}

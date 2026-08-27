@@ -102,25 +102,19 @@ export const store = {
 };
 
 export const C = {
-  /* base 60% */
-  bg: '#F7F8F6', card: '#FFFFFF', petroleo: '#075B59', petroleoEsc: '#054845', carvao: '#0B1416',
-  ink: '#0F3A38', ink2: '#485563', ink3: '#8FA0A8', line: '#E6E9EC',
-  /* informação 25% */
-  azul: '#2563FF', aqua: '#00E6D2', aquaSuave: '#E6FBF8',
-  /* progresso 7% */
-  lima: '#A8FF00', limaSuave: '#F1FFDB',
-  /* atenção 5% */
-  lilas: '#C084FC',
-  /* destaque 5% */
-  roxo: '#8E2DE2', roxoEletrico: '#5D00FF',
-  /* aliases semânticos usados no app */
-  get green() { return this.petroleo }, get greenDark() { return this.petroleoEsc },
-  get mint() { return this.aquaSuave }, get sky() { return this.azul },
-  get gold() { return this.lima }, get coral() { return this.lilas }, get lilac() { return this.roxo }
+  bg: '#F7F8F5', card: '#FFFFFF', petroleo: '#17151D', petroleoEsc: '#6C9700', carvao: '#17151D',
+  ink: '#17151D', ink2: '#5F5A66', ink3: '#8B8791', line: '#E7E4EA',
+  azul: '#17151D', aqua: '#F3F9DB', aquaSuave: '#F3F9DB',
+  lima: '#B7F20C', limaSuave: '#F3F9DB',
+  lilas: '#B7F20C',
+  roxo: '#17151D', roxoEletrico: '#6C9700',
+  get green() { return this.lima }, get greenDark() { return this.petroleoEsc },
+  get mint() { return this.aquaSuave }, get sky() { return this.petroleoEsc },
+  get gold() { return this.petroleo }, get coral() { return '#FF8A3D' }, get lilac() { return this.petroleoEsc }
 };
 
 /* texto legível sobre qualquer cor da paleta */
-export const CLARAS = ['#A8FF00', '#00E6D2', '#C084FC', '#F1FFDB', '#E6FBF8', '#F7F8F6', '#FFFFFF', '#fff', '#FFF'];
+export const CLARAS = ['#B7F20C', '#F3F9DB', '#F7F8F5', '#FF8A3D', '#FFFFFF', '#fff', '#FFF'];
 export const sobre = (cor) => CLARAS.includes(cor) ? C.ink : '#fff';
 
 export const hoje = () => new Date().toISOString().split('T')[0];
@@ -134,7 +128,7 @@ export const CSS = `
 @keyframes niilTracar{to{stroke-dashoffset:0}}
 @keyframes niilPontoLogo{0%{opacity:0;transform:scale(0) translateY(7px)}100%{opacity:1;transform:scale(1) translateY(0)}}
 @keyframes niilCelebra{0%{opacity:0;transform:translateY(20px) scale(.82) rotate(-3deg)}55%{transform:translateY(-5px) scale(1.05) rotate(2deg)}100%{opacity:1;transform:none}}
-@keyframes niilPulso{0%,100%{box-shadow:0 0 0 0 rgba(168,255,0,0)}50%{box-shadow:0 0 0 12px rgba(168,255,0,.16)}}
+@keyframes niilPulso{0%,100%{box-shadow:0 0 0 0 rgba(183,242,12,0)}50%{box-shadow:0 0 0 12px rgba(183,242,12,.16)}}
 @keyframes niilGira{to{transform:rotate(360deg)}}
 .niil-surge{animation:niilSurge .42s cubic-bezier(.22,1,.36,1) both}
 .niil-barra{transform-origin:bottom;animation:niilBarra .6s cubic-bezier(.22,1,.36,1) both}
@@ -150,31 +144,32 @@ export const CSS = `
 /* ══════════ UI BASE ══════════ */
 export const Card = ({ children, style, onClick, cls = '', delay = 0 }) => (
   <div onClick={onClick} className={cls}
-    style={{ background: C.card, borderRadius: 20, padding: 16, boxShadow: '0 1px 3px rgba(27,58,75,.06)', animationDelay: `${delay}ms`, ...style }}>
+    style={{ background: C.card, borderRadius: 22, padding: 16, border: `1px solid ${C.line}`, boxShadow: '0 8px 24px rgba(23,21,29,.045)', animationDelay: `${delay}ms`, ...style }}>
     {children}
   </div>
 );
 
 export const Btn = ({ children, onClick, variante = 'solid', cor = C.green, style, disabled }) => (
   <button onClick={onClick} disabled={disabled} style={{
-    padding: '12px 18px', borderRadius: 14, fontWeight: 700, fontSize: 14, cursor: disabled ? 'not-allowed' : 'pointer',
+    minHeight: 44, padding: '12px 18px', borderRadius: 15, fontWeight: 800, fontSize: 14, cursor: disabled ? 'not-allowed' : 'pointer',
     border: variante === 'outline' ? `1.5px solid ${cor}` : 'none',
-    background: variante === 'outline' ? 'transparent' : cor,
-    color: variante === 'outline' ? cor : sobre(cor), opacity: disabled ? .4 : 1, fontFamily: 'inherit', ...style
+    background: variante === 'outline' ? '#FFFFFF' : cor,
+    color: variante === 'outline' ? cor : sobre(cor), opacity: disabled ? .4 : 1, fontFamily: 'inherit',
+    boxShadow: variante === 'outline' ? 'none' : '0 6px 14px rgba(23,21,29,.08)', ...style
   }}>{children}</button>
 );
 
 export const Campo = ({ label, ...p }) => (
   <div style={{ marginBottom: 12 }}>
     {label && <label style={{ fontSize: 12, fontWeight: 700, color: C.ink2, display: 'block', marginBottom: 6 }}>{label}</label>}
-    <input {...p} style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${C.line}`, fontSize: 15, color: C.ink, fontFamily: 'inherit', outline: 'none', background: '#FAFCFB', ...p.style }} />
+    <input {...p} style={{ width: '100%', minHeight: 46, padding: '12px 14px', borderRadius: 14, border: `1.5px solid ${C.line}`, fontSize: 15, color: C.ink, fontFamily: 'inherit', outline: 'none', background: '#FFFFFF', boxShadow:'0 1px 0 rgba(23,21,29,.02)', ...p.style }} />
   </div>
 );
 
 export const Area = ({ label, ...p }) => (
   <div style={{ marginBottom: 12 }}>
     {label && <label style={{ fontSize: 12, fontWeight: 700, color: C.ink2, display: 'block', marginBottom: 6 }}>{label}</label>}
-    <textarea {...p} style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${C.line}`, fontSize: 15, color: C.ink, fontFamily: 'inherit', outline: 'none', background: '#FAFCFB', resize: 'vertical', minHeight: 88, ...p.style }} />
+    <textarea {...p} style={{ width: '100%', padding: '12px 14px', borderRadius: 14, border: `1.5px solid ${C.line}`, fontSize: 15, color: C.ink, fontFamily: 'inherit', outline: 'none', background: '#FFFFFF', resize: 'vertical', minHeight: 96, ...p.style }} />
   </div>
 );
 
@@ -185,12 +180,12 @@ export const Barra = ({ v, max, cor, h = 8 }) => (
 );
 
 export const Sheet = ({ aberto, fechar, titulo, children }) => aberto ? (
-  <div onClick={fechar} style={{ position: 'fixed', inset: 0, background: 'rgba(11,20,22,.42)', zIndex: 90, display: 'flex', alignItems: 'flex-end' }}>
-    <div onClick={e => e.stopPropagation()} className="niil-surge" style={{ background: C.card, width: '100%', maxHeight: '88vh', overflowY: 'auto', borderRadius: '26px 26px 0 0', padding: 20, paddingBottom: 32 }}>
+  <div onClick={fechar} style={{ position: 'fixed', inset: 0, background: 'rgba(23,21,29,.34)', zIndex: 90, display: 'flex', alignItems: 'flex-end', backdropFilter:'blur(4px)' }}>
+    <div onClick={e => e.stopPropagation()} className="niil-surge" style={{ background: C.card, width: '100%', maxHeight: '88vh', overflowY: 'auto', borderRadius: '28px 28px 0 0', padding: 20, paddingBottom: 'calc(28px + env(safe-area-inset-bottom))', borderTop:`1px solid ${C.line}`, boxShadow:'0 -18px 48px rgba(23,21,29,.14)' }}>
       <div style={{ width: 40, height: 4, background: C.line, borderRadius: 99, margin: '0 auto 16px' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h2 style={{ fontSize: 20, fontWeight: 800, color: C.ink, margin: 0 }}>{titulo}</h2>
-        <button onClick={fechar} style={{ background: '#F2F5F4', border: 'none', borderRadius: 99, width: 34, height: 34, cursor: 'pointer', color: C.ink2 }}><X size={18} /></button>
+        <button onClick={fechar} style={{ background: C.aquaSuave, border: 'none', borderRadius: 12, width: 38, height: 38, cursor: 'pointer', color: C.ink, display:'grid',placeItems:'center' }}><X size={18} /></button>
       </div>
       {children}
     </div>

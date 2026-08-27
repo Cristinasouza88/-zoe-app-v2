@@ -1,7 +1,6 @@
 import React,{useMemo,useState}from'react';
 import{CalendarDays,ChevronLeft,ChevronRight,Flame,Trophy,Sparkles,BookOpen,Target,Check,Circle,Plus,X}from'lucide-react';
 import{C,hoje}from'./ui.jsx';
-import{niilMascot}from'./niil-mascot.data.js';
 import'./AgendaLeve.css';
 
 export default function AgendaLeve({d,data,setData,agendaAtiva,toggleTarefaDe,streak,setAba,up}){
@@ -93,7 +92,6 @@ export default function AgendaLeve({d,data,setData,agendaAtiva,toggleTarefaDe,st
         <p>{total?(progresso===100?'O restante do dia fica livre para você.':'A próxima missão fica destacada. Ao concluir, o dia se reorganiza.'):'Quando uma trilha gerar uma missão, ela aparece aqui.'}</p>
         {total>0&&<div className="agx-progress"><div style={{width:progresso+'%'}}/></div>}
       </div>
-      <img src={niilMascot} alt="NIIL" className="agx-mascot"/>
     </section>
 
     {itens.length?<>
