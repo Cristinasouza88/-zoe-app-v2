@@ -2,21 +2,22 @@ import React from 'react';
 import * as Base from './NiilUIBase.jsx';
 
 Object.assign(Base.C,{
-  bg:'#F8F6F2',card:'#FFFFFF',petroleo:'#2F2545',petroleoEsc:'#251D37',carvao:'#1E1927',
-  ink:'#2C2834',ink2:'#625B69',ink3:'#817A89',line:'#E4DFE6',
-  azul:'#9B8DD3',aqua:'#DDD6F2',aquaSuave:'#F1EEF7',
-  lima:'#C9E56C',limaSuave:'#F4F8E8',lilas:'#DDD6F2',roxo:'#9B8DD3',roxoEletrico:'#7568B5'
+  bg:'#F7F8F5',card:'#FFFFFF',petroleo:'#B7F20C',petroleoEsc:'#6C9700',carvao:'#17151D',
+  ink:'#17151D',ink2:'#5F5A66',ink3:'#8B8791',line:'#E7E4EA',
+  azul:'#5B2D86',aqua:'#F3F9DB',aquaSuave:'#F3F9DB',
+  lima:'#B7F20C',limaSuave:'#F3F9DB',lilas:'#EEE7F7',roxo:'#5B2D86',roxoEletrico:'#6C46C8',
+  laranja:'#FF8A3D'
 });
 Object.defineProperties(Base.C,{
-  green:{get(){return this.plum||this.petroleo},configurable:true},
+  green:{get(){return this.petroleo},configurable:true},
   greenDark:{get(){return this.petroleoEsc},configurable:true},
   mint:{get(){return this.aquaSuave},configurable:true},
   sky:{get(){return this.azul},configurable:true},
-  gold:{get(){return this.lima},configurable:true},
-  coral:{get(){return this.lilas},configurable:true},
+  gold:{get(){return this.laranja},configurable:true},
+  coral:{get(){return this.laranja},configurable:true},
   lilac:{get(){return this.roxo},configurable:true}
 });
-Base.C.plum='#2F2545';Base.C.mist='#DDD6F2';Base.C.cloud='#F8F6F2';Base.C.soft='#F1EEF7';
+Base.C.plum='#5B2D86';Base.C.mist='#EEE7F7';Base.C.cloud='#F7F8F5';Base.C.soft='#F3F9DB';
 
 export const C=Base.C;
 export const store=Base.store;
@@ -30,11 +31,11 @@ export const Sheet=Base.Sheet;
 export const Foto=Base.Foto;
 export const GraficoBarras=Base.GraficoBarras;
 export const GraficoLinha=Base.GraficoLinha;
-export const CLARAS=['#C9E56C','#DDD6F2','#F1EEF7','#F8F6F2','#FFFFFF','#fff','#FFF'];
+export const CLARAS=['#B7F20C','#F3F9DB','#EEE7F7','#F7F8F5','#FF8A3D','#FFFFFF','#fff','#FFF'];
 export const sobre=cor=>CLARAS.includes(cor)?C.ink:'#fff';
 
 export const CSS=Base.CSS+`
-:root{--niil-plum:#2F2545;--niil-lilac:#9B8DD3;--niil-mist:#DDD6F2;--niil-lime:#C9E56C;--niil-cloud:#F8F6F2;--niil-ink:#2C2834;--niil-muted:#817A89;--niil-line:#E4DFE6;--niil-soft:#F1EEF7}
+:root{--niil-green:#B7F20C;--niil-green-dark:#6C9700;--niil-green-soft:#F3F9DB;--niil-plum:#5B2D86;--niil-lilac:#6C46C8;--niil-mist:#EEE7F7;--niil-orange:#FF8A3D;--niil-cloud:#F7F8F5;--niil-ink:#17151D;--niil-muted:#8B8791;--niil-line:#E7E4EA;--niil-soft:#F3F9DB;--niil-lime:#B7F20C}
 html,body,#root{background:var(--niil-cloud)!important;color:var(--niil-ink)}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 .niil-surge{animation-name:niilSurge}
@@ -42,7 +43,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 `;
 
 // Wordmark oficial NIIL: letras lilás, dois pontos lime e terminal curvo no “l”.
-export function Wordmark({altura=54,cor='#9B8DD3',corPontos='#C9E56C'}){
+export function Wordmark({altura=54,cor='#5B2D86',corPontos='#B7F20C'}){
   return <svg viewBox="0 0 420 190" style={{height:altura,display:'block',overflow:'visible'}} role="img" aria-label="niil">
     <g fill="none" stroke={cor} strokeWidth="28" strokeLinecap="round" strokeLinejoin="round">
       <path d="M28 160V92C28 48 61 26 103 26s75 22 75 66v68"/>
