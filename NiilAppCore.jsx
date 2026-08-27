@@ -15,6 +15,7 @@ import Sono from './Sono.jsx';
 import AgendaLeve from './AgendaLeve.jsx';
 import HomeTopActions from './HomeTopActions.jsx';
 import HubNIIL from './HubNIIL.jsx';
+import GuardaRoupa from './GuardaRoupa.jsx';
 import JornadaSistemica from './JornadaSistemica.jsx';
 import { FASES as FASES_INGLES } from './ingles.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
@@ -312,7 +313,8 @@ const inicial = {
   visao: {}, medidas: [], biblioteca: [], ritual: {}, jejum: null, alarmes: [],
   metasSOL: [], redes: [], cartas: {}, gratidoes: [], fotos: [], cursos: [], agendaCursos: [],
   jornada: { checkins: [], mapaNos: [], planoSemana: null },
-  sono: { objetivoHoras: 8, registros: [], despertador: { ativo:false, hora:'07:00', janelaMin:30, dias:[1,2,3,4,5] }, integracoes:{} }
+  sono: { objetivoHoras: 8, registros: [], despertador: { ativo:false, hora:'07:00', janelaMin:30, dias:[1,2,3,4,5] }, integracoes:{} },
+  guardaRoupa: { pecas: [] }
 };
 
 /* ══════════ APP ══════════ */
@@ -2010,6 +2012,7 @@ export default function NIILApp() {
     { id: 'inicio', n: 'Início', i: Home },
     { id: 'trilha', n: 'Trilha', i: Route },
     { id: 'fab', n: '', i: Plus },
+    { id: 'cursos', n: 'Cursos', i: BookOpen },
     { id: 'financeiro', n: 'Financeiro', i: Wallet }
   ];
 
@@ -2026,6 +2029,7 @@ export default function NIILApp() {
         {aba === 'extras' && Extras()}
         {aba === 'financeiro' && <Financeiro d={d} up={up} aviso={aviso} />}
         {aba === 'sono' && <Sono d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
+        {aba === 'guarda-roupa' && <GuardaRoupa d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
         {aba === 'ingles' && <Ingles d={d} up={up} aviso={aviso} />}
         {aba === 'dopamina' && <Cursos d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
         {aba === 'cursos' && <Cursos d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
@@ -2115,7 +2119,7 @@ export default function NIILApp() {
           <div className="niil-surge" style={{ position: 'fixed', bottom: 100, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: C.petroleo, color: '#fff', padding: '12px 20px', borderRadius: 14, fontSize: 13.5, fontWeight: 700, boxShadow: '0 8px 24px rgba(11,20,22,.28)', maxWidth: '90vw' }}>{toast}</div>
         )}
 
-        <div style={{ position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:520,background:C.card,borderTop:`1px solid ${C.line}`,display:'grid',gridTemplateColumns:'1fr 1fr 74px 1fr',alignItems:'center',height:74,padding:'0 12px 8px',zIndex:70 }}>
+        <div style={{ position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:520,background:C.card,borderTop:`1px solid ${C.line}`,display:'grid',gridTemplateColumns:'1fr 1fr 74px 1fr 1fr',alignItems:'center',height:74,padding:'0 12px 8px',zIndex:70 }}>
           {NAV.map(n => {
             if (n.id === 'fab') return (
               <button key="fab" onClick={() => setFab(true)} style={{ width: 54, height: 54, borderRadius: 99, border: 'none', background: C.petroleo, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: -20, boxShadow: '0 6px 18px rgba(7,91,89,.34)' }}><Plus size={26} /></button>
