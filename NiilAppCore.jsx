@@ -1407,12 +1407,6 @@ export default function NIILApp() {
             const aberto = sessoesAbertas[b.id] ?? (!completo || contemAtual);
             const posicoes = [50, 68, 58, 34, 25, 43, 67, 72, 51, 29, 35, 61];
             const alturaMapa = b.etapas.length * 116 + 18;
-            const emocoes = ['acolher', 'refletir', 'incentivar', 'celebrar'];
-            const aparicoesNIIL = [1, 4, 7].filter(i => i < b.etapas.length).map((indice, j) => ({
-              indice,
-              emocao: emocoes[(bi + j) % emocoes.length],
-              lado: posicoes[indice % posicoes.length] > 50 ? 'left' : 'right'
-            }));
             return (
               <div key={b.id} style={{ marginBottom: 28, opacity: blocoLiberado ? 1 : .62 }}>
                 <button onClick={() => blocoLiberado && setSessoesAbertas(a => ({ ...a, [b.id]: !aberto }))} style={{ width: '100%', minHeight: 92, display: 'flex', alignItems: 'center', gap: 12, border: 0, borderRadius: 23, background: blocoLiberado ? corBloco : '#DDE3E3', color: blocoLiberado ? sobre(corBloco) : C.ink3, padding: '16px 17px', fontFamily: 'inherit', textAlign: 'left', cursor: blocoLiberado ? 'pointer' : 'default', boxShadow: blocoLiberado ? `0 8px 0 ${corBloco}42,0 15px 30px ${corBloco}20` : '0 7px 0 #C9D0D0' }}>
