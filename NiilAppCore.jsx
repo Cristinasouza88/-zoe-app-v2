@@ -15,6 +15,7 @@ import JornadaSistemica from './JornadaSistemica.jsx';
 import { FASES as FASES_INGLES } from './ingles.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 import { supabase } from './supabase.js';
+import { carregarRemoto, salvarRemoto, aguardarSalvamentosRemotos } from './zoe.remote-store.js';
 import avatarExpressoes, { niilMascot } from './niil-mascot.data.js';
 
 /* ══════════ FOTOS ══════════
@@ -341,13 +342,58 @@ export default function NIILApp() {
   });
   const setForm = (k, p) => setForms(f => ({ ...f, [k]: typeof p === 'function' ? p(f[k]) : { ...f[k], ...p } }));
 
+  const chaveDados=u=>`niil:dados:${String(u?.email||'').trim().toLowerCase()}`;
+  const chaveMeta=u=>`${chaveDados(u)}:meta`;
+
+  const carregarPersistido=async perfil=>{
+    const key=chaveDados(perfil),metaKey=chaveMeta(perfil);
+    const [local,localMeta,remoto]=await Promise.all([
+      store.get(key).catch(()=>null),
+      store.get(metaKey).catch(()=>null),
+      carregarRemoto().catch(()=>null)
+    ]);
+    const localTs=Date.parse(localMeta?.updatedAt||0)||0;
+    const remotoTs=Date.parse(remoto?.updatedAt||0)||0;
+
+    // Se a nuvem comprova que é mais nova, ela vence. Sem timestamp remoto,
+    // preservamos o local para nunca trocar um estado válido por um snapshot antigo.
+    if(remoto?.data&&(!local||(remotoTs&&remotoTs>localTs))){
+      await store.set(key,remoto.data).catch(()=>false);
+      await store.set(metaKey,{updatedAt:remoto.updatedAt||new Date().toISOString(),source:'remote'}).catch(()=>false);
+      return remoto.data;
+    }
+
+    if(local){
+      const updatedAt=localMeta?.updatedAt||new Date().toISOString();
+      if(!localMeta?.updatedAt)await store.set(metaKey,{updatedAt,source:'local-recovered'}).catch(()=>false);
+      if(!remoto?.data||!remotoTs||localTs>=remotoTs)salvarRemoto(local,updatedAt);
+      return local;
+    }
+
+    if(remoto?.data)return remoto.data;
+    return null;
+  };
+
+  const persistirEstadoUsuario=(u,state)=>{
+    if(!u?.email)return Promise.resolve(false);
+    const updatedAt=new Date().toISOString(),key=chaveDados(u),metaKey=chaveMeta(u);
+    const local=Promise.all([
+      store.set(key,state),
+      store.set(metaKey,{updatedAt,source:'local'})
+    ]).catch(()=>[false,false]);
+    salvarRemoto(state,updatedAt);
+    return local.then(([ok])=>ok);
+  };
+
   useEffect(() => {
     let ativo = true;
+    let carga=0;
 
-    const aplicarSessao = (session) => {
+    const aplicarSessao = async session => {
+      const seq=++carga;
       const u = session?.user;
       if (!u) {
-        if (ativo) {
+        if (ativo&&seq===carga) {
           setUsuario(null);
           setD(inicial);
           setCarregando(false);
@@ -361,19 +407,22 @@ export default function NIILApp() {
         id: u.id
       };
 
-      // Atualiza a tela imediatamente. A leitura dos dados locais acontece depois,
-      // fora do callback do Supabase, para não bloquear o retorno do OAuth.
-      if (ativo) {
+      if(ativo){
         setUsuario(perfil);
-        setCarregando(false);
+        setCarregando(true);
       }
-      store.get(`niil:dados:${perfil.email}`).then(dd => {
-        if (!ativo) return;
-        setD(dd ? { ...inicial, ...dd } : {
-          ...inicial,
-          perfil: { ...inicial.perfil, nome: perfil.nome, email: perfil.email }
-        });
+
+      const dd=await carregarPersistido(perfil);
+      if(!ativo||seq!==carga)return;
+      setD(dd ? {
+        ...inicial,
+        ...dd,
+        perfil:{...inicial.perfil,...(dd.perfil||{}),nome:dd.perfil?.nome||perfil.nome,email:perfil.email}
+      } : {
+        ...inicial,
+        perfil:{...inicial.perfil,nome:perfil.nome,email:perfil.email}
       });
+      setCarregando(false);
     };
 
     const veioDeRecuperacao = window.location.hash.includes('type=recovery') ||
@@ -399,7 +448,7 @@ export default function NIILApp() {
         setCarregando(false);
         return;
       }
-      // Evita operações assíncronas dentro do callback de autenticação.
+      if(event==='TOKEN_REFRESHED')return;
       setTimeout(() => aplicarSessao(session), 0);
     });
 
@@ -420,16 +469,34 @@ export default function NIILApp() {
     return () => clearInterval(t);
   }, [precisaRelogio]);
 
-  const salvar = n => { setD(n); if (usuario) store.set(`niil:dados:${usuario.email}`, n).catch?.(()=>{}); };
-  const up = fn => setD(prev => { const next = typeof fn === 'function' ? fn(prev) : fn; if (usuario) store.set(`niil:dados:${usuario.email}`, next).catch?.(()=>{}); return next; });
+  const salvar = n => {
+    setD(n);
+    if(usuario)persistirEstadoUsuario(usuario,n);
+  };
+  const up = fn => setD(prev => {
+    const next = typeof fn === 'function' ? fn(prev) : fn;
+    if(usuario)persistirEstadoUsuario(usuario,next);
+    return next;
+  });
   const aviso = m => { setToast(m); setTimeout(() => setToast(''), 2300); };
 
   const entrar = async u => {
+    setCarregando(true);
     setUsuario(u);
-    const dd = await store.get(`niil:dados:${u.email}`);
-    setD(dd ? { ...inicial, ...dd } : { ...inicial, perfil: { ...inicial.perfil, nome: u.nome, email: u.email } });
+    const dd=await carregarPersistido(u);
+    setD(dd ? {
+      ...inicial,
+      ...dd,
+      perfil:{...inicial.perfil,...(dd.perfil||{}),nome:dd.perfil?.nome||u.nome,email:u.email}
+    } : {
+      ...inicial,
+      perfil:{...inicial.perfil,nome:u.nome,email:u.email}
+    });
+    setCarregando(false);
   };
   const sair = async () => {
+    if(usuario)await persistirEstadoUsuario(usuario,d);
+    await aguardarSalvamentosRemotos();
     await supabase.auth.signOut();
     setUsuario(null);
     setD(inicial);
