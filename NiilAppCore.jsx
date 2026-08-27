@@ -13,7 +13,6 @@ import Conquistas from './Conquistas.jsx';
 import Cursos from './Cursos.jsx';
 import Sono from './Sono.jsx';
 import AgendaLeve from './AgendaLeve.jsx';
-import HomeTopActions from './HomeTopActions.jsx';
 import HubNIIL from './HubNIIL.jsx';
 import GuardaRoupa from './GuardaRoupa.jsx';
 import JornadaSistemica from './JornadaSistemica.jsx';
@@ -22,7 +21,6 @@ import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
 import { supabase } from './supabase.js';
 import { carregarRemoto, salvarRemoto, aguardarSalvamentosRemotos } from './zoe.remote-store.js';
 import avatarExpressoes, { niilMascot } from './niil-mascot.data.js';
-import NiilOrb from './NiilOrb.jsx';
 import HomeNIILV3 from './HomeNIILV3.jsx';
 
 /* ══════════ FOTOS ══════════
@@ -260,7 +258,6 @@ function Login({ onEntrar }) {
 
   return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: -140, right: -110, width: 320, height: 320, borderRadius: '50%', filter: 'blur(80px)', opacity: .2, background: `conic-gradient(from 40deg, ${C.lima}, ${C.aqua}, ${C.azul}, ${C.lima})` }} />
       <div className="niil-surge" style={{ textAlign: 'center', marginBottom: 30, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Wordmark altura={58} />
         <p style={{ color: C.ink2, fontSize: 13.5, marginTop: 16 }}>Sua vida extraordinária, um dia por vez</p>
@@ -1395,8 +1392,8 @@ export default function NIILApp() {
     if (etapaAberta) return DetalheEtapa();
     return (
       <div style={{ paddingBottom: 120 }}>
-        <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 14px' }}>
-          <div style={{ display:'flex',alignItems:'center',minHeight:94 }}><div style={{ flex:1 }}><h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Minha trilha</h1><p style={{ fontSize: 13, color: C.ink2, margin: 0 }}>Uma missão por vez. Eu sigo com você.</p></div><img src={avatarImagem} alt="NIIL" style={{ width:88,height:96,objectFit:'contain',objectPosition:'center',filter:'drop-shadow(0 8px 12px rgba(55,28,105,.18))' }}/></div>
+        <div style={{ background: C.bg, padding: '18px 18px 14px' }}>
+          <div style={{ display:'flex',alignItems:'center',minHeight:94,gap:14 }}><div style={{ flex:1 }}><h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Minha trilha</h1><p style={{ fontSize: 13, color: C.ink2, margin: 0 }}>Uma missão por vez. O caminho se organiza conforme você avança.</p></div><div aria-hidden="true" style={{ width:76,height:76,borderRadius:22,background:C.lima,color:C.ink,display:'grid',placeItems:'center',flex:'0 0 auto' }}><Route size={31}/></div></div>
           <Card>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>Progresso da jornada</span>
@@ -1408,6 +1405,7 @@ export default function NIILApp() {
 
         <div style={{ padding: '18px 14px' }}>
           {TRILHA.map((b, bi) => {
+            const corBloco = bi % 2 === 0 ? C.lima : C.ink;
             const feitasB = b.etapas.filter(e => feito(e.id)).length;
             const blocoLiberado = b.etapas.some(e => liberada(e.id));
             const completo = feitasB === b.etapas.length;
@@ -1423,7 +1421,7 @@ export default function NIILApp() {
             }));
             return (
               <div key={b.id} style={{ marginBottom: 28, opacity: blocoLiberado ? 1 : .62 }}>
-                <button onClick={() => blocoLiberado && setSessoesAbertas(a => ({ ...a, [b.id]: !aberto }))} style={{ width: '100%', minHeight: 92, display: 'flex', alignItems: 'center', gap: 12, border: 0, borderRadius: 23, background: blocoLiberado ? b.cor : '#DDE3E3', color: blocoLiberado ? sobre(b.cor) : C.ink3, padding: '16px 17px', fontFamily: 'inherit', textAlign: 'left', cursor: blocoLiberado ? 'pointer' : 'default', boxShadow: blocoLiberado ? `0 8px 0 ${b.cor}42,0 15px 30px ${b.cor}20` : '0 7px 0 #C9D0D0' }}>
+                <button onClick={() => blocoLiberado && setSessoesAbertas(a => ({ ...a, [b.id]: !aberto }))} style={{ width: '100%', minHeight: 92, display: 'flex', alignItems: 'center', gap: 12, border: 0, borderRadius: 23, background: blocoLiberado ? corBloco : '#DDE3E3', color: blocoLiberado ? sobre(corBloco) : C.ink3, padding: '16px 17px', fontFamily: 'inherit', textAlign: 'left', cursor: blocoLiberado ? 'pointer' : 'default', boxShadow: blocoLiberado ? `0 8px 0 ${corBloco}42,0 15px 30px ${corBloco}20` : '0 7px 0 #C9D0D0' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 10.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1, opacity: .8 }}>{b.bloco}</div>
                     <div style={{ fontSize: 18, fontWeight: 900, marginTop: 4, lineHeight: 1.2 }}>{b.nome}</div>
@@ -1436,13 +1434,9 @@ export default function NIILApp() {
 
                 {aberto && <div style={{ position: 'relative', height: alturaMapa, marginTop: 16, overflow: 'hidden' }}>
                   <svg viewBox={`0 0 100 ${alturaMapa}`} preserveAspectRatio="none" aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
-                    <polyline points={b.etapas.map((_, i) => `${posicoes[i % posicoes.length]},${i * 116 + 42}`).join(' ')} fill="none" stroke="#DDE5E3" strokeWidth="2.2" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
-                    {b.etapas.slice(0, -1).map((e, i) => feito(e.id) && <line key={e.id} x1={posicoes[i % posicoes.length]} y1={i * 116 + 42} x2={posicoes[(i + 1) % posicoes.length]} y2={(i + 1) * 116 + 42} stroke={b.cor} strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />)}
+                    <polyline points={b.etapas.map((_, i) => `${posicoes[i % posicoes.length]},${i * 116 + 42}`).join(' ')} fill="none" stroke="#E7E4EA" strokeWidth="2.2" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+                    {b.etapas.slice(0, -1).map((e, i) => feito(e.id) && <line key={e.id} x1={posicoes[i % posicoes.length]} y1={i * 116 + 42} x2={posicoes[(i + 1) % posicoes.length]} y2={(i + 1) * 116 + 42} stroke={corBloco} strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" />)}
                   </svg>
-                  {blocoLiberado && aparicoesNIIL.map((ap, j) => (
-                    <img key={`${b.id}-niil-${ap.indice}`} src={avatarExpressoes[ap.emocao][avatarId]} alt={`NIIL em modo ${ap.emocao}`}
-                      style={{ position: 'absolute', top: ap.indice * 116 - 28, [ap.lado]: 4, width: avatarId === 'essencial' ? 86 : 96, height: 108, objectFit: 'contain', objectPosition: `${ap.lado} center`, filter: 'drop-shadow(0 8px 12px rgba(55,28,105,.16))', zIndex: 3, transform: j % 2 ? 'rotate(2deg)' : 'rotate(-2deg)' }} />
-                  ))}
                   {b.etapas.map((e, i) => {
                     const lib = liberada(e.id), ok = feito(e.id), atual = etapaAtual && etapaAtual.id === e.id;
                     const x = posicoes[i % posicoes.length];
@@ -1454,8 +1448,8 @@ export default function NIILApp() {
                           position: 'absolute', top: i * 116, left: `${x}%`, transform: 'translateX(-50%)', width: 144,
                           display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: lib ? 'pointer' : 'default', opacity: lib ? 1 : .5, zIndex: 2
                         }}>
-                        {atual && <span style={{ position: 'absolute', top: -13, padding: '4px 10px', borderRadius: 9, background: C.lima, color: C.petroleo, fontSize: 9, fontWeight: 950, letterSpacing: .5, boxShadow: '0 4px 10px rgba(7,91,89,.12)' }}>AGORA</span>}
-                        <div style={{ width: atual ? 82 : 74, height: atual ? 82 : 74, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', background: ok ? b.cor : '#E1E6E5', color: ok ? sobre(b.cor) : '#A8B1B1', border: atual ? '8px solid #fff' : '6px solid #fff', boxShadow: atual ? `0 0 0 5px ${b.cor}50,0 10px 0 rgba(120,132,132,.32),0 16px 28px ${b.cor}25` : '0 7px 0 rgba(46,61,67,.16)', transition: 'transform .2s ease' }}>
+                        {atual && <span style={{ position: 'absolute', top: -13, padding: '4px 10px', borderRadius: 9, background: C.lima, color: C.ink, fontSize: 9, fontWeight: 950, letterSpacing: .5, boxShadow: '0 4px 10px rgba(7,91,89,.12)' }}>AGORA</span>}
+                        <div style={{ width: atual ? 82 : 74, height: atual ? 82 : 74, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', background: ok ? corBloco : '#E1E6E5', color: ok ? sobre(corBloco) : '#A8B1B1', border: atual ? '8px solid #fff' : '6px solid #fff', boxShadow: atual ? `0 0 0 5px ${corBloco}50,0 10px 0 rgba(120,132,132,.32),0 16px 28px ${corBloco}25` : '0 7px 0 rgba(46,61,67,.16)', transition: 'transform .2s ease' }}>
                           {ok ? <Check size={28} strokeWidth={3} /> : lib ? <IconeEtapa size={25} /> : <Lock size={22} />}
                         </div>
                         <div style={{ width: 138, marginTop: 11, padding: '7px 8px', borderRadius: 11, background: atual ? '#fff' : 'rgba(255,255,255,.86)', boxShadow: atual ? '0 6px 18px rgba(20,43,48,.09)' : 'none', textAlign: 'center' }}>
@@ -1507,7 +1501,7 @@ export default function NIILApp() {
       <div style={{ padding: '20px 16px 120px', minHeight: '100vh', background: '#F7FAF9' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}><CalendarDays size={24} color={C.green} /><h1 style={{ margin: 0, color: C.ink, fontSize: 24 }}>Minha agenda</h1></div>
         <p style={{ margin: '4px 0 18px 34px', color: C.ink3, fontSize: 12.5 }}>Agenda e missões organizadas pela NIIL</p>
-        <Card style={{marginBottom:14,background:'linear-gradient(135deg,#0A6963,#15977E)',color:'#fff',padding:16}}><div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center'}}><div><Flame size={21} color={C.lima}/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{streak}</div><div style={{fontSize:9,opacity:.78}}>dias de ofensiva</div></div><div style={{borderLeft:'1px solid rgba(255,255,255,.2)',borderRight:'1px solid rgba(255,255,255,.2)'}}><Trophy size={21} color="#FFD759"/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{fasesConcluidas}</div><div style={{fontSize:9,opacity:.78}}>fases vencidas</div></div><div><Sparkles size={21} color="#DDB4FF"/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{reflexoesCursos}</div><div style={{fontSize:9,opacity:.78}}>reflexões</div></div></div></Card>
+        <Card style={{marginBottom:14,background:C.ink,color:'#fff',padding:16}}><div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',textAlign:'center'}}><div><Flame size={21} color={C.lima}/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{streak}</div><div style={{fontSize:9,opacity:.78}}>dias de ofensiva</div></div><div style={{borderLeft:'1px solid rgba(255,255,255,.2)',borderRight:'1px solid rgba(255,255,255,.2)'}}><Trophy size={21} color="#FFD759"/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{fasesConcluidas}</div><div style={{fontSize:9,opacity:.78}}>fases vencidas</div></div><div><Sparkles size={21} color="#B7F20C"/><div style={{fontSize:22,fontWeight:950,marginTop:3}}>{reflexoesCursos}</div><div style={{fontSize:9,opacity:.78}}>reflexões</div></div></div></Card>
         <Card style={{ marginBottom: 16, padding: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}><button onClick={() => { const x=new Date(base); x.setMonth(x.getMonth()-1); setData(x.toISOString().slice(0,10)); }} style={{ border:0,background:'transparent' }}><ChevronLeft size={20}/></button><strong style={{ color:C.ink, textTransform:'capitalize' }}>{base.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</strong><button onClick={() => { const x=new Date(base); x.setMonth(x.getMonth()+1); setData(x.toISOString().slice(0,10)); }} style={{ border:0,background:'transparent' }}><ChevronRight size={20}/></button></div>
           <div style={{ display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:4,marginBottom:5 }}>{['S','T','Q','Q','S','S','D'].map((x,i)=><div key={i} style={{ textAlign:'center',fontSize:9,fontWeight:800,color:C.ink3 }}>{x}</div>)}</div>
@@ -1635,7 +1629,7 @@ export default function NIILApp() {
     const jejumH = d.jejum ? (Date.now() - d.jejum.inicio) / 3600000 : 0;
     return (
       <div style={{ paddingBottom: 120 }}>
-        <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 12px' }}>
+        <div style={{ background: C.bg, padding: '18px 18px 12px' }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 14px' }}>Alimentação</h1>
           <Card cls="niil-surge">
             <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', marginBottom: 13 }}>
@@ -1727,7 +1721,7 @@ export default function NIILApp() {
     const rodasFeitas = Object.keys(d.rodas).map(Number).sort();
     return (
       <div style={{ paddingBottom: 120 }}>
-        <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 14px' }}>
+        <div style={{ background: C.bg, padding: '18px 18px 14px' }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 14px' }}>Progresso</h1>
           <div style={{ display: 'flex', background: 'rgba(255,255,255,.7)', borderRadius: 13, padding: 4 }}>
             {[['semana', 'Semana'], ['mes', 'Mês'], ['tri', '3 meses']].map(([k, l]) => (
@@ -1798,7 +1792,7 @@ export default function NIILApp() {
 
     return (
       <div style={{ paddingBottom: 120 }}>
-        <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 14px' }}>
+        <div style={{ background: C.bg, padding: '18px 18px 14px' }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Diário de fotos</h1>
           <p style={{ fontSize: 13, color: C.ink2, margin: '0 0 14px' }}>Registre hoje para comparar depois</p>
           <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 3 }}>
@@ -1908,7 +1902,7 @@ export default function NIILApp() {
     const a = forms.alarme, b = forms.biblioteca, tipo = forms.tipoMidia;
     return (
       <div style={{ paddingBottom: 120 }}>
-        <div style={{ background: `linear-gradient(175deg,${C.aquaSuave},${C.bg})`, padding: '18px 18px 14px' }}>
+        <div style={{ background: C.bg, padding: '18px 18px 14px' }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: 0 }}>Apoio</h1>
           <p style={{ fontSize: 13, color: C.ink2, margin: '4px 0 0' }}>Lembretes e sua biblioteca</p>
         </div>
@@ -2062,17 +2056,17 @@ export default function NIILApp() {
         <input ref={inputFoto} type="file" accept="image/*" onChange={receberFoto} style={{ display: 'none' }} />
 
         {coach && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 110, background: `linear-gradient(160deg,${coach.bloco.cor},${C.petroleo})`, padding: '28px 20px', overflowY: 'auto', color: '#fff' }}>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 110, background: C.ink, padding: '28px 20px', overflowY: 'auto', color: '#fff' }}>
             <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ width: 240, height: 245, margin: '4px auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFEFA', borderRadius: '47% 53% 44% 56% / 55% 45% 55% 45%', boxShadow: '0 16px 32px rgba(21,12,58,.2)' }}><img src={avatarImagem} alt="NIIL celebrando" style={{ height: avatarId === 'essencial' ? 220 : 190, maxWidth: 205, objectFit: 'contain' }} /></div>
+              <div aria-hidden="true" style={{ width:86,height:86,margin:'18px auto 12px',display:'grid',placeItems:'center',background:C.lima,color:C.ink,borderRadius:28,boxShadow:'0 12px 26px rgba(0,0,0,.14)' }}><CheckCircle2 size={42} strokeWidth={2.4}/></div>
               <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: 1.4, opacity: .75 }}>NIIL · SUA COACH</div>
               <h1 style={{ textAlign: 'center', fontSize: 27, lineHeight: 1.18, margin: '8px 0 18px' }}>{coach.titulo}</h1>
               <div style={{ background: 'rgba(255,255,255,.96)', color: C.ink, borderRadius: 24, padding: 20, boxShadow: '0 18px 45px rgba(0,0,0,.18)' }}>
                 <p style={{ fontSize: 14, lineHeight: 1.65, margin: '0 0 17px', color: C.ink2 }}>{coach.texto}</p>
                 {coach.tipo === 'sessao' && <><div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Antes de seguir, leve estas reflexões:</div>
-                {coach.reflexoes.map((q, i) => <div key={q} style={{ marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 700, color: coach.bloco.cor }}>{i + 1}. {q}</label><textarea value={campo(`coach-${coach.bloco.id}-${i}`)} onChange={ev => setCampo(`coach-${coach.bloco.id}-${i}`, ev.target.value)} placeholder="Escreva o que vier com sinceridade" style={{ width: '100%', minHeight: 62, marginTop: 6, borderRadius: 12, border: `1.5px solid ${C.line}`, padding: 11, resize: 'vertical', fontFamily: 'inherit', color: C.ink, outline: 'none' }} /></div>)}</>}
+                {coach.reflexoes.map((q, i) => <div key={q} style={{ marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 700, color: C.greenDark }}>{i + 1}. {q}</label><textarea value={campo(`coach-${coach.bloco.id}-${i}`)} onChange={ev => setCampo(`coach-${coach.bloco.id}-${i}`, ev.target.value)} placeholder="Escreva o que vier com sinceridade" style={{ width: '100%', minHeight: 62, marginTop: 6, borderRadius: 12, border: `1.5px solid ${C.line}`, padding: 11, resize: 'vertical', fontFamily: 'inherit', color: C.ink, outline: 'none' }} /></div>)}</>}
               </div>
-              <button onClick={() => { const ultimo = coach.tipo === 'etapa' ? coach.etapaId : coach.bloco.etapas[coach.bloco.etapas.length - 1].id; setCoach(null); abrirProximaEtapa(ultimo); }} style={{ width: '100%', marginTop: 18, border: 0, borderRadius: 16, background: '#fff', color: coach.bloco.cor, padding: 16, fontSize: 15, fontWeight: 900, fontFamily: 'inherit', boxShadow: '0 6px 0 rgba(0,0,0,.16)' }}>{coach.tipo === 'etapa' ? 'CONTINUAR' : 'CONTINUAR PARA A PRÓXIMA SESSÃO'}</button>
+              <button onClick={() => { const ultimo = coach.tipo === 'etapa' ? coach.etapaId : coach.bloco.etapas[coach.bloco.etapas.length - 1].id; setCoach(null); abrirProximaEtapa(ultimo); }} style={{ width: '100%', marginTop: 18, border: 0, borderRadius: 16, background: '#fff', color: C.greenDark, padding: 16, fontSize: 15, fontWeight: 900, fontFamily: 'inherit', boxShadow: '0 6px 0 rgba(0,0,0,.16)' }}>{coach.tipo === 'etapa' ? 'CONTINUAR' : 'CONTINUAR PARA A PRÓXIMA SESSÃO'}</button>
             </div>
           </div>
         )}
