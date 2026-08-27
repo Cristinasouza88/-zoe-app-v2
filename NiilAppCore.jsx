@@ -11,6 +11,7 @@ import Financeiro from './Financeiro.jsx';
 import Ingles from './Ingles.jsx';
 import Conquistas from './Conquistas.jsx';
 import Cursos from './Cursos.jsx';
+import Sono from './Sono.jsx';
 import JornadaSistemica from './JornadaSistemica.jsx';
 import { FASES as FASES_INGLES } from './ingles.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
@@ -307,7 +308,8 @@ const inicial = {
   desafio100: {}, ativacao40: { frase: '', marcas: {} }, caracteristicas: [],
   visao: {}, medidas: [], biblioteca: [], ritual: {}, jejum: null, alarmes: [],
   metasSOL: [], redes: [], cartas: {}, gratidoes: [], fotos: [], cursos: [], agendaCursos: [],
-  jornada: { checkins: [], mapaNos: [], planoSemana: null }
+  jornada: { checkins: [], mapaNos: [], planoSemana: null },
+  sono: { objetivoHoras: 8, registros: [], despertador: { ativo:false, hora:'07:00', janelaMin:30, dias:[1,2,3,4,5] }, integracoes:{} }
 };
 
 /* ══════════ APP ══════════ */
@@ -1563,6 +1565,10 @@ export default function NIILApp() {
       { nome: 'Estudar inglês', valor: inglesFeitas, meta: 5, cor: C.green, icone: BookOpen }
     ];
     const secao = { background: C.card, borderRadius: 24, padding: 18, marginBottom: 14, border: `1px solid ${C.line}`, boxShadow: '0 9px 26px rgba(38,53,68,.055)' };
+    const noitesSono = Array.isArray(d.sono?.registros) ? d.sono.registros : [];
+    const sonoHoje = noitesSono.find(r=>r.data===data) || noitesSono[0] || null;
+    const ultimasNoites = noitesSono.slice(0,7).reverse();
+    const horasSonoHome = sonoHoje ? Number(sonoHoje.tempoDormindoMin||0)/60 : Number(dia.sono||0);
     return (
       <div style={{ padding: '18px 16px 120px', background: 'radial-gradient(circle at 50% 7%,rgba(168,255,0,.13),transparent 27%),radial-gradient(circle at 92% 18%,rgba(0,230,210,.10),transparent 24%),linear-gradient(180deg,#FCFFFD 0%,#F7FAF9 100%)' }}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 22 }}>
@@ -1607,9 +1613,18 @@ export default function NIILApp() {
           </div>
         </div>
 
-        <div style={secao}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Moon size={19} color={C.lilac} /> Sono</strong><span style={{ color: C.lilac, fontSize: 12, fontWeight: 800 }}>Ver histórico →</span></div>
-          <div style={{ display: 'flex', alignItems: 'end', gap: 20, marginTop: 15 }}><div style={{ minWidth: 92 }}><div style={{ fontSize: 25, fontWeight: 800, color: C.ink }}>{Math.floor(dia.sono || 0)}h {Math.round(((dia.sono || 0) % 1) * 60)}m</div><div style={{ color: C.ink3, fontSize: 11 }}>Sono de hoje</div></div><div style={{ display: 'flex', gap: 13, alignItems: 'end', flex: 1 }}>{[2,5,3,6,4,7,5].map((h,i)=><div key={i} style={{ flex:1, textAlign:'center' }}><div style={{ height: 42, borderRadius: 9, background: `linear-gradient(to top,${C.lilac} ${h*10}%,#EEF0F3 ${h*10}%)` }} /><span style={{ fontSize: 9, color: C.ink3 }}>{'DSTQQSS'[i]}</span></div>)}</div></div>
+        <div style={{...secao,cursor:'pointer'}} onClick={()=>setAba('sono')}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><strong style={{ display: 'flex', gap: 8, color: C.ink }}><Moon size={19} color={C.lilac} /> Sono</strong><span style={{ color: C.lilac, fontSize: 12, fontWeight: 800 }}>Abrir sono →</span></div>
+          <div style={{ display: 'flex', alignItems: 'end', gap: 16, marginTop: 15 }}>
+            <div style={{ minWidth: 112 }}>
+              <div style={{ fontSize: 25, fontWeight: 800, color: C.ink }}>{Math.floor(horasSonoHome)}h {Math.round((horasSonoHome%1)*60)}m</div>
+              <div style={{ color: C.ink3, fontSize: 11 }}>{sonoHoje?'última noite registrada':'Sono de hoje'}</div>
+              {sonoHoje&&<div style={{marginTop:6,fontSize:10,color:C.lilac,fontWeight:800}}>{Math.round(sonoHoje.qualidade||0)}% qualidade · {Math.round(sonoHoje.eficiencia||0)}% eficiência</div>}
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'end', flex: 1, height:56 }}>
+              {(ultimasNoites.length?ultimasNoites:Array.from({length:7},()=>null)).map((r,i)=>{const h=r?Number(r.tempoDormindoMin||0)/60:0;return <div key={r?.id||i} style={{ flex:1, textAlign:'center' }}><div style={{ height: 42, borderRadius: 9, background: `linear-gradient(to top,${C.lilac} ${Math.max(4,Math.min(100,h/10*100))}%,#EEF0F3 ${Math.max(4,Math.min(100,h/10*100))}%)` }} /><span style={{ fontSize: 8, color: C.ink3 }}>{r?new Date(r.data+'T12:00').getDate():''}</span></div>})}
+            </div>
+          </div>
         </div>
 
         <div style={secao}>
@@ -2049,6 +2064,7 @@ export default function NIILApp() {
         {aba === 'diario' && Diario()}
         {aba === 'extras' && Extras()}
         {aba === 'financeiro' && <Financeiro d={d} up={up} aviso={aviso} />}
+        {aba === 'sono' && <Sono d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
         {aba === 'ingles' && <Ingles d={d} up={up} aviso={aviso} />}
         {aba === 'dopamina' && <Cursos d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
         {aba === 'cursos' && <Cursos d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
@@ -2059,6 +2075,7 @@ export default function NIILApp() {
         <Sheet aberto={maisAberto} fechar={() => setMaisAberto(false)} titulo="Mais">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {[
+              ['sono', 'Sono', Moon, C.lilac],
               ['diario', 'Feed', Camera, C.sky],
               ['progresso', 'Performance', TrendingUp, C.green],
               ['conquistas', 'Conquistas', Trophy, C.gold],
@@ -2175,7 +2192,7 @@ export default function NIILApp() {
           })}
         </div>
 
-        {!['extras', 'diario', 'progresso', 'conquistas'].includes(aba) && !fab && (
+        {!['extras', 'diario', 'progresso', 'conquistas', 'sono'].includes(aba) && !fab && (
           <button onClick={() => setMaisAberto(true)} style={{ position: 'fixed', bottom: 92, right: 16, width: 48, height: 48, borderRadius: 16, border: 'none', background: C.petroleo, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 16px rgba(11,20,22,.26)', zIndex: 60 }}><Compass size={21} /></button>
         )}
       </div>
