@@ -41,6 +41,11 @@ export function pedirSugestoes(resumo) {
   return chamar('financial-agent', { resumo });
 }
 
+/** conversa geral com a inteligência do NIIL */
+export function conversarNIIL({ mensagem, contexto, historico }) {
+  return chamar('niil-assistant', { mensagem, contexto, historico });
+}
+
 /** Web Speech API — grava e transcreve localmente no navegador, sem backend */
 export function reconhecimentoDisponivel() {
   return typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
