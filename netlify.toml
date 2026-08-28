@@ -11,4 +11,4 @@
   to = "/index.html"
   status = 200
 
-# deploy-trigger: home-orb-voice-assistant
+# deploy-trigger: emergency-restore-after-trail-v2
