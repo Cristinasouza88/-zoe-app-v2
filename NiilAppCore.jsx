@@ -23,6 +23,7 @@ import { carregarRemoto, salvarRemoto, aguardarSalvamentosRemotos } from './zoe.
 import HomeNIILV3 from './HomeNIILV3.jsx';
 import TreinoSheet from './TreinoSheet.jsx';
 import NIILOrb from './NIILOrb.jsx';
+import NIILVoice from './NIILVoice.jsx';
 import { GAMIFICACAO_INICIAL, PONTOS_NIIL, reconciliarGamificacao, resumoGamificacao, desafiosGamificacao } from './gamificacao.core.js';
 
 /* ══════════ FOTOS ══════════
@@ -2142,6 +2143,12 @@ export default function NIILApp() {
           </div>
           <div style={{ textAlign: 'center', color: C.ink3, fontSize: 10.5, marginTop: 18 }}>NIIL · versão 1.0.0</div>
         </Sheet>
+
+        <NIILVoice
+          aberto={sheet === 'ia'}
+          fechar={() => setSheet(null)}
+          d={d}
+        />
 
         <TreinoSheet
           aberto={sheet === 'treino'}
