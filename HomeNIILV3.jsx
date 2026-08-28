@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Menu, Target, CheckCircle2, BookOpen, Wallet, UserRound, Plus, ChevronRight, CalendarDays, MapPin } from 'lucide-react';
+import { Menu, Target, CheckCircle2, BookOpen, Wallet, UserRound, Plus, ChevronRight, CalendarDays, MapPin, BarChart3 } from 'lucide-react';
 import './HomeNIILV3.css';
 
 const GREEN = '#B7F20C';
@@ -97,10 +97,15 @@ export default function HomeNIILV3({
           <strong>{nome}</strong>
         </div>
 
-        <button className="niil-home-v3-avatar" onClick={() => setSheet?.('perfil')} aria-label="Abrir perfil">
-          <span>{nome.slice(0, 1).toUpperCase()}</span>
-          <i />
-        </button>
+        <div className="niil-home-v3-header-actions">
+          <button className="niil-home-v3-performance" onClick={() => setAba?.('progresso')} aria-label="Abrir Performance" title="Performance">
+            <BarChart3 size={21} strokeWidth={2.1} />
+          </button>
+          <button className="niil-home-v3-avatar" onClick={() => setSheet?.('perfil')} aria-label="Abrir perfil">
+            <span>{nome.slice(0, 1).toUpperCase()}</span>
+            <i />
+          </button>
+        </div>
       </header>
 
       <button className="niil-home-v3-goal" onClick={() => setAba?.('trilha')}>
