@@ -221,8 +221,44 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
   const Interacao=({e})=>{
     const v=ler(e.chave);
     if(e.tipo==='roda'){
-      const vals=d.rodas?.[e.rodaId]||{};
-      return <div className="tn-roda"><Radar valores={vals}/><div className="tn-roda-list">{RODA_SETORES.map(s=><label key={s}><span>{s}<b>{vals[s]||'—'}</b></span><input type="range" min="1" max="10" value={vals[s]||5} onChange={ev=>{up(st=>({...st,rodas:{...(st.rodas||{}),[e.rodaId]:{...(st.rodas?.[e.rodaId]||{}),[s]:Number(ev.target.value)}}}));feedback('tap',d)}}/></label>)}</div></div>;
+      const snap=(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id);
+      if(snap){
+        const ordenadas=[...RODA_SETORES].sort((a,b)=>Number(snap.valores[a])-Number(snap.valores[b]));
+        const dataFmt=new Date(snap.concluidaEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+        return <div className="tn-roda-result">
+          <div className="tn-roda-result-head"><span>RETRATO CONCLUÍDO</span><b>{dataFmt}</b></div>
+          <Radar valores={snap.valores}/>
+          <div className="tn-roda-score-grid">{RODA_SETORES.map(s=><div key={s}><span>{s}</span><b>{snap.valores[s]}/10</b></div>)}</div>
+          <div className="tn-roda-focus">
+            <span>AGORA, ESCOLHA UM FOCO</span>
+            <h3>Qual ponto merece entrar primeiro no seu sistema?</h3>
+            <p>O NIIL sugere começar por áreas com notas mais baixas, mas a escolha é sua.</p>
+            <div className="tn-roda-focus-list">{ordenadas.slice(0,4).map(area=>{
+              const mod=RODA_MODULO(area);
+              const destino=mod?(mod==='financeiro'?'Financeiro':mod==='sono'?'Sono':mod==='cursos'?'Cursos':mod==='agenda'?'Agenda':'Diário'):'trilha contextual';
+              return <button key={area} onClick={()=>ativarFocoRoda(e,snap,area)}>
+                <div><b>{area}</b><small>{snap.valores[area]+'/10 · '+(mod?'conectar ao módulo '+destino:'criar '+destino)}</small></div>
+                <ChevronRight size={18}/>
+              </button>;
+            })}</div>
+            <details className="tn-roda-all"><summary>Escolher outra área</summary><div>{ordenadas.slice(4).map(area=><button key={area} onClick={()=>ativarFocoRoda(e,snap,area)}><span>{area}</span><b>{snap.valores[area]}/10</b></button>)}</div></details>
+          </div>
+          <div className="tn-roda-locked-note"><Lock size={14}/><span>Este retrato foi fechado e não pode ser editado. Em uma nova revisão, o NIIL cria outro retrato para comparação.</span></div>
+        </div>;
+      }
+      const setor=RODA_SETORES[rodaPasso],item=rascunhoRoda?.[setor]||{},guia=RODA_GUIA[setor]||{dica:'Pense na sua realidade recente.',exemplos:[]};
+      return <div className="tn-roda-wizard">
+        <div className="tn-roda-step"><span>{rodaPasso+1} de {RODA_SETORES.length}</span><b>{setor}</b></div>
+        <h2>Como está {setor.toLowerCase()} na sua vida hoje?</h2>
+        <p className="tn-roda-tip">{guia.dica}</p>
+        <div className="tn-roda-notas">{Array.from({length:10},(_,i)=>i+1).map(n=><button key={n} className={Number(item.nota)===n?'on':''} onClick={()=>salvarRodaCampo(e,setor,{nota:n})}>{n}</button>)}</div>
+        <div className="tn-roda-why">
+          <span>O que mais pesou nessa nota?</span>
+          <small>Use os exemplos como ponto de partida. Não existe resposta certa.</small>
+          <div className="tn-roda-reasons">{guia.exemplos.map(x=>{const on=(item.razoes||[]).includes(x);return <button key={x} className={on?'on':''} onClick={()=>alternarRazaoRoda(e,setor,x)}>{x}{on&&<Check size={14}/>}</button>})}</div>
+          <textarea value={item.detalhe||''} onChange={ev=>salvarRodaCampo(e,setor,{detalhe:ev.target.value})} placeholder="Se quiser, complete em uma frase: “dei essa nota porque...”"/>
+        </div>
+      </div>;
     }
     if(['choice','binary','module-decision'].includes(e.interacao))return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}<ChevronRight size={16}/></button>)}</div>;
     if(e.interacao==='scale')return <div className="tn-scale"><strong>{v||5}/10</strong><input type="range" min="1" max="10" value={v||5} onChange={ev=>salvar(e.chave,Number(ev.target.value))} onPointerUp={ev=>concluirRapido(e,Number(ev.currentTarget.value))}/><div><span>{e.minimo}</span><span>{e.maximo}</span></div></div>;
