@@ -90,9 +90,11 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
   const concluir=e=>{
     if(!valido(e)){aviso('Faça a interação rápida antes de continuar.');return;}
     const ja=feito(e.id);
+    const idx=e.fase.etapas.findIndex(x=>x.id===e.id);
+    const ultima=idx===e.fase.etapas.length-1;
     if(!ja)up(s=>{
       const base={...s,etapas:{...(s.etapas||{}),[e.id]:{feito:true,data:hoje(),concluidaEm:new Date().toISOString()}}};
-      return registrarEventoGamificacao(base,{
+      let next=registrarEventoGamificacao(base,{
         key:`trilha:v2:${e.id}`,
         tipo:e.tipo==='roda'?'trail.tool.completed':'trail.microstep.completed',
         pontos:Number(e.pontos)||10,
@@ -103,10 +105,19 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
         origemId:e.id,
         contexto:{marco:e.fase?.id||null}
       });
+      if(ultima)next=registrarEventoGamificacao(next,{
+        key:`trilha:v2:marco:${e.fase.id}`,
+        tipo:'trail.phase.completed',
+        pontos:50,
+        titulo:`Marco concluído · ${e.fase.nome}`,
+        area:'trilha',
+        data:hoje(),
+        trilhaId:'niil-central-v2',
+        origemId:e.fase.id
+      });
+      return next;
     });
     feedback('snap',d);
-    const idx=e.fase.etapas.findIndex(x=>x.id===e.id);
-    const ultima=idx===e.fase.etapas.length-1;
     if(ultima&&!ja){
       setMarco(e.fase);
       feedback('marco',d);
