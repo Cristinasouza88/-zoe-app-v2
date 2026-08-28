@@ -22,6 +22,7 @@ import { supabase } from './supabase.js';
 import { carregarRemoto, salvarRemoto, aguardarSalvamentosRemotos } from './zoe.remote-store.js';
 import HomeNIILV3 from './HomeNIILV3.jsx';
 import TreinoSheet from './TreinoSheet.jsx';
+import NIILOrb from './NIILOrb.jsx';
 import { GAMIFICACAO_INICIAL, PONTOS_NIIL, reconciliarGamificacao, resumoGamificacao, desafiosGamificacao } from './gamificacao.core.js';
 
 /* ══════════ FOTOS ══════════
@@ -2156,8 +2157,8 @@ export default function NIILApp() {
         {coach && (
           <div style={{ position: 'fixed', inset: 0, zIndex: 110, background: C.ink, padding: '28px 20px', overflowY: 'auto', color: '#fff' }}>
             <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-              <div aria-hidden="true" style={{ width:86,height:86,margin:'18px auto 12px',display:'grid',placeItems:'center',background:C.lima,color:C.ink,borderRadius:28,boxShadow:'0 12px 26px rgba(0,0,0,.14)' }}><CheckCircle2 size={42} strokeWidth={2.4}/></div>
-              <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: 1.4, opacity: .75 }}>NIIL · SUA COACH</div>
+              <div style={{margin:'18px auto 12px'}}><NIILOrb state="responding" size={112} label="NIIL apresentando sua reflexão"/></div>
+              <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: 1.4, opacity: .75 }}>NIIL · REFLEXÃO GUIADA</div>
               <h1 style={{ textAlign: 'center', fontSize: 27, lineHeight: 1.18, margin: '8px 0 18px' }}>{coach.titulo}</h1>
               <div style={{ background: 'rgba(255,255,255,.96)', color: C.ink, borderRadius: 24, padding: 20, boxShadow: '0 18px 45px rgba(0,0,0,.18)' }}>
                 <p style={{ fontSize: 14, lineHeight: 1.65, margin: '0 0 17px', color: C.ink2 }}>{coach.texto}</p>
