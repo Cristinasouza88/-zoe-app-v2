@@ -5,7 +5,7 @@ import {
   Heart, Scale, Circle, LogOut, Flame, Trash2, Compass, PenLine, ClipboardList, Sun,
   Wallet, Languages, Trophy, Moon, Smile, CheckCircle2, Zap, CalendarDays, ChevronDown, ChevronUp, MessageCircle
 } from 'lucide-react';
-import { TRILHA, RODA_SETORES, RITUAL_ACORDAR, VISAO_PILARES, RESUMO_VISAO, PILARES, VINCULOS, totalEtapas } from './conteudo';
+import { TRILHA, RODA_SETORES, RITUAL_ACORDAR, VISAO_PILARES, RESUMO_VISAO, PILARES, VINCULOS } from './conteudo';
 import { store, C, sobre, CLARAS, hoje, CSS, Card, Btn, Campo, Area, Barra, Sheet, Wordmark, Foto, GraficoBarras, GraficoLinha } from './ui.jsx';
 import Financeiro from './Financeiro.jsx';
 import Ingles from './Ingles.jsx';
@@ -24,6 +24,8 @@ import HomeNIILV3 from './HomeNIILV3.jsx';
 import TreinoSheet from './TreinoSheet.jsx';
 import NIILOrb from './NIILOrb.jsx';
 import NIILVoice from './NIILVoice.jsx';
+import TrilhaNIIL from './TrilhaNIIL.jsx';
+import { TRILHA_NIIL, TOTAL_PASSOS_NIIL, TOTAL_MARCOS_NIIL, faseAtualNIIL, marcosConcluidosNIIL } from './trilha.niil.data.js';
 import { GAMIFICACAO_INICIAL, PONTOS_NIIL, reconciliarGamificacao, resumoGamificacao, desafiosGamificacao } from './gamificacao.core.js';
 
 /* ══════════ FOTOS ══════════
@@ -311,6 +313,7 @@ const inicial = {
   visao: {}, medidas: [], biblioteca: [], ritual: {}, jejum: null, alarmes: [],
   metasSOL: [], redes: [], cartas: {}, gratidoes: [], fotos: [], cursos: [], agendaCursos: [],
   jornada: { checkins: [], mapaNos: [], planoSemana: null },
+  trilhaNIIL: { respostas: {}, modulosVisitados: {} },
   sono: { objetivoHoras: 8, registros: [], despertador: { ativo:false, hora:'07:00', janelaMin:30, dias:[1,2,3,4,5] }, integracoes:{} },
   guardaRoupa: { pecas: [] },
   treinos: [],
@@ -589,7 +592,10 @@ export default function NIILApp() {
     return i <= indiceAtual;
   };
   const etapaAtual = sequencia[indiceAtual];
-  const concluidas = sequencia.filter(e => feito(e.id)).length;
+  const concluidas = TRILHA_NIIL.flatMap(f => f.etapas).filter(e => feito(e.id)).length;
+  const totalEtapas = TOTAL_PASSOS_NIIL;
+  const marcoAtualNIIL = useMemo(() => faseAtualNIIL(d.etapas || {}), [d.etapas]);
+  const marcosConcluidos = useMemo(() => marcosConcluidosNIIL(d.etapas || {}), [d.etapas]);
 
   const respostasDaSessao = (bloco) => {
     const ids = bloco.etapas.map(x => x.id);
@@ -669,9 +675,19 @@ export default function NIILApp() {
 
   /* ── agenda do dia: pega a agenda da sessão mais avançada já liberada ── */
   const agendaAtiva = useMemo(() => {
-    const agendas = sequencia.filter(e => e.tipo === 'agenda' && liberada(e.id));
-    return agendas.length ? agendas[agendas.length - 1] : sequencia.find(e => e.tipo === 'agenda');
-  }, [indiceAtual, sequencia]);
+    const plano = d.jornada?.planoSemana;
+    if (!plano?.ativo) return { id:'niil-agenda-viva', bloco:{ nome:'Sua semana' }, tarefas:[] };
+    return {
+      id:'niil-agenda-viva',
+      bloco:{ nome:'Plano NIIL' },
+      tarefas:[{
+        t:plano.acao || 'Minha ação NIIL',
+        tipo:'Ação NIIL',
+        p:PONTOS_NIIL.ACAO,
+        hora:plano.hora || 'Ao longo do dia'
+      }]
+    };
+  }, [d.jornada?.planoSemana]);
 
   const marcasDia = d.agenda[data] || {};
   const game = useMemo(() => resumoGamificacao(d), [d.gamificacao]);
@@ -1455,7 +1471,7 @@ export default function NIILApp() {
   };
 
   /* ══════════ TRILHA ══════════ */
-  const Trilha = () => {
+  const TrilhaLegada = () => {
     if (etapaAberta) return DetalheEtapa();
     return (
       <div style={{ paddingBottom: 120 }}>
@@ -1528,6 +1544,8 @@ export default function NIILApp() {
       </div>
     );
   };
+
+  const Trilha = () => <TrilhaNIIL d={d} up={up} setAba={setAba} aviso={aviso} />;
 
   /* ══════════ AGENDA ══════════ */
   const Agenda = () => {
@@ -1605,7 +1623,7 @@ export default function NIILApp() {
     const inglesFeitas = Object.values(d.ingles?.fasesConcluidas || {}).filter(Boolean).length;
     const metaAnual = d.financeiro?.metaAnual || METAANUAL_PADRAO;
     const economizado = (d.financeiro?.transacoes || []).reduce((a, t) => a + (t.tipo === 'entrada' ? t.valor : -t.valor), 0);
-    const pctVida = Math.min(100, Math.round((concluidas / totalEtapas) * 100));
+    const pctVida = Math.min(100, Math.round(((marcosConcluidos + (marcoAtualNIIL?.total ? marcoAtualNIIL.concluidas / marcoAtualNIIL.total : 0)) / TOTAL_MARCOS_NIIL) * 100));
     const trilhasCursos = cursosFixados.length ? cursosFixados.map(c=>{const feitas=c.aulas.filter(a=>a.feito).length;return {id:'cursos',nome:c.nome,icone:BookOpen,cor:'#17151D',suave:'#F3F9DB',valor:`${feitas} / ${c.aulas.length}`,pct:c.aulas.length?(feitas/c.aulas.length)*100:0}}) : [{ id: 'cursos', nome: 'Meus cursos', icone: BookOpen, cor: '#17151D', suave: '#F3F9DB', valor: cursos.length ? `${aulasCursosFeitas} / ${aulasCursos}` : 'Adicionar curso', pct: aulasCursos ? (aulasCursosFeitas / aulasCursos) * 100 : 0 }];
     const trilhas = [
       ...trilhasCursos,
@@ -1637,6 +1655,9 @@ export default function NIILApp() {
           pctVida={pctVida}
           concluidas={concluidas}
           totalEtapas={totalEtapas}
+          marcosConcluidos={marcosConcluidos}
+          totalMarcos={TOTAL_MARCOS_NIIL}
+          marcoAtual={marcoAtualNIIL}
           agendaAtiva={agendaAtiva}
           setAba={setAba}
           setData={setData}
