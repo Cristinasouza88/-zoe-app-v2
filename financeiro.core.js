@@ -227,18 +227,18 @@ export function gerarMissoes(fin,mesRef){
   const r=resumoMes(fin,mesRef),cats=categoriasMes(fin,mesRef),revisoes=(fin.transacoes||[]).filter(t=>t.revisar&&t.status!=='ignorado').length;
   const res=reservaResumo(fin),orc=orcamentoStatus(fin,mesRef),start=resumoStartFinanceiro(fin);
   return[
-    {id:'start',titulo:'Defina seu ponto de partida',atual:fin.startFinanceiroConcluido?1:0,meta:1,xp:80,cristais:25},
-    {id:'dados',titulo:'Registre ou importe suas finanças',atual:(fin.transacoes||[]).length?1:0,meta:1,xp:30,cristais:10},
-    {id:'renda',titulo:'Cadastre sua renda recorrente',atual:start.rendaMensal>0?1:0,meta:1,xp:30,cristais:10},
-    {id:'fixos',titulo:'Mapeie seus gastos fixos',atual:(fin.gastosFixos||[]).length?1:0,meta:1,xp:40,cristais:15},
-    {id:'despesas5',titulo:'Registre 5 despesas',atual:r.itens.filter(t=>impactos(t).despesa>0).length,meta:5,xp:40,cristais:15},
-    {id:'classificar',titulo:'Deixe seus gastos classificados',atual:revisoes===0&&(fin.transacoes||[]).length?1:0,meta:1,xp:50,cristais:20},
-    {id:'reserva',titulo:'Defina sua meta de reserva',atual:res.meta>0?1:0,meta:1,xp:60,cristais:20},
-    {id:'objetivo',titulo:'Crie um objetivo financeiro',atual:(fin.objetivos||[]).some(o=>o.status!=='arquivado')?1:0,meta:1,xp:50,cristais:15},
-    {id:'orcamento',titulo:'Defina um limite de gastos',atual:(fin.orcamentos||[]).length?1:0,meta:1,xp:50,cristais:15},
-    {id:'orcamento_ok',titulo:'Fique dentro do orçamento',atual:orc.length&&orc.every(o=>o.pct<=100)?1:0,meta:1,xp:80,cristais:30},
-    {id:'resultado',titulo:'Feche o mês no positivo',atual:r.receita>0&&r.resultado>0?1:0,meta:1,xp:100,cristais:40},
-    {id:'categorias',titulo:'Entenda seus principais gastos',atual:cats.length>=3?1:0,meta:1,xp:30,cristais:10}
+    {id:'start',titulo:'Defina seu ponto de partida',atual:fin.startFinanceiroConcluido?1:0,meta:1,pontos:30},
+    {id:'dados',titulo:'Registre ou importe suas finanças',atual:(fin.transacoes||[]).length?1:0,meta:1,pontos:15},
+    {id:'renda',titulo:'Cadastre sua renda recorrente',atual:start.rendaMensal>0?1:0,meta:1,pontos:15},
+    {id:'fixos',titulo:'Mapeie seus gastos fixos',atual:(fin.gastosFixos||[]).length?1:0,meta:1,pontos:10},
+    {id:'despesas5',titulo:'Registre 5 despesas',atual:r.itens.filter(t=>impactos(t).despesa>0).length,meta:5,pontos:10},
+    {id:'classificar',titulo:'Deixe seus gastos classificados',atual:revisoes===0&&(fin.transacoes||[]).length?1:0,meta:1,pontos:15},
+    {id:'reserva',titulo:'Defina sua meta de reserva',atual:res.meta>0?1:0,meta:1,pontos:10},
+    {id:'objetivo',titulo:'Crie um objetivo financeiro',atual:(fin.objetivos||[]).some(o=>o.status!=='arquivado')?1:0,meta:1,pontos:10},
+    {id:'orcamento',titulo:'Defina um limite de gastos',atual:(fin.orcamentos||[]).length?1:0,meta:1,pontos:10},
+    {id:'orcamento_ok',titulo:'Fique dentro do orçamento',atual:orc.length&&orc.every(o=>o.pct<=100)?1:0,meta:1,pontos:25},
+    {id:'resultado',titulo:'Feche o mês no positivo',atual:r.receita>0&&r.resultado>0?1:0,meta:1,pontos:25},
+    {id:'categorias',titulo:'Entenda seus principais gastos',atual:cats.length>=3?1:0,meta:1,pontos:15}
   ].map(m=>({...m,concluida:Number(m.atual)>=Number(m.meta),pct:clamp(Number(m.atual)/Math.max(1,Number(m.meta))*100)}));
 }
 

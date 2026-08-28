@@ -1,7 +1,7 @@
 import React,{useEffect,useMemo,useRef,useState}from'react';
 import{
   Sparkles,Eye,EyeOff,Plus,Upload,WalletCards,Route,BarChart3,Target,Home,MoreHorizontal,
-  ChevronLeft,ChevronRight,Check,Gift,Coins,Star,PiggyBank,Landmark,CreditCard,PieChart,
+  ChevronLeft,ChevronRight,Check,Gift,Coins,PiggyBank,Landmark,CreditCard,PieChart,
   ShieldCheck,Brain,ReceiptText,Layers3,HandCoins,TrendingUp,CircleDollarSign,X,Save,FileUp,
   ListChecks,ArrowUpRight,ArrowDownRight,LockKeyhole,FolderClock,Settings2,CalendarDays
 }from'lucide-react';
@@ -18,9 +18,10 @@ import{
 }from'./financeiro.core.js';
 import{parseTransacao,pedirSugestoes}from'./ia.jsx';
 import FinanceiroStart from'./FinanceiroStart.jsx';
+import{registrarEventoGamificacao,resumoGamificacao}from'./gamificacao.core.js';
 
 const COLORS=['#B7F20C','#6C9700','#17151D','#8B8791','#FF8A3D','#C8D69A','#4F4D54'];
-const CRISTAIS_OFENSIVA={7:40,14:120,30:200,50:340};
+const PONTOS_OFENSIVA={7:25,14:50,30:100,50:150};
 const CurrencyContext=React.createContext('BRL');
 
 const bytesBase64=file=>new Promise((resolve,reject)=>{const r=new FileReader();r.onerror=()=>reject(new Error('Não consegui ler o arquivo.'));r.onload=()=>resolve(String(r.result||'').split(',')[1]||'');r.readAsDataURL(file)});
@@ -69,6 +70,7 @@ export default function Financeiro({d={},up=()=>{},aviso=()=>{}}){
   const projecao=useMemo(()=>projecaoProximoMes(fin,mesRef),[fin,mesRef]);
   const missoes=useMemo(()=>gerarMissoes(fin,mesRef),[fin,mesRef]);
   const nivel=useMemo(()=>nivelFinanceiro(fin,mesRef),[fin,mesRef]);
+  const game=useMemo(()=>resumoGamificacao(d),[d.gamificacao]);
   const ofensiva=useMemo(()=>ofensivaStatus(fin),[fin]);
   const insights=useMemo(()=>insightsFinanceiros(fin,mesRef),[fin,mesRef]);
   const hidden=!!fin.configuracao?.ocultarValores;
@@ -114,12 +116,6 @@ export default function Financeiro({d={},up=()=>{},aviso=()=>{}}){
   const aportesPeriodo=fin.transacoes.filter(t=>t.aporteInvestimento&&mesesEvolucao.has(String(t.data||'').slice(0,7))).reduce((a,t)=>a+Number(t.valor||0),0);
   const mediaAportes=evolucaoFiltrada.length?aportesPeriodo/evolucaoFiltrada.length:0;
   const variacaoInvest=evolucaoFiltrada.length>1?evolucaoFiltrada[evolucaoFiltrada.length-1].total-evolucaoFiltrada[0].total:0;
-
-  useEffect(()=>{
-    const premiadas=new Set(fin.gamificacao?.missoesPremiadas||[]),novas=missoes.filter(m=>m.concluida&&!premiadas.has(m.id));
-    if(!novas.length&&Number(fin.gamificacao?.nivel||1)===nivel.nivel)return;
-    persistir(f=>({...f,gamificacao:{...f.gamificacao,xp:Number(f.gamificacao.xp||0)+novas.reduce((a,m)=>a+m.xp,0),cristais:Number(f.gamificacao.cristais||0)+novas.reduce((a,m)=>a+m.cristais,0),nivel:nivel.nivel,missoesPremiadas:Array.from(new Set([...(f.gamificacao.missoesPremiadas||[]),...novas.map(m=>m.id)]))}}));
-  },[missoes.map(m=>`${m.id}:${m.concluida}`).join('|'),nivel.nivel]);
 
   useEffect(()=>{
     if(!ofensiva?.concluida)return;
@@ -197,8 +193,27 @@ export default function Financeiro({d={},up=()=>{},aviso=()=>{}}){
     }finally{setImportando(false);if(inputFile.current)inputFile.current.value=''}
   };
 
-  const iniciarOfensiva=()=>{agir(f=>({...f,gamificacao:{...f.gamificacao,ofensiva:{inicio:hoje(),dias:ofensivaDias,recompensa:CRISTAIS_OFENSIVA[ofensivaDias]},atividadeDias:Array.from(new Set([...(f.gamificacao.atividadeDias||[]),hoje()]))}}));setTela('visao');aviso(`Ofensiva de ${ofensivaDias} dias iniciada`)};
-  const abrirBau=()=>{if(!ofensiva?.concluida)return;const key=`ofensiva-${ofensiva.inicio}-${ofensiva.dias}`;persistir(f=>({...f,gamificacao:{...f.gamificacao,cristais:Number(f.gamificacao.cristais||0)+Number(ofensiva.recompensa||0),xp:Number(f.gamificacao.xp||0)+100,bausAbertos:Array.from(new Set([...(f.gamificacao.bausAbertos||[]),key])),ofensiva:null}}));setTela('visao');aviso('Recompensa adicionada')};
+  const iniciarOfensiva=()=>{agir(f=>({...f,gamificacao:{...f.gamificacao,ofensiva:{inicio:hoje(),dias:ofensivaDias,recompensa:PONTOS_OFENSIVA[ofensivaDias]},atividadeDias:Array.from(new Set([...(f.gamificacao.atividadeDias||[]),hoje()]))}}));setTela('visao');aviso(`Ofensiva de ${ofensivaDias} dias iniciada`)};
+  const abrirBau=()=>{
+    if(!ofensiva?.concluida)return;
+    const key=`ofensiva-${ofensiva.inicio}-${ofensiva.dias}`;
+    up(s=>{
+      const atual=normalizarFinanceiro(s.financeiro);
+      const financeNovo={...atual,gamificacao:{...atual.gamificacao,bausAbertos:Array.from(new Set([...(atual.gamificacao?.bausAbertos||[]),key])),ofensiva:null}};
+      return registrarEventoGamificacao({...s,financeiro:financeNovo},{
+        key:`financeiro:${key}`,
+        tipo:'finance.streak.completed',
+        pontos:Number(ofensiva.recompensa||0),
+        titulo:`Ofensiva financeira de ${ofensiva.dias} dias`,
+        area:'financas',
+        data:hoje(),
+        trilhaId:'financeiro',
+        origemId:key
+      });
+    });
+    setTela('visao');
+    aviso(`+${ofensiva.recompensa||0} Pontos NIIL`);
+  };
   const pedirLeitura=async()=>{setIaLendo(true);const r=await pedirSugestoes({mes:mesRef,resumo:{receita:resumo.receita,despesa:resumo.despesa,resultado:resumo.resultado,categorias:categorias.slice(0,6),orcamentos,reserva:{meta:reserva.meta,atual:reserva.atual,pct:reserva.pct},projecao}});setIaLendo(false);if(r.ok)setIaTexto(r.dados?.texto||'');else aviso(r.erro||'Leitura indisponível')};
 
   const ImportStatusBox=()=>importStatus.fase!=='idle'?<div className="fx2-card" style={{marginTop:12,padding:14}}>
@@ -219,8 +234,8 @@ export default function Financeiro({d={},up=()=>{},aviso=()=>{}}){
   const Trilha=()=>{if(!diagnosticoConcluido)return <><div className="fx2-title"><h2>Minha trilha financeira</h2><p>Seu primeiro caminho é o diagnóstico. Ele fica salvo aqui e, depois de concluído, novas trilhas podem ser adicionadas conforme sua vida financeira evolui.</p></div><div className="fx2-card fx2-trail-card"><div className="fx2-trail-head"><span className="fx2-pill">EM ANDAMENTO</span><span className="fx2-muted">Diagnóstico inicial</span></div><h3>Diagnóstico financeiro</h3><p className="fx2-muted">Entenda seu ponto de partida em 7 etapas.</p><button className="fx2-btn wide" onClick={()=>{setStartUi({step:0,aberto:false});setRevisandoDiagnostico(true);setTela('visao')}}>CONTINUAR TRILHA</button></div></>;
     const diag=trilhaDiagnostico||{id:'diagnostico-inicial',nome:'Diagnóstico financeiro',status:'concluida',totalEtapas:7,etapasConcluidas:7,concluidaEm:fin.configuracao?.diagnosticoFinanceiroConcluidoEm||''};
     return <><div className="fx2-title"><h2>Minhas trilhas financeiras</h2><p>As trilhas não somem quando terminam. Elas ficam salvas aqui para consulta e edição, e novas jornadas entram conforme seus dados e prioridades evoluem.</p></div><div className="fx2-trails-stack"><div className="fx2-card fx2-trail-card completed"><div className="fx2-trail-head"><span className="fx2-pill">CONCLUÍDA</span><span className="fx2-muted">{diag.etapasConcluidas||7}/{diag.totalEtapas||7} etapas</span></div><h3>{diag.nome||'Diagnóstico financeiro'}</h3><p className="fx2-muted">Seu ponto de partida financeiro. Você pode revisar os dados sem perder o histórico de conclusão.</p>{diag.concluidaEm&&<small className="fx2-muted">Concluída em {dateBr(diag.concluidaEm)}</small>}<button className="fx2-btn ghost wide" onClick={abrirDiagnostico}>REVISAR DIAGNÓSTICO</button></div>{trilhasPosDiagnostico.map(t=><div className="fx2-card fx2-trail-card" key={t.id}><div className="fx2-trail-head"><span className="fx2-pill">{t.status==='concluida'?'CONCLUÍDA':'ATIVA'}</span><span className="fx2-muted">{Number(t.etapasConcluidas||0)}/{Number(t.totalEtapas||0)} etapas</span></div><h3>{t.nome||'Trilha financeira'}</h3>{t.descricao&&<p className="fx2-muted">{t.descricao}</p>}<button className="fx2-btn wide" onClick={()=>aviso('Esta trilha será aberta aqui conforme as próximas etapas forem definidas.')}>{t.status==='concluida'?'VER TRILHA':'CONTINUAR TRILHA'}</button></div>)}{!trilhasPosDiagnostico.length&&<div className="fx2-card fx2-trail-next"><span className="fx2-pill">PRÓXIMA TRILHA</span><h3>Sua jornada continua daqui</h3><p className="fx2-muted">Este espaço recebe novas etapas conforme o NIIL identifica prioridades a partir de receitas, despesas, sobra, patrimônio, compromissos e objetivos. A próxima trilha ainda não foi definida.</p></div>}</div></>};
-  const Ofensiva=()=> <><Back onClick={()=>setTela('visao')}/><div className="fx2-title"><div className="fx2-brandmark" style={{margin:'0 auto 13px',width:66,height:66,borderRadius:22}}><Route size={29}/></div><h2>Escolha sua ofensiva</h2><p>Um dia só conta quando você registra, importa, revisa ou toma uma ação financeira real.</p></div><div className="fx2-options">{[7,14,30,50].map(x=><button key={x} className={`fx2-option ${ofensivaDias===x?'active':''}`} onClick={()=>setOfensivaDias(x)}><b>{x} dias</b><small>Ganhe {CRISTAIS_OFENSIVA[x]} cristais</small></button>)}</div><div style={{height:13}}/><button className="fx2-btn wide" onClick={iniciarOfensiva}>VOU ME DEDICAR</button></>;
-  const Bau=()=> <><Back onClick={()=>setTela('visao')}/><div className="fx2-title"><span className="fx2-pill">Nível {nivel.nivel}</span><h2 style={{marginTop:10}}>Baú de recompensa</h2></div><div className="fx2-chest"><div className="fx2-chest-glow"/><div className="fx2-chest-box"/></div><div className="fx2-title"><h2>Você concluiu sua ofensiva</h2><p>A recompensa existe porque houve comportamento real, não apenas abertura do app.</p></div><div className="fx2-rewards"><div className="fx2-reward"><Coins size={21} color="#6C9700"/><b>{ofensiva?.recompensa||0}</b><small>Cristais</small></div><div className="fx2-reward"><Star size={21} color="#F1A924"/><b>100</b><small>XP</small></div><div className="fx2-reward"><Gift size={21} color="#E0A127"/><b>Baú</b><small>Conquista</small></div></div><div style={{height:13}}/><button className="fx2-btn wide" onClick={abrirBau}>ABRIR E CONTINUAR</button></>;
+  const Ofensiva=()=> <><Back onClick={()=>setTela('visao')}/><div className="fx2-title"><div className="fx2-brandmark" style={{margin:'0 auto 13px',width:66,height:66,borderRadius:22}}><Route size={29}/></div><h2>Escolha sua ofensiva</h2><p>Um dia só conta quando você registra, importa, revisa ou toma uma ação financeira real.</p></div><div className="fx2-options">{[7,14,30,50].map(x=><button key={x} className={`fx2-option ${ofensivaDias===x?'active':''}`} onClick={()=>setOfensivaDias(x)}><b>{x} dias</b><small>Ganhe {PONTOS_OFENSIVA[x]} Pontos NIIL</small></button>)}</div><div style={{height:13}}/><button className="fx2-btn wide" onClick={iniciarOfensiva}>VOU ME DEDICAR</button></>;
+  const Bau=()=> <><Back onClick={()=>setTela('visao')}/><div className="fx2-title"><span className="fx2-pill">Nível NIIL {game.nivel}</span><h2 style={{marginTop:10}}>Baú de recompensa</h2></div><div className="fx2-chest"><div className="fx2-chest-glow"/><div className="fx2-chest-box"/></div><div className="fx2-title"><h2>Você concluiu sua ofensiva</h2><p>A recompensa existe porque houve comportamento real, não apenas abertura do app.</p></div><div className="fx2-rewards"><div className="fx2-reward"><Coins size={21} color="#6C9700"/><b>{ofensiva?.recompensa||0}</b><small>Pontos NIIL</small></div><div className="fx2-reward"><Gift size={21} color="#6C9700"/><b>1</b><small>Marco concluído</small></div></div><div style={{height:13}}/><button className="fx2-btn wide" onClick={abrirBau}>ABRIR E CONTINUAR</button></>;
 
   const Painel=()=> <><div className="fx2-title"><h2>Gráficos e categorias</h2><p>Entenda para evoluir.</p></div><Month/><div className="fx2-card">{categorias.length?<>{categorias.slice(0,7).map((c,i)=><div className="fx2-bar-row" key={c.nome}><span>{c.nome}</span><div className="fx2-bar"><i style={{width:`${c.pct}%`,background:COLORS[i%COLORS.length]}}/></div><b style={{fontSize:8,textAlign:'right'}}>{c.pct.toFixed(0)}%</b></div>)}</>:<Empty icon={PieChart} title="Sem despesas neste período" text="O ranking aparece quando houver gastos válidos no mês."/>}</div><Section title="Participação das despesas"><div className="fx2-card">{categorias.length?<div className="fx2-donut-wrap"><div className="fx2-donut"><strong><Money value={resumo.despesa} hidden={hidden}/></strong></div><div style={{flex:1}}>{categorias.slice(0,5).map((c,i)=><div className="fx2-legend" key={c.nome} style={{margin:'5px 0'}}><span><i style={{background:COLORS[i%COLORS.length]}}/>{c.nome}</span><span style={{marginLeft:'auto'}}>{c.pct.toFixed(0)}%</span></div>)}</div></div>:<Empty icon={PieChart} title="Nada para distribuir ainda" text="Nenhum dado fictício será mostrado."/>}</div></Section><Section title="Orçamentos" action="+ Novo" onAction={()=>abrir('orcamento',{categoria:'Total'})}><div className="fx2-list">{orcamentos.length?orcamentos.map(o=><div className="fx2-card" key={o.id}><div style={{display:'flex',justifyContent:'space-between'}}><b style={{fontSize:10}}>{o.categoria}</b><span className="fx2-muted">{Math.round(o.pct)}%</span></div><div style={{height:7}}/><Progress value={o.pct} tone={o.pct>100?'purple':''}/><div style={{display:'flex',justifyContent:'space-between',marginTop:7}}><span className="fx2-muted">Gasto <Money value={o.gasto} hidden={hidden}/></span><span className="fx2-muted">Limite <Money value={o.limite} hidden={hidden}/></span></div></div>):<div className="fx2-card"><Empty icon={Layers3} title="Sem orçamento definido" text="Você pode criar um limite total ou por categoria." action="CRIAR ORÇAMENTO" onAction={()=>abrir('orcamento',{categoria:'Total'})}/></div>}</div></Section>{projecao.baseadoEm>0&&<Section title="Próximo mês · projeção"><div className="fx2-card"><div className="fx2-grid2"><div><span className="fx2-label">Receitas recorrentes</span><span className="fx2-val"><Money value={projecao.receita} hidden={hidden}/></span></div><div><span className="fx2-label">Comprometido</span><span className="fx2-val"><Money value={projecao.comprometido} hidden={hidden}/></span></div></div><div style={{marginTop:11}}><span className="fx2-label">Livre projetado</span><span className="fx2-val"><Money value={projecao.livre} hidden={hidden}/></span></div><div className="fx2-muted" style={{marginTop:8}}>Estimativa baseada em recorrências, parcelas e compromissos cadastrados.</div></div></Section>}</>;
 
