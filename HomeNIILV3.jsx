@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { Menu, Target, CheckCircle2, BookOpen, Wallet, UserRound, Plus, ChevronRight, CalendarDays, MapPin, BarChart3 } from 'lucide-react';
+import { Menu, Target, CheckCircle2, BookOpen, Wallet, Plus, ChevronRight, CalendarDays, MapPin, BarChart3 } from 'lucide-react';
 import './HomeNIILV3.css';
+import NIILOrb from './NIILOrb.jsx';
 
 const GREEN = '#B7F20C';
 
@@ -185,10 +186,10 @@ export default function HomeNIILV3({
           <small>Fixo</small>
         </button>
 
-        <button onClick={() => setSheet?.('perfil')}>
-          <span className="niil-home-v3-quick-icon"><UserRound size={19} /></span>
-          <b>Perfil</b>
-          <small>Fixo</small>
+        <button onClick={() => setSheet?.('ia')} aria-label="Conversar com a NIIL">
+          <span className="niil-home-v3-quick-icon niil-home-v3-quick-orb"><NIILOrb state="idle" size={32} label="NIIL IA"/></span>
+          <b>NIIL</b>
+          <small>Conversar</small>
         </button>
       </div>
 
