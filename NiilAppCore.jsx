@@ -22,7 +22,7 @@ import { supabase } from './supabase.js';
 import { carregarRemoto, salvarRemoto, aguardarSalvamentosRemotos } from './zoe.remote-store.js';
 import HomeNIILV3 from './HomeNIILV3.jsx';
 import TreinoSheet from './TreinoSheet.jsx';
-import { GAMIFICACAO_INICIAL, reconciliarGamificacao, resumoGamificacao, desafiosGamificacao } from './gamificacao.core.js';
+import { GAMIFICACAO_INICIAL, PONTOS_NIIL, reconciliarGamificacao, resumoGamificacao, desafiosGamificacao } from './gamificacao.core.js';
 
 /* ══════════ FOTOS ══════════
    As imagens são comprimidas antes de salvar (lado maior 900px, jpeg 72%),
@@ -1317,7 +1317,7 @@ export default function NIILApp() {
 
       if (e.tipo === 'agenda') {
         const marcas = d.agenda[data] || {};
-        const pts = e.tarefas.reduce((a, t, i) => a + (marcas[`${e.id}-${i}`] ? t.p : 0), 0);
+        const pts = e.tarefas.reduce((a, t, i) => a + (marcas[`${e.id}-${i}`] ? (/academia|treino/i.test(t.t || '') ? PONTOS_NIIL.FERRAMENTA : PONTOS_NIIL.ACAO) : 0), 0);
         const iconeT = tp => tp === 'Livro' ? <BookOpen size={12} /> : tp === 'Filme' ? <Film size={12} /> : tp === 'Vídeo' ? <Video size={12} /> : <Circle size={12} />;
         const corT = tp => ({ Livro: C.gold, Filme: C.coral, 'Vídeo': C.lilac }[tp] || C.ink3);
         return (
@@ -1349,7 +1349,7 @@ export default function NIILApp() {
                       {t.hora && <span style={{ fontSize: 10.5, color: C.ink3 }}>· {t.hora}</span>}
                     </div>
                   </div>
-                  <div style={{ padding: '4px 9px', borderRadius: 8, fontSize: 12.5, fontWeight: 800, background: on ? C.green : '#F2F5F4', color: on ? C.ink : C.ink3 }}>{t.p}</div>
+                  <div style={{ padding: '4px 9px', borderRadius: 8, fontSize: 12.5, fontWeight: 800, background: on ? C.green : '#F2F5F4', color: on ? C.ink : C.ink3 }}>{/academia|treino/i.test(t.t || '') ? PONTOS_NIIL.FERRAMENTA : PONTOS_NIIL.ACAO}</div>
                 </div>
               );
             })}
@@ -1587,7 +1587,7 @@ export default function NIILApp() {
           const on = !!marcas[`${agendaAtiva.id}-${i}`];
           return <div key={i} onClick={() => toggleTarefaDe(agendaAtiva, i)} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: 14, marginBottom: 8, borderRadius: 16, background: on ? C.mint : '#fff', border: `1.5px solid ${on ? C.green : C.line}`, cursor: 'pointer' }}>
             <div style={{ width: 26, height: 26, borderRadius: 9, display: 'grid', placeItems: 'center', background: on ? C.green : '#F2F5F4', color: on ? C.ink : C.ink3 }}>{on ? <Check size={15} /> : <Circle size={14} />}</div>
-            <div style={{ flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink, textDecoration: on ? 'line-through' : 'none' }}>{t.t}</div><div style={{ fontSize: 10.5, color: C.ink3, marginTop: 3 }}>{t.hora || 'Ao longo do dia'} · {t.p} pontos</div></div>
+            <div style={{ flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink, textDecoration: on ? 'line-through' : 'none' }}>{t.t}</div><div style={{ fontSize: 10.5, color: C.ink3, marginTop: 3 }}>{t.hora || 'Ao longo do dia'} · +{/academia|treino/i.test(t.t || '') ? PONTOS_NIIL.FERRAMENTA : PONTOS_NIIL.ACAO} pontos</div></div>
           </div>;
         }) : <Card><div style={{ textAlign: 'center', color: C.ink3, padding: 18 }}>Conclua as primeiras etapas para a NIIL liberar sua agenda.</div></Card>}
       </div>
@@ -1860,10 +1860,22 @@ export default function NIILApp() {
             </Card>
           )}
 
+          <Card style={{ marginBottom: 12 }}>
+            <div style={{ fontWeight: 800, color: C.ink, fontSize: 14.5, marginBottom: 4 }}>Indicadores de apoio</div>
+            <div style={{fontSize:10.5,color:C.ink3,lineHeight:1.5,marginBottom:14}}>
+              Estas métricas ajudam a enxergar contexto. Elas não aumentam a pontuação por volume, peso, calorias ou dinheiro.
+            </div>
+            <div style={{fontSize:11,fontWeight:800,color:C.ink2,marginBottom:7}}>Água</div>
+            <GraficoBarras dados={serie.map(s => s.agua)} max={Math.max(1,d.perfil.metaAgua||1)} cor={C.green} rotulos={nd <= 7 ? serie.map(s => s.lbl) : null} />
+            <div style={{height:16}}/>
+            <div style={{fontSize:11,fontWeight:800,color:C.ink2,marginBottom:7}}>Energia e humor</div>
+            <GraficoLinha dados={serie.map(s => s.humor)} cor={C.greenDark} />
+          </Card>
+
           <Card>
-            <div style={{ fontWeight: 800, color: C.ink, marginBottom: 12 }}>Indicadores de apoio</div>
+            <div style={{ fontWeight: 800, color: C.ink, marginBottom: 8 }}>Como os pontos funcionam</div>
             <div style={{fontSize:11,color:C.ink3,lineHeight:1.55}}>
-              Água, humor, sono e outras métricas continuam sendo acompanhadas, mas os Pontos NIIL recompensam comportamento de evolução — não performance corporal ou financeira.
+              O NIIL pontua movimento de evolução: refletir, agir, registrar e concluir marcos. Performance corporal e valor financeiro continuam sendo acompanhados, mas não valem mais pontos por serem maiores.
             </div>
           </Card>
         </div>
