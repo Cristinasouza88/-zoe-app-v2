@@ -20,18 +20,26 @@
 .niil-home-v3-first{padding-top:18px;margin:0 -16px 18px;padding-left:16px;padding-right:16px}
 .niil-home-v3-header{
   display:grid;
-  grid-template-columns:52px 1fr 52px;
+  grid-template-columns:52px minmax(0,1fr) auto;
   align-items:start;
-  gap:14px;
+  gap:12px;
   margin-bottom:18px;
 }
 .niil-home-v3-menu,
-.niil-home-v3-avatar{
+.niil-home-v3-avatar,
+.niil-home-v3-performance{
   width:50px;height:50px;border:0;border-radius:50%;
   display:grid;place-items:center;cursor:pointer;
   font-family:inherit;
 }
 .niil-home-v3-menu{background:var(--home-green);color:var(--home-ink)}
+.niil-home-v3-header-actions{display:flex;align-items:center;gap:8px}
+.niil-home-v3-performance{
+  background:#fff;color:var(--home-ink);
+  border:1px solid var(--home-line);
+  box-shadow:0 5px 14px rgba(23,21,29,.05);
+}
+.niil-home-v3-performance:active{transform:scale(.97)}
 .niil-home-v3-avatar{
   position:relative;background:#fff;color:var(--home-ink);
   border:2px solid var(--home-green);
