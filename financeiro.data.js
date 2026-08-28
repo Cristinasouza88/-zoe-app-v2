@@ -99,6 +99,6 @@ export const ESTADO_FINANCEIRO_INICIAL={
  versao:VERSAO_FINANCEIRO,onboardingConcluido:false,startFinanceiroConcluido:false,
  transacoes:[],contas:[],cartoes:[],investimentos:[],dividas:[],patrimonios:[],receitasRecorrentes:[],gastosFixos:[],objetivos:[],orcamentos:[],regrasClassificacao:[],importacoes:[],trilhasFinanceiras:[],caixinhas:[],alocacoesSobra:[],
  configuracao:{ocultarValores:false,moedaBase:'BRL',metaReserva:0,prazoReserva:'',aporteReservaMensal:0,metaReservaMeses:6,metasPrioritarias:[],trilhasEducacao:[]},
- gamificacao:{xp:0,cristais:0,nivel:1,missoesPremiadas:[],ofensiva:null,atividadeDias:[],bausAbertos:[]},metaAnual:METAANUAL_PADRAO
+ gamificacao:{ofensiva:null,atividadeDias:[],bausAbertos:[]},metaAnual:METAANUAL_PADRAO
 };
 export const cloneFinanceiroInicial=()=>JSON.parse(JSON.stringify(ESTADO_FINANCEIRO_INICIAL));
