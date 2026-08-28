@@ -163,3 +163,10 @@
   .niil-home-v3-goal-copy small{display:none}
   .niil-home-v3-quick{overflow-x:auto;grid-template-columns:repeat(5,64px);justify-content:start}
 }
+
+.niil-home-v3-quick-orb{
+  background:#fff;
+  border:1px solid #E7E4EA;
+}
+.niil-home-v3-quick-orb .niil-orb-wrap{min-width:32px}
+.niil-home-v3-quick-orb .niil-orb{box-shadow:none}
