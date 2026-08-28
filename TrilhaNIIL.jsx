@@ -1,6 +1,6 @@
 import React,{useMemo,useRef,useState}from'react';
 import{
-  ArrowLeft,Target,Moon,Home,Repeat2,Network,Flag,CalendarDays,ChartNoAxesCombined,
+  ArrowLeft,Target,Moon,Home,Repeat2,Network,Flag,CalendarDays,TrendingUp,
   Lock,Check,ChevronRight,BookOpen,Wallet,Dumbbell,Droplets,Utensils,GraduationCap,
   Languages,Camera,Clock3,Mic,Square,Brain,Footprints,Sparkles
 }from'lucide-react';
