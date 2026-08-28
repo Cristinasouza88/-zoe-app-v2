@@ -166,6 +166,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
         <h1>{passo.pergunta||passo.perguntaCurta||passo.titulo}</h1>
         {passo.perguntaCurta&&<p>{passo.perguntaCurta}</p>}
         <Interacao e={passo}/>
+        {passo.modulo&&!['sleep','agenda','photo'].includes(passo.interacao)&&<button className="tn-open-module" onClick={()=>abrirModulo(passo.modulo)}>Abrir {passo.modulo==='financeiro'?'Financeiro':passo.modulo==='cursos'?'Cursos':passo.modulo==='sono'?'Sono':'módulo relacionado'} <ChevronRight size={16}/></button>}
+        {passo.ciencia&&<details className="tn-science"><summary>Por que o NIIL pergunta isso?</summary><p>{passo.ciencia}</p>{passo.fonte&&<small>{passo.fonte}</small>}</details>}
         {passo.base&&<small className="tn-base">{passo.base}</small>}
       </main>
       <footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{feito(passo.id)?'Continuar':'Concluir e seguir'} <ChevronRight size={18}/></button></footer>
