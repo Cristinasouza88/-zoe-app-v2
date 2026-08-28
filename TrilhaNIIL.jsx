@@ -1,4 +1,4 @@
-import React,{useMemo,useRef,useState}from'react';
+import React,{useEffect,useMemo,useRef,useState}from'react';
 import{
   ArrowLeft,Target,Moon,Home,Repeat2,Network,Flag,CalendarDays,TrendingUp,
   Lock,Check,ChevronRight,BookOpen,Wallet,Dumbbell,Droplets,Utensils,GraduationCap,
@@ -13,6 +13,22 @@ import'./TrilhaNIIL.css';
 
 const ICONS={target:Target,moon:Moon,home:Home,repeat:Repeat2,network:Network,flag:Flag,calendar:CalendarDays,chart:TrendingUp};
 const MOD_ICONS={Sono:Moon,Água:Droplets,Alimentação:Utensils,Movimento:Dumbbell,Leitura:BookOpen,Cursos:GraduationCap,Inglês:Languages,Finanças:Wallet,Ambiente:Home,'Minha Visão':Camera,Agenda:CalendarDays};
+const RODA_GUIA={
+  'Saúde':{dica:'Olhe para as últimas semanas, não para o seu melhor nem para o seu pior dia.',exemplos:['Sono','Energia','Exercício','Alimentação'],modulo:'sono'},
+  'Família':{dica:'Pense em presença, convivência e na qualidade das trocas — não em uma família ideal.',exemplos:['Presença','Convivência','Apoio','Conflitos']},
+  'Relacionamentos':{dica:'Considere conexão, comunicação, reciprocidade e limites nas relações que mais importam.',exemplos:['Conexão','Comunicação','Reciprocidade','Limites']},
+  'Lazer':{dica:'Pergunte se existe espaço real para descanso, diversão e experiências que renovam você.',exemplos:['Tempo livre','Descanso','Diversão','Novas experiências'],modulo:'agenda'},
+  'Espiritualidade':{dica:'Avalie sentido, conexão e práticas que ajudam você a se orientar internamente.',exemplos:['Sentido','Prática','Conexão','Paz']},
+  'Carreira':{dica:'Pense em crescimento, reconhecimento, autonomia e no quanto o trabalho faz sentido hoje.',exemplos:['Crescimento','Reconhecimento','Autonomia','Direção'],modulo:'cursos'},
+  'Finanças':{dica:'Considere organização, compromissos, segurança e liberdade de decisão — não só renda.',exemplos:['Dívidas','Reserva','Organização','Metas'],modulo:'financeiro'},
+  'Crescimento pessoal':{dica:'Olhe para aquilo que você vem aprendendo e para mudanças que realmente viraram comportamento.',exemplos:['Hábitos','Autoconhecimento','Disciplina','Coragem'],modulo:'cursos'},
+  'Social':{dica:'Pense na qualidade das amizades, pertencimento e trocas que existem de verdade na sua rotina.',exemplos:['Amizades','Pertencimento','Trocas','Isolamento']},
+  'Emocional':{dica:'Observe como você tem lidado com pressão, oscilações e recuperação emocional no cotidiano.',exemplos:['Estabilidade','Pressão','Autocontrole','Descanso mental'],modulo:'diario'},
+  'Intelectual':{dica:'Avalie curiosidade, estudo e quanto do que você consome está realmente se transformando em aprendizado.',exemplos:['Leitura','Cursos','Aprendizado','Curiosidade'],modulo:'cursos'},
+  'Contribuição':{dica:'Pense em impacto, ajuda e participação em algo que vá além das suas necessidades imediatas.',exemplos:['Impacto','Ajuda','Generosidade','Participação']}
+};
+const RODA_MODULO=area=>RODA_GUIA[area]?.modulo||null;
+
 
 const hoje=()=>new Date().toISOString().slice(0,10);
 const vibrar=()=>{try{navigator.vibrate?.(18)}catch{}};
@@ -47,12 +63,22 @@ const Radar=({valores={}})=>{
 export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
   const[aberta,setAberta]=useState(null);
   const[marco,setMarco]=useState(null);
+  const[rodaPasso,setRodaPasso]=useState(0);
   const recRef=useRef(null);
   const atual=useMemo(()=>faseAtualNIIL(d.etapas||{}),[d.etapas]);
   const marcos=useMemo(()=>marcosConcluidosNIIL(d.etapas||{}),[d.etapas]);
   const recomendacoes=useMemo(()=>recomendacoesContextuaisNIIL(d),[d]);
   const passo=TRILHA_NIIL.flatMap(f=>f.etapas.map(e=>({...e,fase:f}))).find(e=>e.id===aberta);
   const resp=d.trilhaNIIL?.respostas||{};
+  const snapshotRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===passo.id):null;
+  const rascunhoRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaRascunhos?.[passo.rodaId]||{}):{};
+
+  useEffect(()=>{
+    if(passo?.tipo!=='roda'||snapshotRoda)return;
+    const i=RODA_SETORES.findIndex(s=>!rascunhoRoda?.[s]?.nota);
+    setRodaPasso(i<0?0:i);
+  },[passo?.id,snapshotRoda?.id]);
+
 
   const salvar=(chave,valor)=>up(s=>({...s,trilhaNIIL:{...(s.trilhaNIIL||{}),respostas:{...(s.trilhaNIIL?.respostas||{}),[chave]:valor}}}));
   const ler=chave=>resp[chave];
@@ -159,11 +185,80 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
     });
   };
 
+  const salvarRodaCampo=(e,setor,patch)=>up(s=>{
+    const atual=s.trilhaNIIL||{},rascunhos=atual.rodaRascunhos||{},roda=rascunhos[e.rodaId]||{},item=roda[setor]||{};
+    return{...s,trilhaNIIL:{...atual,rodaRascunhos:{...rascunhos,[e.rodaId]:{...roda,[setor]:{...item,...patch}}}}};
+  });
+
+  const concluirAreaRoda=e=>{
+    const setor=RODA_SETORES[rodaPasso],item=rascunhoRoda?.[setor]||{};
+    const justificou=(item.razoes||[]).length>0||String(item.detalhe||'').trim().length>=3;
+    if(!item.nota)return aviso('Escolha uma nota antes de continuar.');
+    if(!justificou)return aviso('Marque pelo menos um ponto que explica sua nota.');
+    if(rodaPasso<RODA_SETORES.length-1){setRodaPasso(x=>x+1);return;}
+    const respostas={...rascunhoRoda,[setor]:item};
+    const valores={};RODA_SETORES.forEach(s=>valores[s]=Number(respostas[s]?.nota||0));
+    const snap={id:'roda-'+e.rodaId+'-'+Date.now(),rodaId:e.rodaId,etapaId:e.id,concluidaEm:new Date().toISOString(),data:hoje(),valores,respostas};
+    up(s=>({...s,rodas:{...(s.rodas||{}),[e.rodaId]:valores},trilhaNIIL:{...(s.trilhaNIIL||{}),rodaSnapshots:[...(s.trilhaNIIL?.rodaSnapshots||[]),snap]}}));
+  };
+
+  const alternarRazaoRoda=(e,setor,razao)=>{
+    const item=rascunhoRoda?.[setor]||{},atuais=Array.isArray(item.razoes)?item.razoes:[];
+    salvarRodaCampo(e,setor,{razoes:atuais.includes(razao)?atuais.filter(x=>x!==razao):[...atuais,razao]});
+  };
+
+  const ativarFocoRoda=(e,snapshot,area)=>{
+    const modulo=RODA_MODULO(area),nota=Number(snapshot?.valores?.[area]||0);
+    const meta={id:'meta-roda-'+snapshot.id,titulo:'Evoluir '+area,area,notaInicial:nota,snapshotId:snapshot.id,origem:'roda-da-vida',status:'ativa',criadaEm:new Date().toISOString()};
+    up(s=>{
+      const atual=s.trilhaNIIL||{},metas=Array.isArray(atual.metas)?atual.metas:[],trilhas=atual.trilhasContextuais||{};
+      return{...s,trilhaNIIL:{...atual,focoAtual:meta,metas:metas.some(x=>x.id===meta.id)?metas:[...metas,meta],trilhasContextuais:{...trilhas,[area]:{area,origem:'roda-da-vida',snapshotId:snapshot.id,notaInicial:nota,status:modulo?'conectada':'sugerida',modulo}},handoff:{id:'handoff-'+Date.now(),area,modulo,snapshotId:snapshot.id,notaInicial:nota,consumido:false}}};
+    });
+    concluir(e,{ignorarValidacao:true,semFeedback:true});
+    if(modulo){setAberta(null);setAba(modulo);}
+  };
+
   const Interacao=({e})=>{
     const v=ler(e.chave);
     if(e.tipo==='roda'){
-      const vals=d.rodas?.[e.rodaId]||{};
-      return <div className="tn-roda"><Radar valores={vals}/><div className="tn-roda-list">{RODA_SETORES.map(s=><label key={s}><span>{s}<b>{vals[s]||'—'}</b></span><input type="range" min="1" max="10" value={vals[s]||5} onChange={ev=>{up(st=>({...st,rodas:{...(st.rodas||{}),[e.rodaId]:{...(st.rodas?.[e.rodaId]||{}),[s]:Number(ev.target.value)}}}));feedback('tap',d)}}/></label>)}</div></div>;
+      const snap=(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id);
+      if(snap){
+        const ordenadas=[...RODA_SETORES].sort((a,b)=>Number(snap.valores[a])-Number(snap.valores[b]));
+        const dataFmt=new Date(snap.concluidaEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+        return <div className="tn-roda-result">
+          <div className="tn-roda-result-head"><span>RETRATO CONCLUÍDO</span><b>{dataFmt}</b></div>
+          <Radar valores={snap.valores}/>
+          <div className="tn-roda-score-grid">{RODA_SETORES.map(s=><div key={s}><span>{s}</span><b>{snap.valores[s]}/10</b></div>)}</div>
+          <div className="tn-roda-focus">
+            <span>AGORA, ESCOLHA UM FOCO</span>
+            <h3>Qual ponto merece entrar primeiro no seu sistema?</h3>
+            <p>O NIIL sugere começar por áreas com notas mais baixas, mas a escolha é sua.</p>
+            <div className="tn-roda-focus-list">{ordenadas.slice(0,4).map(area=>{
+              const mod=RODA_MODULO(area);
+              const destino=mod?(mod==='financeiro'?'Financeiro':mod==='sono'?'Sono':mod==='cursos'?'Cursos':mod==='agenda'?'Agenda':'Diário'):'trilha contextual';
+              return <button key={area} onClick={()=>ativarFocoRoda(e,snap,area)}>
+                <div><b>{area}</b><small>{snap.valores[area]+'/10 · '+(mod?'conectar ao módulo '+destino:'criar '+destino)}</small></div>
+                <ChevronRight size={18}/>
+              </button>;
+            })}</div>
+            <details className="tn-roda-all"><summary>Escolher outra área</summary><div>{ordenadas.slice(4).map(area=><button key={area} onClick={()=>ativarFocoRoda(e,snap,area)}><span>{area}</span><b>{snap.valores[area]}/10</b></button>)}</div></details>
+          </div>
+          <div className="tn-roda-locked-note"><Lock size={14}/><span>Este retrato foi fechado e não pode ser editado. Em uma nova revisão, o NIIL cria outro retrato para comparação.</span></div>
+        </div>;
+      }
+      const setor=RODA_SETORES[rodaPasso],item=rascunhoRoda?.[setor]||{},guia=RODA_GUIA[setor]||{dica:'Pense na sua realidade recente.',exemplos:[]};
+      return <div className="tn-roda-wizard">
+        <div className="tn-roda-step"><span>{rodaPasso+1} de {RODA_SETORES.length}</span><b>{setor}</b></div>
+        <h2>Como está {setor.toLowerCase()} na sua vida hoje?</h2>
+        <p className="tn-roda-tip">{guia.dica}</p>
+        <div className="tn-roda-notas">{Array.from({length:10},(_,i)=>i+1).map(n=><button key={n} className={Number(item.nota)===n?'on':''} onClick={()=>salvarRodaCampo(e,setor,{nota:n})}>{n}</button>)}</div>
+        <div className="tn-roda-why">
+          <span>O que mais pesou nessa nota?</span>
+          <small>Use os exemplos como ponto de partida. Não existe resposta certa.</small>
+          <div className="tn-roda-reasons">{guia.exemplos.map(x=>{const on=(item.razoes||[]).includes(x);return <button key={x} className={on?'on':''} onClick={()=>alternarRazaoRoda(e,setor,x)}>{x}{on&&<Check size={14}/>}</button>})}</div>
+          <textarea value={item.detalhe||''} onChange={ev=>salvarRodaCampo(e,setor,{detalhe:ev.target.value})} placeholder="Se quiser, complete em uma frase: “dei essa nota porque...”"/>
+        </div>
+      </div>;
     }
     if(['choice','binary','module-decision'].includes(e.interacao))return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}<ChevronRight size={16}/></button>)}</div>;
     if(e.interacao==='scale')return <div className="tn-scale"><strong>{v||5}/10</strong><input type="range" min="1" max="10" value={v||5} onChange={ev=>salvar(e.chave,Number(ev.target.value))} onPointerUp={ev=>concluirRapido(e,Number(ev.currentTarget.value))}/><div><span>{e.minimo}</span><span>{e.maximo}</span></div></div>;
@@ -190,18 +285,17 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
   if(passo){
     const fase=passo.fase;
     return <div className="tn-shell tn-detail">
-      <header className="tn-detail-head"><button onClick={()=>setAberta(null)}><ArrowLeft size={20}/></button><div><span>{fase.marco} · {passo.min} min</span><b>{passo.titulo}</b></div><i>{fase.etapas.findIndex(x=>x.id===passo.id)+1}/{fase.etapas.length}</i></header>
-      <div className="tn-detail-progress"><i style={{width:`${((fase.etapas.findIndex(x=>x.id===passo.id)+1)/fase.etapas.length)*100}%`}}/></div>
+      <header className="tn-detail-head"><button onClick={()=>setAberta(null)}><ArrowLeft size={20}/></button><div><span>{passo.tipo==='roda'?'RODA DA VIDA':fase.marco+' · '+passo.min+' min'}</span><b>{passo.tipo==='roda'?(snapshotRoda?'Seu retrato':RODA_SETORES[rodaPasso]):passo.titulo}</b></div><i>{passo.tipo==='roda'&&!snapshotRoda?(rodaPasso+1)+'/'+RODA_SETORES.length:(fase.etapas.findIndex(x=>x.id===passo.id)+1)+'/'+fase.etapas.length}</i></header>
+      <div className="tn-detail-progress"><i style={{width:(passo.tipo==='roda'&&!snapshotRoda?((rodaPasso+1)/RODA_SETORES.length)*100:((fase.etapas.findIndex(x=>x.id===passo.id)+1)/fase.etapas.length)*100)+'%'}}/></div>
       <main className="tn-detail-main">
-        <div className="tn-kicker">UMA COISA POR VEZ</div>
-        <h1>{passo.pergunta||passo.perguntaCurta||passo.titulo}</h1>
-        {passo.perguntaCurta&&<p>{passo.perguntaCurta}</p>}
+        {passo.tipo!=='roda'&&<><div className="tn-kicker">UMA COISA POR VEZ</div><h1>{passo.pergunta||passo.perguntaCurta||passo.titulo}</h1>{passo.perguntaCurta&&<p>{passo.perguntaCurta}</p>}</>}
         <Interacao e={passo}/>
         {passo.modulo&&!['sleep','agenda','photo'].includes(passo.interacao)&&<button className="tn-open-module" onClick={()=>abrirModulo(passo.modulo)}>Abrir {passo.modulo==='financeiro'?'Financeiro':passo.modulo==='cursos'?'Cursos':passo.modulo==='sono'?'Sono':'módulo relacionado'} <ChevronRight size={16}/></button>}
         {passo.ciencia&&<details className="tn-science"><summary>Por que o NIIL pergunta isso?</summary><p>{passo.ciencia}</p>{passo.fonte&&<small>{passo.fonte}</small>}</details>}
         {passo.base&&<small className="tn-base">{passo.base}</small>}
       </main>
-      {!['choice','binary','module-decision','experiment','sort','minimum','scale'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{feito(passo.id)?'Continuar':'Concluir e seguir'} <ChevronRight size={18}/></button></footer>}
+      {passo.tipo==='roda'&&!snapshotRoda&&<footer className="tn-detail-foot"><button onClick={()=>concluirAreaRoda(passo)}>{rodaPasso===RODA_SETORES.length-1?'Ver meu retrato':'Continuar'} <ChevronRight size={18}/></button></footer>}
+      {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum','scale'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{feito(passo.id)?'Continuar':'Concluir e seguir'} <ChevronRight size={18}/></button></footer>}
     </div>;
   }
 
