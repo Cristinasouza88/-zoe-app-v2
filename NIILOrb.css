@@ -1,0 +1,181 @@
+.niil-orb-wrap{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  min-width:var(--niil-orb-size);
+}
+.niil-orb{
+  width:var(--niil-orb-size);
+  height:var(--niil-orb-size);
+  border-radius:50%;
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  border:1px solid rgba(23,21,29,.08);
+  background:rgba(255,255,255,.86);
+  box-shadow:
+    inset 0 0 0 10px rgba(255,255,255,.16),
+    0 18px 42px rgba(23,21,29,.08);
+  transform:translateZ(0);
+}
+.niil-orb__glass{
+  position:absolute;
+  inset:7%;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.78);
+  box-shadow:inset 14px 10px 24px rgba(255,255,255,.5);
+  z-index:5;
+  pointer-events:none;
+}
+.niil-orb__blob{
+  position:absolute;
+  display:block;
+  border-radius:50%;
+  pointer-events:none;
+  will-change:transform;
+}
+.niil-orb__blob--green{
+  width:58%;
+  height:58%;
+  left:8%;
+  top:24%;
+  background:#B7F20C;
+  filter:blur(calc(var(--niil-orb-size) * .075));
+  opacity:.92;
+  z-index:1;
+}
+.niil-orb__blob--ink{
+  width:52%;
+  height:52%;
+  right:6%;
+  bottom:9%;
+  background:#17151D;
+  filter:blur(calc(var(--niil-orb-size) * .06));
+  opacity:.93;
+  z-index:2;
+}
+.niil-orb__blob--light{
+  width:54%;
+  height:54%;
+  right:2%;
+  top:2%;
+  background:#FFFFFF;
+  filter:blur(calc(var(--niil-orb-size) * .055));
+  opacity:.88;
+  z-index:3;
+}
+.niil-orb__blob--soft{
+  width:42%;
+  height:42%;
+  left:25%;
+  top:7%;
+  background:#F3F9DB;
+  filter:blur(calc(var(--niil-orb-size) * .07));
+  opacity:.72;
+  z-index:2;
+}
+.niil-orb__orbit{
+  position:absolute;
+  inset:17%;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.58);
+  z-index:4;
+  pointer-events:none;
+  transform:rotate(-18deg) scaleX(1.12);
+}
+.niil-orb__orbit--two{
+  inset:25% 13%;
+  opacity:.46;
+  transform:rotate(34deg) scaleY(.72);
+}
+.niil-orb__status{
+  font-size:11px;
+  font-weight:760;
+  color:#6C686F;
+  letter-spacing:.01em;
+}
+
+/* repouso: presença discreta */
+.niil-orb--idle .niil-orb__blob--green{animation:niilOrbDriftA 8s ease-in-out infinite}
+.niil-orb--idle .niil-orb__blob--ink{animation:niilOrbDriftB 9s ease-in-out infinite}
+
+/* ouvindo: pulsa e reage visualmente sem virar personagem */
+.niil-orb--listening{animation:niilOrbListen 1.65s ease-in-out infinite}
+.niil-orb--listening .niil-orb__blob--green{animation:niilOrbListenGreen 1.2s ease-in-out infinite}
+.niil-orb--listening .niil-orb__blob--ink{animation:niilOrbListenInk 1.45s ease-in-out infinite}
+.niil-orb--listening .niil-orb__orbit--one{animation:niilOrbOrbit 4.2s linear infinite}
+
+/* pensando: movimento interno, mais contido */
+.niil-orb--thinking .niil-orb__blob--green{animation:niilOrbThinkGreen 2.7s ease-in-out infinite}
+.niil-orb--thinking .niil-orb__blob--ink{animation:niilOrbThinkInk 3.1s ease-in-out infinite}
+.niil-orb--thinking .niil-orb__orbit--one{animation:niilOrbOrbit 5.2s linear infinite}
+.niil-orb--thinking .niil-orb__orbit--two{animation:niilOrbOrbitReverse 6.8s linear infinite}
+
+/* respondendo: expansão suave */
+.niil-orb--responding{animation:niilOrbRespond 2.1s ease-in-out infinite}
+.niil-orb--responding .niil-orb__blob--green{animation:niilOrbRespondGreen 2s ease-in-out infinite}
+.niil-orb--responding .niil-orb__blob--ink{animation:niilOrbRespondInk 2.3s ease-in-out infinite}
+
+/* concluído: volta ao estado estável */
+.niil-orb--done .niil-orb__blob--green{transform:translate(6%,2%) scale(.96)}
+.niil-orb--done .niil-orb__blob--ink{transform:translate(-4%,-3%) scale(.96)}
+
+@keyframes niilOrbDriftA{
+  0%,100%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(9%,-7%) scale(1.05)}
+}
+@keyframes niilOrbDriftB{
+  0%,100%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(-7%,6%) scale(1.04)}
+}
+@keyframes niilOrbListen{
+  0%,100%{transform:scale(.985)}
+  50%{transform:scale(1.02)}
+}
+@keyframes niilOrbListenGreen{
+  0%,100%{transform:translate(-2%,3%) scale(.98)}
+  50%{transform:translate(15%,-8%) scale(1.13)}
+}
+@keyframes niilOrbListenInk{
+  0%,100%{transform:translate(2%,1%) scale(1)}
+  50%{transform:translate(-10%,7%) scale(1.08)}
+}
+@keyframes niilOrbThinkGreen{
+  0%,100%{transform:translate(-4%,6%) scale(.96)}
+  50%{transform:translate(20%,-12%) scale(1.08)}
+}
+@keyframes niilOrbThinkInk{
+  0%,100%{transform:translate(3%,-2%) scale(1.02)}
+  50%{transform:translate(-16%,11%) scale(.94)}
+}
+@keyframes niilOrbRespond{
+  0%,100%{transform:scale(.99)}
+  48%{transform:scale(1.028)}
+}
+@keyframes niilOrbRespondGreen{
+  0%,100%{transform:translate(0,2%) scale(1)}
+  50%{transform:translate(12%,-9%) scale(1.12)}
+}
+@keyframes niilOrbRespondInk{
+  0%,100%{transform:translate(0,0) scale(.98)}
+  50%{transform:translate(-8%,5%) scale(1.06)}
+}
+@keyframes niilOrbOrbit{
+  from{transform:rotate(-18deg) scaleX(1.12)}
+  to{transform:rotate(342deg) scaleX(1.12)}
+}
+@keyframes niilOrbOrbitReverse{
+  from{transform:rotate(34deg) scaleY(.72)}
+  to{transform:rotate(-326deg) scaleY(.72)}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .niil-orb,
+  .niil-orb__blob,
+  .niil-orb__orbit{
+    animation:none!important;
+    transition:none!important;
+  }
+}
