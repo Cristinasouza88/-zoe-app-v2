@@ -1,4 +1,4 @@
-import { TRILHA_NIIL as TRILHA } from './trilha.niil.data.js';
+import { TRILHA } from './conteudo.js';
 import { normalizarFinanceiro, reservaResumo, mesDa } from './financeiro.core.js';
 
 export const PONTOS_NIIL = Object.freeze({
@@ -120,12 +120,10 @@ const evento=(key,tipo,pontos,titulo,area,data,extra={})=>({
 });
 
 const pontosEtapa=et=>{
-  if(Number(et.pontos)>0)return Number(et.pontos);
   if(et.tipo==='leitura')return PONTOS_NIIL.REGISTRO;
   if(et.tipo==='fichas'||et.tipo==='dia7')return PONTOS_NIIL.REFLEXAO;
   if(et.tipo==='agenda')return PONTOS_NIIL.ACAO;
   if(et.tipo==='roda'||et.tipo==='ferramenta')return PONTOS_NIIL.FERRAMENTA;
-  if(et.tipo==='micro')return PONTOS_NIIL.ACAO;
   return PONTOS_NIIL.ACAO;
 };
 
@@ -183,10 +181,6 @@ function eventosAgenda(d){
       if(!feito)return;
       if(key==='niil-experimento'){
         out.push(evento(`agenda:${data}:niil-experimento`,'action.experiment.completed',PONTOS_NIIL.FERRAMENTA,'Experimento NIIL realizado','trilha',data,{trilhaId:'niil-central',origemId:key}));
-        return;
-      }
-      if(key.startsWith('niil-agenda-viva-')){
-        out.push(evento(`agenda:${data}:${key}`,'action.completed',PONTOS_NIIL.ACAO,'Ação da trilha realizada','rotina',data,{trilhaId:'niil-central',origemId:key}));
         return;
       }
       const tarefa=AGENDA_MAP[key];
