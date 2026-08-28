@@ -309,6 +309,70 @@ function eventosBemEstar(d){
   return out;
 }
 
+function eventosPraticas(d){
+  const out=[];
+
+  /* Um check-in conta no máximo uma vez por dia, mesmo que a pessoa ajuste a emoção. */
+  const checkinsPorDia=new Map();
+  array(d.jornada?.checkins).forEach(x=>{
+    const data=normalizaData(x.data);
+    if(!checkinsPorDia.has(data))checkinsPorDia.set(data,x);
+  });
+  checkinsPorDia.forEach((x,data)=>out.push(evento(
+    `jornada:checkin:${data}`,
+    'wellbeing.checkin.completed',
+    PONTOS_NIIL.CHECKIN,
+    'Check-in de percepção',
+    'bem-estar',
+    data,
+    {trilhaId:'niil-central',origemId:data}
+  )));
+
+  /* Ritual vale pela prática completa do dia, nunca pela quantidade de passos isolados. */
+  Object.entries(d.ritual||{}).forEach(([data,marcas])=>{
+    const completo=Object.values(marcas||{}).filter(Boolean).length>=9;
+    if(completo)out.push(evento(
+      `ritual:${data}`,
+      'routine.ritual.completed',
+      PONTOS_NIIL.ACAO,
+      'Ritual concluído',
+      'rotina',
+      data,
+      {trilhaId:'niil-central',origemId:data}
+    ));
+  });
+
+  /* Ativação 40 é uma prática completa; repetir cliques não multiplica pontos. */
+  if(Object.values(d.ativacao40?.marcas||{}).filter(Boolean).length>=40){
+    const data=isoHoje();
+    out.push(evento(
+      `ativacao40:${data}`,
+      'practice.activation.completed',
+      PONTOS_NIIL.ACAO,
+      'Ativação 40 concluída',
+      'autoconhecimento',
+      data,
+      {trilhaId:'niil-central',origemId:data}
+    ));
+  }
+
+  /* Desafio 100: cada dia sustentado é uma evidência pequena, limitada a 5 pontos. */
+  Object.entries(d.desafio100||{}).forEach(([dia,feito])=>{
+    if(!feito)return;
+    out.push(evento(
+      `desafio100:dia:${dia}`,
+      'practice.challenge100.day',
+      PONTOS_NIIL.REGISTRO,
+      `Desafio 100 · dia ${dia}`,
+      'consistencia',
+      isoHoje(),
+      {trilhaId:'niil-central',origemId:String(dia)}
+    ));
+  });
+
+  return out;
+}
+
 function eventosBiblioteca(d){
   const out=[];
   array(d.biblioteca).forEach(x=>{
@@ -412,6 +476,7 @@ function coletarEventos(d){
     ...eventosCursos(d),
     ...eventosTreino(d),
     ...eventosBemEstar(d),
+    ...eventosPraticas(d),
     ...eventosBiblioteca(d),
     ...eventosIngles(d),
     ...eventosFinanceiros(d)
