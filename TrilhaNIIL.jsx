@@ -70,7 +70,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
   const recomendacoes=useMemo(()=>recomendacoesContextuaisNIIL(d),[d]);
   const passo=TRILHA_NIIL.flatMap(f=>f.etapas.map(e=>({...e,fase:f}))).find(e=>e.id===aberta);
   const resp=d.trilhaNIIL?.respostas||{};
-  const snapshotRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===passo.id):null;
+  const snapshotValido=x=>x?.versao===2&&RODA_SETORES.every(s=>Number(x?.valores?.[s])>=1&&Number(x?.valores?.[s])<=10);
+  const snapshotRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===passo.id&&snapshotValido(x)):null;
   const rascunhoRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaRascunhos?.[passo.rodaId]||{}):{};
 
   useEffect(()=>{
@@ -195,10 +196,10 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
     const justificou=(item.razoes||[]).length>0||String(item.detalhe||'').trim().length>=3;
     if(!item.nota)return aviso('Escolha uma nota antes de continuar.');
     if(!justificou)return aviso('Marque pelo menos um ponto que explica sua nota.');
-    if(rodaPasso<RODA_SETORES.length-1){setRodaPasso(x=>x+1);return;}
+    if(rodaPasso<RODA_SETORES.length-1){setRodaPasso(x=>x+1);window.setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),30);return;}
     const respostas={...rascunhoRoda,[setor]:item};
     const valores={};RODA_SETORES.forEach(s=>valores[s]=Number(respostas[s]?.nota||0));
-    const snap={id:'roda-'+e.rodaId+'-'+Date.now(),rodaId:e.rodaId,etapaId:e.id,concluidaEm:new Date().toISOString(),data:hoje(),valores,respostas};
+    const snap={id:'roda-'+e.rodaId+'-'+Date.now(),versao:2,rodaId:e.rodaId,etapaId:e.id,concluidaEm:new Date().toISOString(),data:hoje(),valores,respostas};
     up(s=>({...s,rodas:{...(s.rodas||{}),[e.rodaId]:valores},trilhaNIIL:{...(s.trilhaNIIL||{}),rodaSnapshots:[...(s.trilhaNIIL?.rodaSnapshots||[]),snap]}}));
   };
 
@@ -209,7 +210,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
 
   const ativarFocoRoda=(e,snapshot,area)=>{
     const modulo=RODA_MODULO(area),nota=Number(snapshot?.valores?.[area]||0);
-    const meta={id:'meta-roda-'+snapshot.id,titulo:'Evoluir '+area,area,notaInicial:nota,snapshotId:snapshot.id,origem:'roda-da-vida',status:'ativa',criadaEm:new Date().toISOString()};
+    const areaSlug=area.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    const meta={id:'meta-roda-'+snapshot.id+'-'+areaSlug,titulo:'Evoluir '+area,area,notaInicial:nota,snapshotId:snapshot.id,origem:'roda-da-vida',status:'ativa',criadaEm:new Date().toISOString()};
     up(s=>{
       const atual=s.trilhaNIIL||{},metas=Array.isArray(atual.metas)?atual.metas:[],trilhas=atual.trilhasContextuais||{};
       return{...s,trilhaNIIL:{...atual,focoAtual:meta,metas:metas.some(x=>x.id===meta.id)?metas:[...metas,meta],trilhasContextuais:{...trilhas,[area]:{area,origem:'roda-da-vida',snapshotId:snapshot.id,notaInicial:nota,status:modulo?'conectada':'sugerida',modulo}},handoff:{id:'handoff-'+Date.now(),area,modulo,snapshotId:snapshot.id,notaInicial:nota,consumido:false}}};
@@ -221,7 +223,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
   const Interacao=({e})=>{
     const v=ler(e.chave);
     if(e.tipo==='roda'){
-      const snap=(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id);
+      const snap=(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id&&snapshotValido(x));
       if(snap){
         const ordenadas=[...RODA_SETORES].sort((a,b)=>Number(snap.valores[a])-Number(snap.valores[b]));
         const dataFmt=new Date(snap.concluidaEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
@@ -247,16 +249,21 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
         </div>;
       }
       const setor=RODA_SETORES[rodaPasso],item=rascunhoRoda?.[setor]||{},guia=RODA_GUIA[setor]||{dica:'Pense na sua realidade recente.',exemplos:[]};
+      const nota=Number(item.nota||0);
+      const reflexao=!nota?'Escolha pensando na sua realidade das últimas semanas.':nota<=4?'O que está deixando essa área tão distante do que você gostaria?':nota<=7?'O que já funciona — e o que ainda está faltando?':'O que está funcionando bem e merece ser protegido?';
       return <div className="tn-roda-wizard">
+        <div className="tn-roda-tool-title"><span>FERRAMENTA · RODA DA VIDA</span><small>1 área por vez · seu retrato só fecha no final</small></div>
         <div className="tn-roda-step"><span>{rodaPasso+1} de {RODA_SETORES.length}</span><b>{setor}</b></div>
-        <h2>Como está {setor.toLowerCase()} na sua vida hoje?</h2>
+        <h2>Que nota você dá para {setor.toLowerCase()} hoje?</h2>
         <p className="tn-roda-tip">{guia.dica}</p>
-        <div className="tn-roda-notas">{Array.from({length:10},(_,i)=>i+1).map(n=><button key={n} className={Number(item.nota)===n?'on':''} onClick={()=>salvarRodaCampo(e,setor,{nota:n})}>{n}</button>)}</div>
+        <div className="tn-roda-notas">{Array.from({length:10},(_,i)=>i+1).map(n=><button key={n} className={nota===n?'on':''} onClick={()=>salvarRodaCampo(e,setor,{nota:n})}>{n}</button>)}</div>
+        <div className="tn-roda-reflection"><Sparkles size={17}/><div><b>Antes de seguir, reflita:</b><span>{reflexao}</span></div></div>
         <div className="tn-roda-why">
-          <span>O que mais pesou nessa nota?</span>
-          <small>Use os exemplos como ponto de partida. Não existe resposta certa.</small>
+          <span>Por que você deu essa nota?</span>
+          <small>Marque o que mais influenciou sua resposta. Os exemplos servem só para ajudar a pensar.</small>
           <div className="tn-roda-reasons">{guia.exemplos.map(x=>{const on=(item.razoes||[]).includes(x);return <button key={x} className={on?'on':''} onClick={()=>alternarRazaoRoda(e,setor,x)}>{x}{on&&<Check size={14}/>}</button>})}</div>
-          <textarea value={item.detalhe||''} onChange={ev=>salvarRodaCampo(e,setor,{detalhe:ev.target.value})} placeholder="Se quiser, complete em uma frase: “dei essa nota porque...”"/>
+          <textarea value={item.detalhe||''} onChange={ev=>salvarRodaCampo(e,setor,{detalhe:ev.target.value})} placeholder="Se quiser, conte em uma frase o que está acontecendo nessa área."/>
+          <div className="tn-roda-requirement">Para continuar: escolha uma nota e pelo menos um motivo.</div>
         </div>
       </div>;
     }
@@ -294,7 +301,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
         {passo.ciencia&&<details className="tn-science"><summary>Por que o NIIL pergunta isso?</summary><p>{passo.ciencia}</p>{passo.fonte&&<small>{passo.fonte}</small>}</details>}
         {passo.base&&<small className="tn-base">{passo.base}</small>}
       </main>
-      {passo.tipo==='roda'&&!snapshotRoda&&<footer className="tn-detail-foot"><button onClick={()=>concluirAreaRoda(passo)}>{rodaPasso===RODA_SETORES.length-1?'Ver meu retrato':'Continuar'} <ChevronRight size={18}/></button></footer>}
+      {passo.tipo==='roda'&&!snapshotRoda&&(()=>{const setor=RODA_SETORES[rodaPasso],item=rascunhoRoda?.[setor]||{},ok=!!item.nota&&(((item.razoes||[]).length>0)||String(item.detalhe||'').trim().length>=3);return <footer className="tn-detail-foot tn-roda-foot">{rodaPasso>0&&<button className="tn-roda-back-step" onClick={()=>{setRodaPasso(x=>Math.max(0,x-1));window.setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),30)}}>Anterior</button>}<button className="tn-roda-continue" disabled={!ok} onClick={()=>concluirAreaRoda(passo)}>{rodaPasso===RODA_SETORES.length-1?'Ver meu retrato':'Continuar'} <ChevronRight size={18}/></button></footer>})()}
       {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum','scale'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{feito(passo.id)?'Continuar':'Concluir e seguir'} <ChevronRight size={18}/></button></footer>}
     </div>;
   }
