@@ -27,3 +27,66 @@
 
 .tn-open-module{width:100%;margin-top:14px;border:1px solid #DCE8B8;border-radius:16px;background:#F8FCDD;color:#17151D;min-height:46px;font:inherit;font-size:11px;font-weight:850;display:flex;align-items:center;justify-content:center;gap:6px}
 .tn-science{margin-top:16px;border-top:1px solid #ECEAEF;padding-top:12px}.tn-science summary{cursor:pointer;font-size:10px;font-weight:850;color:#6C9700}.tn-science p{font-size:10.5px;line-height:1.5;color:#6F6C74;margin:9px 0 4px}.tn-science small{font-size:8.5px;color:#9A969F}
+
+/* ══════════ TRILHA OLIMPO — geometria aprovada ══════════ */
+.tn-olympo{display:grid;gap:26px;margin-top:4px}
+.tn-olympo-phase{position:relative}
+.tn-olympo-phase.locked{opacity:.48}
+.tn-olympo-banner{
+  min-height:92px;border-radius:23px;padding:15px 16px;
+  display:grid;grid-template-columns:50px 1fr auto;gap:12px;align-items:center;
+  background:#17151D;color:#fff;box-shadow:0 8px 0 rgba(23,21,29,.12),0 16px 30px rgba(23,21,29,.07)
+}
+.tn-olympo-banner.current{background:#B7F20C;color:#17151D;box-shadow:0 8px 0 rgba(108,151,0,.22),0 16px 28px rgba(108,151,0,.10)}
+.tn-olympo-phase.done .tn-olympo-banner{background:#17151D;color:#fff}
+.tn-olympo-phase.locked .tn-olympo-banner{background:#DDE3DE;color:#777B78;box-shadow:none}
+.tn-olympo-banner-icon{
+  width:48px;height:48px;border-radius:16px;display:grid;place-items:center;
+  background:rgba(255,255,255,.18)
+}
+.tn-olympo-banner.current .tn-olympo-banner-icon{background:rgba(255,255,255,.46)}
+.tn-olympo-banner-copy span{display:block;font-size:9px;font-weight:900;letter-spacing:1.1px;color:inherit;opacity:.72}
+.tn-olympo-banner-copy h2{font-size:18px;line-height:1.15;margin:3px 0 4px;font-weight:900}
+.tn-olympo-banner-copy p{font-size:10.5px;line-height:1.38;margin:0;opacity:.76}
+.tn-olympo-banner>b{align-self:start;margin-top:2px;padding:6px 8px;border-radius:10px;background:rgba(255,255,255,.16);font-size:10px}
+.tn-olympo-banner.current>b{background:rgba(23,21,29,.08)}
+
+.tn-olympo-map{position:relative;margin-top:12px;overflow:hidden}
+.tn-olympo-map>svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.tn-olympo-node{
+  position:absolute;transform:translateX(-50%);width:150px;border:0;background:transparent;
+  padding:0;display:flex;flex-direction:column;align-items:center;font:inherit;color:#17151D;
+  cursor:pointer;z-index:2
+}
+.tn-olympo-node:disabled{cursor:default}
+.tn-olympo-node-circle{
+  width:68px;height:68px;border-radius:50%;display:grid;place-items:center;
+  background:#ECEEEA;color:#9B9D99;border:6px solid #fff;
+  box-shadow:0 7px 0 rgba(46,61,67,.16);transition:transform .16s ease,box-shadow .16s ease,background .16s ease
+}
+.tn-olympo-node.current .tn-olympo-node-circle{
+  background:#B7F20C;color:#17151D;
+  box-shadow:0 0 0 5px rgba(183,242,12,.22),0 9px 0 rgba(108,151,0,.26),0 16px 28px rgba(108,151,0,.14)
+}
+.tn-olympo-node.done .tn-olympo-node-circle{
+  background:#17151D;color:#fff;
+  box-shadow:0 7px 0 rgba(23,21,29,.22)
+}
+.tn-olympo-node:not(:disabled):active .tn-olympo-node-circle{transform:translateY(3px);box-shadow:0 4px 0 rgba(46,61,67,.14)}
+.tn-olympo-node-label{
+  width:142px;margin-top:10px;padding:7px 8px;border-radius:12px;background:rgba(255,255,255,.92);
+  box-shadow:0 6px 18px rgba(23,21,29,.06);text-align:center
+}
+.tn-olympo-node-label b{display:block;font-size:10.5px;line-height:1.25}
+.tn-olympo-node-label small{display:block;font-size:8.5px;color:#8B8791;margin-top:3px}
+.tn-olympo-node.locked .tn-olympo-node-label{opacity:.55;box-shadow:none}
+
+.tn-options button,.tn-minimum button{transition:transform .14s ease,background .14s ease,border-color .14s ease}
+.tn-options button:active,.tn-minimum button:active{transform:scale(.985)}
+.tn-options button.on,.tn-minimum button.on{box-shadow:0 0 0 3px rgba(183,242,12,.16)}
+
+@media(max-width:380px){
+  .tn-olympo-node{width:136px}
+  .tn-olympo-node-label{width:130px}
+  .tn-olympo-node-circle{width:64px;height:64px}
+}
