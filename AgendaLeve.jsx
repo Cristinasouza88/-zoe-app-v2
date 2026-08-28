@@ -1,6 +1,7 @@
 import React,{useMemo,useState}from'react';
 import{CalendarDays,ChevronLeft,ChevronRight,Flame,Trophy,Sparkles,BookOpen,Target,Check,Circle,Plus,X,Dumbbell}from'lucide-react';
 import{C,hoje}from'./ui.jsx';
+import{PONTOS_NIIL}from'./gamificacao.core.js';
 import'./AgendaLeve.css';
 
 export default function AgendaLeve({d,data,setData,agendaAtiva,toggleTarefaDe,abrirTreino,streak,setAba,up}){
@@ -42,14 +43,14 @@ export default function AgendaLeve({d,data,setData,agendaAtiva,toggleTarefaDe,ab
   const itens=[];
   if(planoNesteDia)itens.push({
     id:'niil-experimento',tipo:'niil',titulo:planoNIIL.acao,
-    detalhe:(planoNIIL.hora||'Hoje')+' · '+(planoNIIL.duracao||0)+' min',
+    detalhe:(planoNIIL.hora||'Hoje')+' · '+(planoNIIL.duracao||0)+' min · +'+PONTOS_NIIL.FERRAMENTA+' pontos',
     feito:!!marcas['niil-experimento'],I:Sparkles,cor:C.lilac,
     acao:()=>up(s=>({...s,agenda:{...s.agenda,[data]:{...(s.agenda[data]||{}),'niil-experimento':!(s.agenda[data]||{})['niil-experimento']}}}))
   });
   eventosCursos.forEach(e=>{
     const treino=/academia|treino/i.test(e.titulo||'');
     itens.push({
-      id:'curso-'+e.id,tipo:treino?'treino':'curso',titulo:e.titulo,detalhe:(e.modulo||'Curso')+' · '+e.hora,
+      id:'curso-'+e.id,tipo:treino?'treino':'curso',titulo:e.titulo,detalhe:(e.modulo||'Curso')+' · '+e.hora+(treino?' · +'+PONTOS_NIIL.FERRAMENTA+' pontos':' · pontua ao concluir'),
       feito:!!e.feito,I:treino?Dumbbell:BookOpen,cor:C.lilac,abrir:true,
       acao:()=>treino?abrirTreino?.({origem:'curso',agendaCursoId:e.id,data:e.data,titulo:e.titulo}):setAba('cursos')
     });
@@ -57,7 +58,7 @@ export default function AgendaLeve({d,data,setData,agendaAtiva,toggleTarefaDe,ab
   tarefas.forEach((t,i)=>{
     const treino=t.tipo==='Treino'||/academia|treino/i.test(t.t||'');
     itens.push({
-      id:'tarefa-'+i,tipo:treino?'treino':'missao',titulo:t.t,detalhe:(t.hora||'Ao longo do dia')+' · '+t.p+' pontos',
+      id:'tarefa-'+i,tipo:treino?'treino':'missao',titulo:t.t,detalhe:(t.hora||'Ao longo do dia')+' · +'+(treino?PONTOS_NIIL.FERRAMENTA:PONTOS_NIIL.ACAO)+' pontos',
       feito:!!marcas[agendaAtiva.id+'-'+i],I:treino?Dumbbell:Target,cor:C.green,acao:()=>toggleTarefaDe(agendaAtiva,i,data)
     });
   });
