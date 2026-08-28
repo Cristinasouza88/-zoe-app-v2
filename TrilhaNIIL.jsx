@@ -185,6 +185,39 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
     });
   };
 
+  const salvarRodaCampo=(e,setor,patch)=>up(s=>{
+    const atual=s.trilhaNIIL||{},rascunhos=atual.rodaRascunhos||{},roda=rascunhos[e.rodaId]||{},item=roda[setor]||{};
+    return{...s,trilhaNIIL:{...atual,rodaRascunhos:{...rascunhos,[e.rodaId]:{...roda,[setor]:{...item,...patch}}}}};
+  });
+
+  const concluirAreaRoda=e=>{
+    const setor=RODA_SETORES[rodaPasso],item=rascunhoRoda?.[setor]||{};
+    const justificou=(item.razoes||[]).length>0||String(item.detalhe||'').trim().length>=3;
+    if(!item.nota)return aviso('Escolha uma nota antes de continuar.');
+    if(!justificou)return aviso('Marque pelo menos um ponto que explica sua nota.');
+    if(rodaPasso<RODA_SETORES.length-1){setRodaPasso(x=>x+1);return;}
+    const respostas={...rascunhoRoda,[setor]:item};
+    const valores={};RODA_SETORES.forEach(s=>valores[s]=Number(respostas[s]?.nota||0));
+    const snap={id:'roda-'+e.rodaId+'-'+Date.now(),rodaId:e.rodaId,etapaId:e.id,concluidaEm:new Date().toISOString(),data:hoje(),valores,respostas};
+    up(s=>({...s,rodas:{...(s.rodas||{}),[e.rodaId]:valores},trilhaNIIL:{...(s.trilhaNIIL||{}),rodaSnapshots:[...(s.trilhaNIIL?.rodaSnapshots||[]),snap]}}));
+  };
+
+  const alternarRazaoRoda=(e,setor,razao)=>{
+    const item=rascunhoRoda?.[setor]||{},atuais=Array.isArray(item.razoes)?item.razoes:[];
+    salvarRodaCampo(e,setor,{razoes:atuais.includes(razao)?atuais.filter(x=>x!==razao):[...atuais,razao]});
+  };
+
+  const ativarFocoRoda=(e,snapshot,area)=>{
+    const modulo=RODA_MODULO(area),nota=Number(snapshot?.valores?.[area]||0);
+    const meta={id:'meta-roda-'+snapshot.id,titulo:'Evoluir '+area,area,notaInicial:nota,snapshotId:snapshot.id,origem:'roda-da-vida',status:'ativa',criadaEm:new Date().toISOString()};
+    up(s=>{
+      const atual=s.trilhaNIIL||{},metas=Array.isArray(atual.metas)?atual.metas:[],trilhas=atual.trilhasContextuais||{};
+      return{...s,trilhaNIIL:{...atual,focoAtual:meta,metas:metas.some(x=>x.id===meta.id)?metas:[...metas,meta],trilhasContextuais:{...trilhas,[area]:{area,origem:'roda-da-vida',snapshotId:snapshot.id,notaInicial:nota,status:modulo?'conectada':'sugerida',modulo}},handoff:{id:'handoff-'+Date.now(),area,modulo,snapshotId:snapshot.id,notaInicial:nota,consumido:false}}};
+    });
+    concluir(e,{ignorarValidacao:true,semFeedback:true});
+    if(modulo){setAberta(null);setAba(modulo);}
+  };
+
   const Interacao=({e})=>{
     const v=ler(e.chave);
     if(e.tipo==='roda'){
