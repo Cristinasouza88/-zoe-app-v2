@@ -87,8 +87,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
     return v!==undefined&&v!==null&&String(v).length>0;
   };
 
-  const concluir=e=>{
-    if(!valido(e)){aviso('Faça a interação rápida antes de continuar.');return;}
+  const concluir=(e,opts={})=>{
+    if(!opts.ignorarValidacao&&!valido(e)){aviso('Faça a interação rápida antes de continuar.');return;}
     const ja=feito(e.id);
     const idx=e.fase.etapas.findIndex(x=>x.id===e.id);
     const ultima=idx===e.fase.etapas.length-1;
@@ -117,7 +117,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
       });
       return next;
     });
-    feedback('snap',d);
+    if(!opts.semFeedback)feedback('snap',d);
     if(ultima&&!ja){
       setMarco(e.fase);
       feedback('marco',d);
@@ -126,6 +126,12 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
     }
     const prox=e.fase.etapas[idx+1];
     setAberta(prox?.id||null);
+  };
+
+  const concluirRapido=(e,valor)=>{
+    salvar(e.chave,valor);
+    feedback('snap',d);
+    window.setTimeout(()=>concluir(e,{ignorarValidacao:true,semFeedback:true}),260);
   };
 
   const toggleMulti=(e,item)=>{
@@ -159,8 +165,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
       const vals=d.rodas?.[e.rodaId]||{};
       return <div className="tn-roda"><Radar valores={vals}/><div className="tn-roda-list">{RODA_SETORES.map(s=><label key={s}><span>{s}<b>{vals[s]||'—'}</b></span><input type="range" min="1" max="10" value={vals[s]||5} onChange={ev=>{up(st=>({...st,rodas:{...(st.rodas||{}),[e.rodaId]:{...(st.rodas?.[e.rodaId]||{}),[s]:Number(ev.target.value)}}}));feedback('tap',d)}}/></label>)}</div></div>;
     }
-    if(['choice','binary','module-decision'].includes(e.interacao))return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>{salvar(e.chave,x);feedback('tap',d)}}>{x}<ChevronRight size={16}/></button>)}</div>;
-    if(e.interacao==='scale')return <div className="tn-scale"><strong>{v||5}/10</strong><input type="range" min="1" max="10" value={v||5} onChange={ev=>{salvar(e.chave,Number(ev.target.value));feedback('tap',d)}}/><div><span>{e.minimo}</span><span>{e.maximo}</span></div></div>;
+    if(['choice','binary','module-decision'].includes(e.interacao))return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}<ChevronRight size={16}/></button>)}</div>;
+    if(e.interacao==='scale')return <div className="tn-scale"><strong>{v||5}/10</strong><input type="range" min="1" max="10" value={v||5} onChange={ev=>salvar(e.chave,Number(ev.target.value))} onPointerUp={ev=>concluirRapido(e,Number(ev.currentTarget.value))} onTouchEnd={ev=>concluirRapido(e,Number(ev.currentTarget.value))}/><div><span>{e.minimo}</span><span>{e.maximo}</span></div></div>;
     if(e.interacao==='dual-scale')return <div className="tn-stack">
       {[['querer','Quanto eu quero'],['fazer','Quanto eu faço']].map(([k,l])=><label className="tn-slider" key={k}><span>{l}<b>{v?.[k]||5}/10</b></span><input type="range" min="1" max="10" value={v?.[k]||5} onChange={ev=>salvar(e.chave,{...(v||{}),[k]:Number(ev.target.value)})}/></label>)}
     </div>;
@@ -169,11 +175,11 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
     if(e.interacao==='sleep')return <div className="tn-times"><label><Moon size={19}/><span>Costumo dormir</span><input type="time" value={v?.dormir||'23:00'} onChange={ev=>salvar(e.chave,{...(v||{}),dormir:ev.target.value})}/></label><label><Clock3 size={19}/><span>Costumo acordar</span><input type="time" value={v?.acordar||'07:00'} onChange={ev=>salvar(e.chave,{...(v||{}),acordar:ev.target.value})}/></label>{e.modulo&&<button className="tn-module-link" onClick={()=>abrirModulo(e.modulo)}>Abrir Sono <ChevronRight size={16}/></button>}</div>;
     if(e.interacao==='chain')return <div className="tn-chain">{[['sinal','Sinal','Ex.: termino o jantar'],['acao','Ação','Ex.: pego o celular'],['resultado','Resultado','Ex.: fico 40 min rolando']].map(([k,l,p],i)=><React.Fragment key={k}><input value={v?.[k]||''} placeholder={p} onChange={ev=>salvar(e.chave,{...(v||{}),[k]:ev.target.value})}/>{i<2&&<ChevronRight size={17}/>}</React.Fragment>)}</div>;
     if(e.interacao==='tradeoff')return <div className="tn-trade"><label><span>AGORA</span><input placeholder="O que vence agora?" value={v?.agora||''} onChange={ev=>salvar(e.chave,{...(v||{}),agora:ev.target.value})}/></label><div>↔</div><label><span>ESTOU CONSTRUINDO</span><input placeholder="O que quero depois?" value={v?.depois||''} onChange={ev=>salvar(e.chave,{...(v||{}),depois:ev.target.value})}/></label></div>;
-    if(e.interacao==='experiment')return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>{salvar(e.chave,x);feedback('tap',d)}}>{x}<Footprints size={17}/></button>)}</div>;
+    if(e.interacao==='experiment')return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}<Footprints size={17}/></button>)}</div>;
     if(e.interacao==='photo')return <div className="tn-photo"><Camera size={32}/><b>Uma foto pode virar evidência de contexto.</b><p>Registre o ambiente no Minha Visão e volte para continuar.</p><button onClick={()=>{salvar(e.chave,'visitou');abrirModulo('visao')}}>Abrir Minha Visão</button></div>;
-    if(e.interacao==='sort')return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>{salvar(e.chave,x);feedback('tap',d)}}>{x}</button>)}</div>;
+    if(e.interacao==='sort')return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}</button>)}</div>;
     if(e.interacao==='anchor')return <div className="tn-anchor"><span>DEPOIS DE</span><input placeholder="algo que já acontece" value={v?.ancora||''} onChange={ev=>salvar(e.chave,{...(v||{}),ancora:ev.target.value})}/><span>EU VOU</span><input placeholder="uma ação pequena" value={v?.acao||''} onChange={ev=>salvar(e.chave,{...(v||{}),acao:ev.target.value})}/></div>;
-    if(e.interacao==='minimum')return <div className="tn-minimum">{['5 minutos','10 minutos','15 minutos','Uma ação mínima personalizada'].map(x=><button key={x} className={v===x?'on':''} onClick={()=>{salvar(e.chave,x);feedback('tap',d)}}>{x}</button>)}</div>;
+    if(e.interacao==='minimum')return <div className="tn-minimum">{['5 minutos','10 minutos','15 minutos','Uma ação mínima personalizada'].map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}</button>)}</div>;
     if(e.interacao==='agenda')return <div className="tn-agenda-link"><CalendarDays size={30}/><b>{d.jornada?.planoSemana?.ativo?'Já entrou na sua agenda':'Transforme intenção em contexto real.'}</b><p>{(ler('ancora-acao')||{}).acao||'Use a ação que você acabou de montar.'}</p><button onClick={criarAgenda}>{d.jornada?.planoSemana?.ativo?'Atualizar na agenda':'Adicionar à agenda'}</button><button className="ghost" onClick={()=>abrirModulo('agenda')}>Ver Agenda</button></div>;
     if(e.interacao==='voice')return <div className="tn-voice"><textarea value={v||''} onChange={ev=>salvar(e.chave,ev.target.value)} placeholder="Uma frase já basta."/><button onClick={()=>iniciarVoz(e)}><Mic size={18}/> Falar em vez de escrever</button></div>;
     if(e.interacao==='budget')return <div className="tn-stack">{[['tempo','Tempo por semana'],['dinheiro','Dinheiro'],['atencao','Atenção']].map(([k,l])=><label className="tn-slider" key={k}><span>{l}<b>{v?.[k]??5}/10</b></span><input type="range" min="0" max="10" value={v?.[k]??5} onChange={ev=>salvar(e.chave,{...(v||{}),[k]:Number(ev.target.value)})}/></label>)}</div>;
@@ -195,7 +201,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
         {passo.ciencia&&<details className="tn-science"><summary>Por que o NIIL pergunta isso?</summary><p>{passo.ciencia}</p>{passo.fonte&&<small>{passo.fonte}</small>}</details>}
         {passo.base&&<small className="tn-base">{passo.base}</small>}
       </main>
-      <footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{feito(passo.id)?'Continuar':'Concluir e seguir'} <ChevronRight size={18}/></button></footer>
+      {!['choice','binary','module-decision','experiment','sort','minimum','scale'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{feito(passo.id)?'Continuar':'Concluir e seguir'} <ChevronRight size={18}/></button></footer>}
     </div>;
   }
 
@@ -210,14 +216,46 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
       <button onClick={()=>setAberta(atual.fase.etapas.find(e=>!feito(e.id))?.id||atual.fase.etapas[0].id)}>Continuar <ChevronRight size={17}/></button>
     </section>
 
-    <div className="tn-path">
+    <div className="tn-olympo">
       {TRILHA_NIIL.map((f,fi)=>{
-        const completas=f.etapas.filter(e=>feito(e.id)).length,done=completas===f.etapas.length;
+        const completas=f.etapas.filter(e=>feito(e.id)).length;
+        const done=completas===f.etapas.length;
         const unlocked=fi===0||TRILHA_NIIL[fi-1].etapas.every(e=>feito(e.id));
         const I=ICONS[f.icone]||Target;
-        return <section key={f.id} className={`tn-phase ${done?'done':''} ${unlocked?'':'locked'}`}>
-          <div className="tn-phase-title"><div className="tn-phase-icon">{done?<Check size={22}/>:unlocked?<I size={22}/>:<Lock size={19}/>}</div><div><span>{f.marco}</span><h2>{f.nome}</h2><p>{f.resumo}</p></div><b>{completas}/{f.etapas.length}</b></div>
-          {unlocked&&<div className="tn-nodes">{f.etapas.map((e,i)=>{const ok=feito(e.id),lib=liberado(e.id);return <button key={e.id} disabled={!lib} onClick={()=>lib&&setAberta(e.id)} className={ok?'done':lib?'current':''}><span>{ok?<Check size={18}/>:i+1}</span><div><b>{e.titulo}</b><small>~{e.min||3} min</small></div><ChevronRight size={16}/></button>})}</div>}
+        const pos=[50,68,58,34,25,43,67,72,51,29,35,61];
+        const h=f.etapas.length*116+18;
+        const currentPhase=atual?.fase?.id===f.id;
+        return <section key={f.id} className={`tn-olympo-phase ${done?'done':''} ${unlocked?'':'locked'}`}>
+          <div className={`tn-olympo-banner ${currentPhase?'current':''}`}>
+            <div className="tn-olympo-banner-icon">{done?<Check size={23}/>:unlocked?<I size={23}/>:<Lock size={20}/>}</div>
+            <div className="tn-olympo-banner-copy">
+              <span>{f.marco}</span>
+              <h2>{f.nome}</h2>
+              <p>{f.resumo}</p>
+            </div>
+            <b>{completas}/{f.etapas.length}</b>
+          </div>
+          {unlocked&&<div className="tn-olympo-map" style={{height:h}}>
+            <svg viewBox={`0 0 100 ${h}`} preserveAspectRatio="none" aria-hidden="true">
+              <polyline points={f.etapas.map((_,i)=>`${pos[i%pos.length]},${i*116+42}`).join(' ')} fill="none" stroke="#E7E4EA" strokeWidth="2.3" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round"/>
+              {f.etapas.slice(0,-1).map((e,i)=>feito(e.id)&&<line key={e.id} x1={pos[i%pos.length]} y1={i*116+42} x2={pos[(i+1)%pos.length]} y2={(i+1)*116+42} stroke="#B7F20C" strokeWidth="3.2" vectorEffect="non-scaling-stroke" strokeLinecap="round"/>)}
+            </svg>
+            {f.etapas.map((e,i)=>{
+              const ok=feito(e.id),lib=liberado(e.id),isCurrent=!ok&&lib;
+              const x=pos[i%pos.length];
+              return <button
+                key={e.id}
+                className={`tn-olympo-node ${ok?'done':isCurrent?'current':'locked'}`}
+                disabled={!lib}
+                onClick={()=>lib&&setAberta(e.id)}
+                style={{left:`${x}%`,top:i*116}}
+                aria-label={e.titulo}
+              >
+                <span className="tn-olympo-node-circle">{ok?<Check size={27} strokeWidth={3}/>:lib?<I size={23}/>:<Lock size={20}/>}</span>
+                <span className="tn-olympo-node-label"><b>{e.titulo}</b><small>~{e.min||3} min</small></span>
+              </button>
+            })}
+          </div>}
         </section>
       })}
     </div>
