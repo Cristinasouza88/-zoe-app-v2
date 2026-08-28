@@ -25,6 +25,9 @@ export default function HomeNIILV3({
   pctVida = 0,
   concluidas = 0,
   totalEtapas = 0,
+  marcosConcluidos = 0,
+  totalMarcos = 9,
+  marcoAtual,
   agendaAtiva,
   setAba,
   setData,
@@ -113,13 +116,13 @@ export default function HomeNIILV3({
         <div className="niil-home-v3-goal-copy">
           <span className="niil-home-v3-eyebrow">SUA META</span>
           <div className="niil-home-v3-goal-title">
-            Você está a <strong>{Math.max(0, Math.min(100, Math.round(pctVida)))}%</strong> de desbloquear sua meta
+            <strong>{marcoAtual?.fase?.marco || 'M1'}</strong> · {marcoAtual?.fase?.nome || 'O que vale o esforço?'}
           </div>
           <div className="niil-home-v3-goal-bar" aria-hidden="true">
             <i style={{ width: `${Math.max(0, Math.min(100, pctVida))}%` }} />
           </div>
-          <small>{concluidas} de {totalEtapas} etapas concluídas</small>
-          <span className="niil-home-v3-goal-link">Ver meta <ChevronRight size={16} /></span>
+          <small>{marcosConcluidos} de {totalMarcos} marcos · faltam {Math.max(0,(marcoAtual?.total||0)-(marcoAtual?.concluidas||0))} passos neste marco</small>
+          <span className="niil-home-v3-goal-link">Continuar trilha <ChevronRight size={16} /></span>
         </div>
 
         <div className="niil-home-v3-map" aria-hidden="true">
