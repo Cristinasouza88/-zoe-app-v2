@@ -22,6 +22,7 @@ import { supabase } from './supabase.js';
 import { carregarRemoto, salvarRemoto, aguardarSalvamentosRemotos } from './zoe.remote-store.js';
 import HomeNIILV3 from './HomeNIILV3.jsx';
 import TreinoSheet from './TreinoSheet.jsx';
+import { GAMIFICACAO_INICIAL, reconciliarGamificacao, resumoGamificacao, desafiosGamificacao } from './gamificacao.core.js';
 
 /* ══════════ FOTOS ══════════
    As imagens são comprimidas antes de salvar (lado maior 900px, jpeg 72%),
@@ -310,7 +311,8 @@ const inicial = {
   jornada: { checkins: [], mapaNos: [], planoSemana: null },
   sono: { objetivoHoras: 8, registros: [], despertador: { ativo:false, hora:'07:00', janelaMin:30, dias:[1,2,3,4,5] }, integracoes:{} },
   guardaRoupa: { pecas: [] },
-  treinos: []
+  treinos: [],
+  gamificacao: { ...GAMIFICACAO_INICIAL, ledger: [], badges: [], diasAtivos: [] }
 };
 
 /* ══════════ APP ══════════ */
@@ -480,6 +482,18 @@ export default function NIILApp() {
     if(usuario)persistirEstadoUsuario(usuario,next);
     return next;
   });
+
+  /* Motor único de evolução: reconcilia eventos de todos os módulos sem duplicar pontuação. */
+  useEffect(() => {
+    if (carregando || !usuario) return;
+    setD(prev => {
+      const next = reconciliarGamificacao(prev);
+      if (next === prev) return prev;
+      persistirEstadoUsuario(usuario, next);
+      return next;
+    });
+  }, [carregando, usuario, d]);
+
   const aviso = m => { setToast(m); setTimeout(() => setToast(''), 2300); };
 
   const abrirTreino = (ctx = {}) => {
@@ -658,9 +672,8 @@ export default function NIILApp() {
   }, [indiceAtual, sequencia]);
 
   const marcasDia = d.agenda[data] || {};
-  const pontosDia = useMemo(() => !agendaAtiva ? 0 :
-    agendaAtiva.tarefas.reduce((a, t, i) => a + (marcasDia[`${agendaAtiva.id}-${i}`] ? t.p : 0), 0),
-    [marcasDia, agendaAtiva]);
+  const game = useMemo(() => resumoGamificacao(d), [d.gamificacao]);
+  const pontosDia = game.pontosPorDia[data] || 0;
 
   /* preenchimento cruzado: tarefas de treino abrem o registro; as demais alternam a conclusão. */
   const toggleTarefaDe = (etapa, i, dataAlvo = data) => {
@@ -749,17 +762,8 @@ export default function NIILApp() {
   const dia = { kcal: 0, agua: 0, passos: 0, sono: 0, humor: 0, treino: 0, refeicoes: [], ...(d.dias[data] || {}) };
   const setDia = p => up(s => ({ ...s, dias: { ...s.dias, [data]: { ...dia, ...p } } }));
 
-  const streak = useMemo(() => {
-    let n = 0;
-    for (let i = 0; i < 400; i++) {
-      const dt = new Date(); dt.setDate(dt.getDate() - i);
-      const iso = dt.toISOString().split('T')[0];
-      const m = d.agenda[iso] || {};
-      const tem = Object.values(m).some(Boolean);
-      if (tem) n++; else if (i > 0) break;
-    }
-    return n;
-  }, [d.agenda]);
+  const streak = game.streakAtual;
+
 
   /* alarmes */
   const tocou = useRef({});
@@ -1762,32 +1766,51 @@ export default function NIILApp() {
     const serie = Array.from({ length: nd }, (_, i) => {
       const dt = new Date(); dt.setDate(dt.getDate() - (nd - 1 - i));
       const iso = dt.toISOString().split('T')[0];
-      const m = d.agenda[iso] || {};
-      const pts = Object.entries(m).reduce((a, [k, v]) => {
-        if (!v) return a;
-        const et = sequencia.find(e => e.tipo === 'agenda' && k.startsWith(e.id + '-'));
-        if (!et) return a;
-        const idx = +k.slice(et.id.length + 1);
-        return a + (et.tarefas[idx]?.p || 0);
-      }, 0);
       const dd = d.dias[iso] || {};
-      return { pts, kcal: dd.kcal || 0, agua: dd.agua || 0, humor: dd.humor || 0, lbl: dt.getDate() };
+      return {
+        pts: game.pontosPorDia[iso] || 0,
+        kcal: dd.kcal || 0,
+        agua: dd.agua || 0,
+        humor: dd.humor || 0,
+        lbl: dt.getDate()
+      };
     });
-
     const rodasFeitas = Object.keys(d.rodas).map(Number).sort();
+    const desafios = desafiosGamificacao(d);
+    const badges = [...(game.badges || [])].sort((a,b)=>String(b.desbloqueadoEm||'').localeCompare(String(a.desbloqueadoEm||'')));
+
     return (
       <div style={{ paddingBottom: 120 }}>
         <div style={{ background: C.bg, padding: '18px 18px 14px' }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 14px' }}>Progresso</h1>
-          <div style={{ display: 'flex', background: 'rgba(255,255,255,.7)', borderRadius: 13, padding: 4 }}>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px' }}>Performance</h1>
+          <p style={{fontSize:12.5,color:C.ink3,margin:'0 0 14px'}}>Sua evolução integrada em todas as trilhas.</p>
+          <div style={{ display: 'flex', background: '#fff', border:`1px solid ${C.line}`, borderRadius: 14, padding: 4 }}>
             {[['semana', 'Semana'], ['mes', 'Mês'], ['tri', '3 meses']].map(([k, l]) => (
-              <button key={k} onClick={() => setPeriodo(k)} style={{ flex: 1, padding: 10, borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, fontFamily: 'inherit', background: periodo === k ? C.green : 'transparent', color: periodo === k ? '#fff' : C.ink2 }}>{l}</button>
+              <button key={k} onClick={() => setPeriodo(k)} style={{ flex: 1, padding: 10, borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, fontFamily: 'inherit', background: periodo === k ? C.green : 'transparent', color: periodo === k ? C.ink : C.ink2 }}>{l}</button>
             ))}
           </div>
         </div>
+
         <div style={{ padding: 18 }}>
+          <Card style={{marginBottom:14,background:C.ink,color:'#fff',padding:18,borderRadius:24}}>
+            <div style={{display:'flex',justifyContent:'space-between',gap:14,alignItems:'flex-start'}}>
+              <div>
+                <div style={{fontSize:10,fontWeight:850,letterSpacing:1,color:'#B9B7BD'}}>NÍVEL NIIL</div>
+                <div style={{fontSize:31,fontWeight:850,marginTop:4}}>Nível {game.nivel}</div>
+                <div style={{fontSize:11,color:'#C8C6CC',marginTop:3}}>{game.pontos.toLocaleString('pt-BR')} Pontos NIIL</div>
+              </div>
+              <div style={{width:54,height:54,borderRadius:18,background:C.green,color:C.ink,display:'grid',placeItems:'center'}}><Trophy size={25}/></div>
+            </div>
+            <div style={{height:7,borderRadius:99,background:'#343239',overflow:'hidden',marginTop:17}}><div style={{height:'100%',width:`${game.pct}%`,background:C.green,borderRadius:99}}/></div>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:9.5,color:'#AAA7AF',marginTop:7}}><span>{Math.round(game.pct)}% deste nível</span><span>{game.faltam} pts para o próximo</span></div>
+          </Card>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 16 }}>
-            {[['Pontos', serie.reduce((a, s) => a + s.pts, 0), C.petroleo], ['Etapas', concluidas, C.sky], ['Sequência', streak, C.coral]].map(([l, v, cor], i) => (
+            {[
+              ['Pontos', serie.reduce((a, s) => a + s.pts, 0), C.greenDark],
+              ['Etapas', concluidas, C.ink],
+              ['Sequência', game.streakAtual, C.greenDark]
+            ].map(([l, v, cor], i) => (
               <Card key={l} cls="niil-surge" style={{ textAlign: 'center', padding: 14, animationDelay: `${i * 70}ms` }}>
                 <div style={{ fontSize: 23, fontWeight: 800, color: cor }}>{v}</div>
                 <div style={{ fontSize: 10.5, color: C.ink3, marginTop: 2 }}>{l}</div>
@@ -1795,43 +1818,53 @@ export default function NIILApp() {
             ))}
           </div>
 
+          <Card style={{ marginBottom: 14 }}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,marginBottom:12}}>
+              <div><div style={{fontWeight:800,color:C.ink,fontSize:15}}>Desafios ativos</div><div style={{fontSize:10.5,color:C.ink3,marginTop:2}}>Comportamentos reais, não tempo de tela.</div></div>
+              <Target size={20} color={C.greenDark}/>
+            </div>
+            {desafios.map((x,i)=><div key={x.id} style={{padding:'11px 0',borderTop:i?`1px solid ${C.line}`:'none'}}>
+              <div style={{display:'flex',justifyContent:'space-between',gap:10,alignItems:'center'}}>
+                <div style={{minWidth:0}}><div style={{fontSize:12.5,fontWeight:800,color:C.ink}}>{x.titulo}</div><div style={{fontSize:9.5,color:C.ink3,marginTop:2}}>{x.descricao}</div></div>
+                <strong style={{fontSize:10,color:x.concluido?C.greenDark:C.ink3,whiteSpace:'nowrap'}}>{x.atual}/{x.meta}</strong>
+              </div>
+              <div style={{height:6,borderRadius:99,background:'#ECEDE9',overflow:'hidden',marginTop:8}}><div style={{height:'100%',width:`${x.pct}%`,background:C.green,borderRadius:99}}/></div>
+            </div>)}
+          </Card>
+
+          <Card style={{ marginBottom: 14 }}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+              <div><div style={{fontWeight:800,color:C.ink,fontSize:15}}>Selos conquistados</div><div style={{fontSize:10.5,color:C.ink3,marginTop:2}}>Marcos que contam a história da sua evolução.</div></div>
+              <Trophy size={20} color={C.greenDark}/>
+            </div>
+            {badges.length ? <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+              {badges.slice(0,8).map(b=><div key={b.id} title={b.descricao} style={{textAlign:'center',minWidth:0}}>
+                <div style={{width:54,height:54,margin:'0 auto 7px',clipPath:'polygon(25% 7%,75% 7%,100% 50%,75% 93%,25% 93%,0 50%)',background:C.green,color:C.ink,display:'grid',placeItems:'center',fontWeight:900,fontSize:14,boxShadow:'0 6px 14px rgba(23,21,29,.08)'}}>ii</div>
+                <div style={{fontSize:8.5,lineHeight:1.15,fontWeight:800,color:C.ink,overflow:'hidden',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>{b.titulo}</div>
+              </div>)}
+            </div> : <div style={{padding:'14px 0',fontSize:11,color:C.ink3}}>Seu primeiro selo aparece quando uma ação real de evolução for registrada.</div>}
+          </Card>
+
           <Card style={{ marginBottom: 12 }}>
-            <div style={{ fontWeight: 800, color: C.ink, fontSize: 14.5, marginBottom: 12 }}>Pontuação da agenda</div>
+            <div style={{ fontWeight: 800, color: C.ink, fontSize: 14.5, marginBottom: 12 }}>Pontos NIIL</div>
             <GraficoLinha dados={serie.map(s => s.pts)} cor={C.lima} />
-          </Card>
-          <Card style={{ marginBottom: 12 }}>
-            <div style={{ fontWeight: 800, color: C.ink, fontSize: 14.5, marginBottom: 12 }}>Calorias</div>
-            <GraficoBarras dados={serie.map(s => s.kcal)} max={d.perfil.metaKcal} cor={C.coral} rotulos={nd <= 7 ? serie.map(s => s.lbl) : null} />
-          </Card>
-          <Card style={{ marginBottom: 12 }}>
-            <div style={{ fontWeight: 800, color: C.ink, fontSize: 14.5, marginBottom: 12 }}>Água</div>
-            <GraficoBarras dados={serie.map(s => s.agua)} max={d.perfil.metaAgua} cor={C.sky} rotulos={nd <= 7 ? serie.map(s => s.lbl) : null} />
-          </Card>
-          <Card style={{ marginBottom: 12 }}>
-            <div style={{ fontWeight: 800, color: C.ink, fontSize: 14.5, marginBottom: 12 }}>Energia e humor</div>
-            <GraficoLinha dados={serie.map(s => s.humor)} cor={C.gold} />
           </Card>
 
           {rodasFeitas.length > 0 && (
             <Card style={{ marginBottom: 12 }}>
-              <div style={{ fontWeight: 800, color: C.ink, fontSize: 14.5, marginBottom: 4 }}>Evolução da roda da vida</div>
+              <div style={{ fontWeight: 800, color: C.ink, fontSize: 14.5, marginBottom: 4 }}>Evolução da Roda da Vida</div>
               <div style={{ fontSize: 12, color: C.ink3, marginBottom: 12 }}>Média de cada checkpoint</div>
               <GraficoBarras
                 dados={rodasFeitas.map(r => RODA_SETORES.reduce((a, s) => a + (d.rodas[r][s] || 0), 0) / RODA_SETORES.length)}
-                max={10} cor={C.lilac} rotulos={rodasFeitas.map(r => `#${r}`)} />
+                max={10} cor={C.green} rotulos={rodasFeitas.map(r => `#${r}`)} />
             </Card>
           )}
 
           <Card>
-            <div style={{ fontWeight: 800, color: C.ink, marginBottom: 12 }}>Metas diárias</div>
-            {[['Calorias', 'metaKcal', 'kcal'], ['Água', 'metaAgua', 'ml']].map(([l, k, u]) => (
-              <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                <span style={{ flex: 1, fontSize: 14, color: C.ink }}>{l}</span>
-                <input type="number" inputMode="numeric" value={d.perfil[k]} onChange={e => up(s => ({ ...s, perfil: { ...s.perfil, [k]: +e.target.value || 0 } }))}
-                  style={{ width: 88, padding: '9px 11px', borderRadius: 11, border: `1.5px solid ${C.line}`, fontSize: 14, textAlign: 'right', fontFamily: 'inherit', color: C.ink, outline: 'none' }} />
-                <span style={{ fontSize: 12, color: C.ink3, width: 34 }}>{u}</span>
-              </div>
-            ))}
+            <div style={{ fontWeight: 800, color: C.ink, marginBottom: 12 }}>Indicadores de apoio</div>
+            <div style={{fontSize:11,color:C.ink3,lineHeight:1.55}}>
+              Água, humor, sono e outras métricas continuam sendo acompanhadas, mas os Pontos NIIL recompensam comportamento de evolução — não performance corporal ou financeira.
+            </div>
           </Card>
         </div>
       </div>
