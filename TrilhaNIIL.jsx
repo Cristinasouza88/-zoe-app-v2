@@ -8,6 +8,7 @@ import NIILOrb from'./NIILOrb.jsx';
 import{RODA_SETORES}from'./conteudo.js';
 import{TRILHA_NIIL,moduloParaAba,faseAtualNIIL,marcosConcluidosNIIL,recomendacoesContextuaisNIIL}from'./trilha.niil.data.js';
 import{iniciarReconhecimentoVoz,reconhecimentoDisponivel}from'./ia.jsx';
+import{registrarEventoGamificacao}from'./gamificacao.core.js';
 import'./TrilhaNIIL.css';
 
 const ICONS={target:Target,moon:Moon,home:Home,repeat:Repeat2,network:Network,flag:Flag,calendar:CalendarDays,chart:TrendingUp};
@@ -89,7 +90,20 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
   const concluir=e=>{
     if(!valido(e)){aviso('Faça a interação rápida antes de continuar.');return;}
     const ja=feito(e.id);
-    if(!ja)up(s=>({...s,etapas:{...(s.etapas||{}),[e.id]:{feito:true,data:hoje(),concluidaEm:new Date().toISOString()}}}));
+    if(!ja)up(s=>{
+      const base={...s,etapas:{...(s.etapas||{}),[e.id]:{feito:true,data:hoje(),concluidaEm:new Date().toISOString()}}};
+      return registrarEventoGamificacao(base,{
+        key:`trilha:v2:${e.id}`,
+        tipo:e.tipo==='roda'?'trail.tool.completed':'trail.microstep.completed',
+        pontos:Number(e.pontos)||10,
+        titulo:e.titulo,
+        area:'trilha',
+        data:hoje(),
+        trilhaId:'niil-central-v2',
+        origemId:e.id,
+        contexto:{marco:e.fase?.id||null}
+      });
+    });
     feedback('snap',d);
     const idx=e.fase.etapas.findIndex(x=>x.id===e.id);
     const ultima=idx===e.fase.etapas.length-1;
