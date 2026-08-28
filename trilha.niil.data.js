@@ -5,7 +5,7 @@ export const TRILHA_NIIL = [
     base:'recompensa, motivação, autopercepção e visão sistêmica',
     etapas:[
       {id:'m1-quer',tipo:'micro',titulo:'O que você quer há tempo demais?',min:2,interacao:'choice',chave:'meta-inicial',pergunta:'Se você pudesse mover uma coisa primeiro, qual seria?',opcoes:['Saúde e energia','Dinheiro','Carreira','Aprendizado','Relacionamentos','Organizar minha vida','Outra coisa'],pontos:10},
-      {id:'m1-importa',tipo:'micro',titulo:'Quanto isso importa?',min:1,interacao:'scale',chave:'meta-importancia',pergunta:'Hoje, quanto isso realmente importa para você?',minimo:'Pouco',maximo:'Muito',pontos:5},
+      {id:'m1-importa',tipo:'micro',titulo:'Quanto isso importa?',min:1,interacao:'scale',chave:'meta-importancia',pergunta:'Hoje, quanto isso realmente importa para você?',minimo:'Pouco',maximo:'Muito',pontos:5,ciencia:'Importância percebida ajuda a entender intenção, mas intenção sozinha não garante comportamento.',fonte:'Ciência comportamental · intenção e execução'},
       {id:'m1-presenca',tipo:'micro',titulo:'E quanto isso aparece na sua vida?',min:1,interacao:'scale',chave:'meta-presenca',pergunta:'Quanto desse objetivo já aparece no que você faz hoje?',minimo:'Quase nada',maximo:'Muito',pontos:5},
       {id:'m1-roda',tipo:'roda',rodaId:1,titulo:'Sua vida vista de cima',min:4,perguntaCurta:'Arraste sua percepção em cada área. Isso é uma fotografia, não um diagnóstico.',pontos:20},
       {id:'m1-ecossistema',tipo:'micro',titulo:'Tudo isso está conectado',min:3,interacao:'modules',chave:'ecossistema',pergunta:'Quais partes da sua vida parecem ter relação com o que você quer construir?',opcoes:['Sono','Água','Alimentação','Movimento','Leitura','Cursos','Inglês','Finanças','Ambiente','Minha Visão','Agenda'],pontos:15},
@@ -17,7 +17,7 @@ export const TRILHA_NIIL = [
     base:'sono, ritmo circadiano, energia, hidratação e movimento',
     etapas:[
       {id:'m2-energia',tipo:'micro',titulo:'Quando você liga?',min:2,interacao:'energy',chave:'energia-dia',pergunta:'Como sua energia costuma mudar ao longo do dia?',pontos:10},
-      {id:'m2-sono',tipo:'micro',titulo:'Seu sono cabe na vida que você quer?',min:2,interacao:'sleep',chave:'sono-janela',pergunta:'Qual é sua janela de sono mais comum?',pontos:10,modulo:'sono'},
+      {id:'m2-sono',tipo:'micro',titulo:'Seu sono cabe na vida que você quer?',min:2,interacao:'sleep',chave:'sono-janela',pergunta:'Qual é sua janela de sono mais comum?',pontos:10,modulo:'sono',ciencia:'Sono e ritmo circadiano influenciam alerta, desempenho e regulação fisiológica. O NIIL observa padrão; não faz diagnóstico clínico.',fonte:'Cronobiologia e ciência do sono'},
       {id:'m2-influencias',tipo:'micro',titulo:'O que muda sua energia?',min:2,interacao:'multi',chave:'energia-influencias',pergunta:'O que mais parece mexer com sua energia?',opcoes:['Sono','Comida','Água','Café','Exercício','Trabalho','Telas','Descanso'],limite:3,pontos:10},
       {id:'m2-experimento',tipo:'micro',titulo:'Um experimento. Não dez hábitos.',min:2,interacao:'experiment',chave:'experimento-corpo',pergunta:'Escolha só uma coisa para observar por alguns dias.',opcoes:['Observar sono por 5 noites','Registrar água por 3 dias','Registrar energia antes/depois do treino','Observar energia após as refeições'],pontos:20},
     ]
@@ -27,9 +27,9 @@ export const TRILHA_NIIL = [
     resumo:'Perceba recompensa, antecipação e aquilo que vence sua atenção antes da escolha consciente.',
     base:'dopamina, wanting/liking, recompensa, sinais e aprendizagem',
     etapas:[
-      {id:'m3-quero-faco',tipo:'micro',titulo:'Você quer isso ou gosta da ideia de querer?',min:2,interacao:'dual-scale',chave:'quero-faco',pergunta:'Compare o quanto você quer com o quanto isso aparece no comportamento.',pontos:10},
+      {id:'m3-quero-faco',tipo:'micro',titulo:'Você quer isso ou gosta da ideia de querer?',min:2,interacao:'dual-scale',chave:'quero-faco',pergunta:'Compare o quanto você quer com o quanto isso aparece no comportamento.',pontos:10,ciencia:'Querer uma recompensa e gostar dela não são processos idênticos. Essa diferença ajuda a observar desejos que puxam comportamento sem necessariamente gerar satisfação proporcional.',fonte:'Kent Berridge · incentive salience / wanting e liking'},
       {id:'m3-automatico',tipo:'micro',titulo:'O que te puxa sem pedir licença?',min:2,interacao:'swipe',chave:'recompensas-automaticas',pergunta:'Quais dessas coisas você faz quase no automático?',opcoes:['Celular','Compras','Comida','Vídeos/séries','Jogos','Trabalho','Outro'],pontos:10},
-      {id:'m3-sinal',tipo:'micro',titulo:'Qual é o sinal?',min:3,interacao:'chain',chave:'cadeia-recompensa',pergunta:'Monte uma sequência simples do que costuma acontecer.',pontos:15},
+      {id:'m3-sinal',tipo:'micro',titulo:'Qual é o sinal?',min:3,interacao:'chain',chave:'cadeia-recompensa',pergunta:'Monte uma sequência simples do que costuma acontecer.',pontos:15,ciencia:'Sinais associados a recompensas podem ganhar valor preditivo e influenciar aproximação e aprendizagem. Aqui você mapeia uma hipótese sobre seu próprio padrão.',fonte:'Wolfram Schultz · reward prediction learning'},
       {id:'m3-agora-depois',tipo:'micro',titulo:'Agora ou depois?',min:2,interacao:'tradeoff',chave:'troca-recompensa',pergunta:'Qual recompensa costuma vencer agora e o que você diz que quer construir depois?',pontos:15},
     ]
   },
@@ -41,7 +41,7 @@ export const TRILHA_NIIL = [
       {id:'m4-foto',tipo:'micro',titulo:'Olhe ao redor',min:2,interacao:'photo',chave:'ambiente-foto',pergunta:'Registre o lugar onde essa meta deveria acontecer.',pontos:10,modulo:'visao'},
       {id:'m4-ajuda',tipo:'micro',titulo:'O que ajuda e o que atrapalha?',min:2,interacao:'binary',chave:'ambiente-ajuda',pergunta:'Pense no seu ambiente e escolha o que está mais presente.',opcoes:['Meu ambiente facilita','Meu ambiente exige esforço demais','Depende do dia'],pontos:10},
       {id:'m4-recurso',tipo:'micro',titulo:'Você já comprou a solução?',min:2,interacao:'multi',chave:'recursos-parados',pergunta:'O que você já comprou para uma versão sua que ainda não apareceu?',opcoes:['Curso','Livro','Academia','Roupa/equipamento','Aplicativo','Assinatura','Material de estudo','Nada disso'],limite:4,pontos:10},
-      {id:'m4-mudar',tipo:'micro',titulo:'Mude uma coisa',min:2,interacao:'choice',chave:'ambiente-mudanca',pergunta:'Qual mudança pequena reduziria fricção ainda hoje?',opcoes:['Deixar algo visível','Tirar algo do caminho','Preparar antes','Mudar notificações','Organizar um espaço','Outra'],pontos:15},
+      {id:'m4-mudar',tipo:'micro',titulo:'Mude uma coisa',min:2,interacao:'choice',chave:'ambiente-mudanca',pergunta:'Qual mudança pequena reduziria fricção ainda hoje?',opcoes:['Deixar algo visível','Tirar algo do caminho','Preparar antes','Mudar notificações','Organizar um espaço','Outra'],pontos:15,ciencia:'Hábitos são fortemente dependentes de contexto e pistas recorrentes. Reduzir ou aumentar fricção pode mudar a probabilidade de uma ação sem depender apenas de força de vontade.',fonte:'Wendy Wood · hábitos e contexto'},
     ]
   },
   {
@@ -50,7 +50,7 @@ export const TRILHA_NIIL = [
     base:'hábito, implementation intentions, repetição, aprendizagem e agenda',
     etapas:[
       {id:'m5-automatico',tipo:'micro',titulo:'Isso já acontece sozinho?',min:2,interacao:'sort',chave:'automaticidade',pergunta:'Classifique algumas ações da sua rotina.',opcoes:['Já faço sem pensar','Preciso lembrar','Sempre adio'],pontos:10},
-      {id:'m5-colar',tipo:'micro',titulo:'Cole a ação em algo que já acontece',min:3,interacao:'anchor',chave:'ancora-acao',pergunta:'Complete: depois de ___, eu vou ___.',pontos:15},
+      {id:'m5-colar',tipo:'micro',titulo:'Cole a ação em algo que já acontece',min:3,interacao:'anchor',chave:'ancora-acao',pergunta:'Complete: depois de ___, eu vou ___.',pontos:15,ciencia:'Planos do tipo “quando X acontecer, farei Y” ajudam a reduzir a distância entre intenção e execução porque tornam o contexto de início mais específico.',fonte:'Peter Gollwitzer · implementation intentions'},
       {id:'m5-minimo',tipo:'micro',titulo:'Qual é a menor versão que ainda conta?',min:2,interacao:'minimum',chave:'acao-minima',pergunta:'Defina uma versão pequena o bastante para caber até num dia ruim.',pontos:10},
       {id:'m5-agenda',tipo:'micro',titulo:'Faça caber hoje',min:3,interacao:'agenda',chave:'agenda-primeira',pergunta:'Quer colocar essa ação na sua agenda agora?',pontos:20,modulo:'agenda'},
       {id:'m5-aprender',tipo:'micro',titulo:'Ler não é aprender',min:3,interacao:'choice',chave:'aprendizado-foco',pergunta:'Qual aprendizado você quer transformar em prática?',opcoes:['Livro','Curso','Inglês','Outro aprendizado','Agora não'],pontos:15,modulo:'cursos'},
@@ -61,7 +61,7 @@ export const TRILHA_NIIL = [
     resumo:'Observe pessoas, papéis, obrigações e contextos que sustentam ou dificultam mudanças.',
     base:'coaching sistêmico como ferramenta reflexiva, contexto social e apoio',
     etapas:[
-      {id:'m6-mapa',tipo:'micro',titulo:'Quem e o que entra nessa história?',min:5,interacao:'multi',chave:'sistema-nos',pergunta:'Quais sistemas mais influenciam o que você está tentando mudar?',opcoes:['Família','Trabalho','Relacionamento','Amigos','Dinheiro','Casa','Comunidade','Outro'],limite:4,pontos:20},
+      {id:'m6-mapa',tipo:'micro',titulo:'Quem e o que entra nessa história?',min:5,interacao:'multi',chave:'sistema-nos',pergunta:'Quais sistemas mais influenciam o que você está tentando mudar?',opcoes:['Família','Trabalho','Relacionamento','Amigos','Dinheiro','Casa','Comunidade','Outro'],limite:4,pontos:20,ciencia:'Esta é uma lente reflexiva sistêmica: o objetivo é ampliar contexto e relações, não diagnosticar causas psicológicas.',fonte:'Coaching sistêmico · uso reflexivo, não clínico'},
       {id:'m6-impacto',tipo:'micro',titulo:'Se você mudar, quem sente?',min:4,interacao:'choice',chave:'sistema-impacto',pergunta:'Quando você muda esse comportamento, o que mais muda ao redor?',opcoes:['Meu tempo','Minhas relações','Meu dinheiro','Minha energia','Minhas responsabilidades','Ainda não sei'],pontos:15},
       {id:'m6-limite',tipo:'micro',titulo:'O que você está sustentando?',min:5,interacao:'voice',chave:'sistema-reflexao',pergunta:'Em uma frase: o que você continua fazendo porque sente que precisa?',pontos:20},
     ]
@@ -82,7 +82,7 @@ export const TRILHA_NIIL = [
     resumo:'Não monte uma semana ideal. Trabalhe com a semana que você realmente tem.',
     base:'planejamento realista, intenção de implementação e gestão de energia',
     etapas:[
-      {id:'m8-semana',tipo:'micro',titulo:'Sua semana real',min:6,interacao:'agenda',chave:'semana-real',pergunta:'Abra sua agenda e encontre um espaço que realmente existe.',pontos:20,modulo:'agenda'},
+      {id:'m8-semana',tipo:'micro',titulo:'Sua semana real',min:6,interacao:'agenda',chave:'semana-real',pergunta:'Abra sua agenda e encontre um espaço que realmente existe.',pontos:20,modulo:'agenda',ciencia:'Planejar uma ação dentro de um contexto real tende a ser mais útil do que formular apenas uma intenção abstrata.',fonte:'Planejamento comportamental e implementation intentions'},
       {id:'m8-energia',tipo:'micro',titulo:'Isso pede qual energia?',min:3,interacao:'choice',chave:'acao-energia',pergunta:'Essa ação costuma exigir de você energia baixa, média ou alta?',opcoes:['Baixa','Média','Alta'],pontos:10},
       {id:'m8-proteger',tipo:'micro',titulo:'O que precisa ser protegido?',min:4,interacao:'choice',chave:'protecao-rotina',pergunta:'Para essa ação acontecer, o que você precisa proteger?',opcoes:['Tempo','Sono','Dinheiro','Ambiente','Limites com outras pessoas','Atenção'],pontos:15},
     ]
@@ -93,7 +93,7 @@ export const TRILHA_NIIL = [
     base:'autorregulação, feedback, revisão e aprendizagem com evidências',
     etapas:[
       {id:'m9-roda',tipo:'roda',rodaId:2,titulo:'Sua vida vista de cima, de novo',min:5,perguntaCurta:'Refaça a roda. O valor está na comparação, não em buscar uma nota perfeita.',pontos:20},
-      {id:'m9-padroes',tipo:'micro',titulo:'O que os seus registros estão mostrando?',min:4,interacao:'insight',chave:'revisao-padroes',pergunta:'Veja seus sinais de sono, agenda, treino, estudos e finanças antes de decidir o próximo passo.',pontos:20},
+      {id:'m9-padroes',tipo:'micro',titulo:'O que os seus registros estão mostrando?',min:4,interacao:'insight',chave:'revisao-padroes',pergunta:'Veja seus sinais de sono, agenda, treino, estudos e finanças antes de decidir o próximo passo.',pontos:20,ciencia:'O NIIL mostra associações e tendências dos seus registros. Ele não transforma correlação em causa.',fonte:'Feedback e autorregulação baseados em evidências pessoais'},
       {id:'m9-proximo',tipo:'micro',titulo:'Qual é o próximo ciclo?',min:4,interacao:'choice',chave:'proximo-ciclo',pergunta:'O que merece aprofundamento agora?',opcoes:['Sono e energia','Finanças','Aprendizado','Treino','Ambiente','Relacionamentos','Manter o que já funciona'],pontos:20},
     ]
   }
