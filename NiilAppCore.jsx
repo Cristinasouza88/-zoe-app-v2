@@ -1623,7 +1623,7 @@ export default function NIILApp() {
     const inglesFeitas = Object.values(d.ingles?.fasesConcluidas || {}).filter(Boolean).length;
     const metaAnual = d.financeiro?.metaAnual || METAANUAL_PADRAO;
     const economizado = (d.financeiro?.transacoes || []).reduce((a, t) => a + (t.tipo === 'entrada' ? t.valor : -t.valor), 0);
-    const pctVida = Math.min(100, Math.round((concluidas / totalEtapas) * 100));
+    const pctVida = Math.min(100, Math.round(((marcosConcluidos + (marcoAtualNIIL?.total ? marcoAtualNIIL.concluidas / marcoAtualNIIL.total : 0)) / TOTAL_MARCOS_NIIL) * 100));
     const trilhasCursos = cursosFixados.length ? cursosFixados.map(c=>{const feitas=c.aulas.filter(a=>a.feito).length;return {id:'cursos',nome:c.nome,icone:BookOpen,cor:'#17151D',suave:'#F3F9DB',valor:`${feitas} / ${c.aulas.length}`,pct:c.aulas.length?(feitas/c.aulas.length)*100:0}}) : [{ id: 'cursos', nome: 'Meus cursos', icone: BookOpen, cor: '#17151D', suave: '#F3F9DB', valor: cursos.length ? `${aulasCursosFeitas} / ${aulasCursos}` : 'Adicionar curso', pct: aulasCursos ? (aulasCursosFeitas / aulasCursos) * 100 : 0 }];
     const trilhas = [
       ...trilhasCursos,
