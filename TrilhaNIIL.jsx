@@ -1,4 +1,4 @@
-import React,{useMemo,useRef,useState}from'react';
+import React,{useEffect,useMemo,useRef,useState}from'react';
 import{
   ArrowLeft,Target,Moon,Home,Repeat2,Network,Flag,CalendarDays,TrendingUp,
   Lock,Check,ChevronRight,BookOpen,Wallet,Dumbbell,Droplets,Utensils,GraduationCap,
@@ -13,6 +13,22 @@ import'./TrilhaNIIL.css';
 
 const ICONS={target:Target,moon:Moon,home:Home,repeat:Repeat2,network:Network,flag:Flag,calendar:CalendarDays,chart:TrendingUp};
 const MOD_ICONS={Sono:Moon,Água:Droplets,Alimentação:Utensils,Movimento:Dumbbell,Leitura:BookOpen,Cursos:GraduationCap,Inglês:Languages,Finanças:Wallet,Ambiente:Home,'Minha Visão':Camera,Agenda:CalendarDays};
+const RODA_GUIA={
+  'Saúde':{dica:'Olhe para as últimas semanas, não para o seu melhor nem para o seu pior dia.',exemplos:['Sono','Energia','Exercício','Alimentação'],modulo:'sono'},
+  'Família':{dica:'Pense em presença, convivência e na qualidade das trocas — não em uma família ideal.',exemplos:['Presença','Convivência','Apoio','Conflitos']},
+  'Relacionamentos':{dica:'Considere conexão, comunicação, reciprocidade e limites nas relações que mais importam.',exemplos:['Conexão','Comunicação','Reciprocidade','Limites']},
+  'Lazer':{dica:'Pergunte se existe espaço real para descanso, diversão e experiências que renovam você.',exemplos:['Tempo livre','Descanso','Diversão','Novas experiências'],modulo:'agenda'},
+  'Espiritualidade':{dica:'Avalie sentido, conexão e práticas que ajudam você a se orientar internamente.',exemplos:['Sentido','Prática','Conexão','Paz']},
+  'Carreira':{dica:'Pense em crescimento, reconhecimento, autonomia e no quanto o trabalho faz sentido hoje.',exemplos:['Crescimento','Reconhecimento','Autonomia','Direção'],modulo:'cursos'},
+  'Finanças':{dica:'Considere organização, compromissos, segurança e liberdade de decisão — não só renda.',exemplos:['Dívidas','Reserva','Organização','Metas'],modulo:'financeiro'},
+  'Crescimento pessoal':{dica:'Olhe para aquilo que você vem aprendendo e para mudanças que realmente viraram comportamento.',exemplos:['Hábitos','Autoconhecimento','Disciplina','Coragem'],modulo:'cursos'},
+  'Social':{dica:'Pense na qualidade das amizades, pertencimento e trocas que existem de verdade na sua rotina.',exemplos:['Amizades','Pertencimento','Trocas','Isolamento']},
+  'Emocional':{dica:'Observe como você tem lidado com pressão, oscilações e recuperação emocional no cotidiano.',exemplos:['Estabilidade','Pressão','Autocontrole','Descanso mental'],modulo:'diario'},
+  'Intelectual':{dica:'Avalie curiosidade, estudo e quanto do que você consome está realmente se transformando em aprendizado.',exemplos:['Leitura','Cursos','Aprendizado','Curiosidade'],modulo:'cursos'},
+  'Contribuição':{dica:'Pense em impacto, ajuda e participação em algo que vá além das suas necessidades imediatas.',exemplos:['Impacto','Ajuda','Generosidade','Participação']}
+};
+const RODA_MODULO=area=>RODA_GUIA[area]?.modulo||null;
+
 
 const hoje=()=>new Date().toISOString().slice(0,10);
 const vibrar=()=>{try{navigator.vibrate?.(18)}catch{}};
@@ -47,12 +63,22 @@ const Radar=({valores={}})=>{
 export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
   const[aberta,setAberta]=useState(null);
   const[marco,setMarco]=useState(null);
+  const[rodaPasso,setRodaPasso]=useState(0);
   const recRef=useRef(null);
   const atual=useMemo(()=>faseAtualNIIL(d.etapas||{}),[d.etapas]);
   const marcos=useMemo(()=>marcosConcluidosNIIL(d.etapas||{}),[d.etapas]);
   const recomendacoes=useMemo(()=>recomendacoesContextuaisNIIL(d),[d]);
   const passo=TRILHA_NIIL.flatMap(f=>f.etapas.map(e=>({...e,fase:f}))).find(e=>e.id===aberta);
   const resp=d.trilhaNIIL?.respostas||{};
+  const snapshotRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===passo.id):null;
+  const rascunhoRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaRascunhos?.[passo.rodaId]||{}):{};
+
+  useEffect(()=>{
+    if(passo?.tipo!=='roda'||snapshotRoda)return;
+    const i=RODA_SETORES.findIndex(s=>!rascunhoRoda?.[s]?.nota);
+    setRodaPasso(i<0?0:i);
+  },[passo?.id,snapshotRoda?.id]);
+
 
   const salvar=(chave,valor)=>up(s=>({...s,trilhaNIIL:{...(s.trilhaNIIL||{}),respostas:{...(s.trilhaNIIL?.respostas||{}),[chave]:valor}}}));
   const ler=chave=>resp[chave];
