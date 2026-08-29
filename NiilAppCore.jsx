@@ -14,7 +14,6 @@ import Cursos from './Cursos.jsx';
 import Sono from './Sono.jsx';
 import AgendaLeve from './AgendaLeve.jsx';
 import HubNIIL from './HubNIIL.jsx';
-import GuardaRoupa from './GuardaRoupa.jsx';
 import JornadaSistemica from './JornadaSistemica.jsx';
 import { FASES as FASES_INGLES } from './ingles.data';
 import { formatoMoeda, METAANUAL_PADRAO } from './financeiro.data';
@@ -323,7 +322,6 @@ const inicial = {
   jornada: { checkins: [], mapaNos: [], planoSemana: null },
   trilhaNIIL: { respostas: {}, modulosVisitados: {}, temporadas: [], temporadaAtualId: null, vozCompromisso: null },
   sono: { objetivoHoras: 8, registros: [], despertador: { ativo:false, hora:'07:00', janelaMin:30, dias:[1,2,3,4,5] }, integracoes:{} },
-  guardaRoupa: { pecas: [] },
   treinos: [],
   gamificacao: { ...GAMIFICACAO_INICIAL, ledger: [], badges: [], diasAtivos: [] }
 };
@@ -2149,7 +2147,6 @@ export default function NIILApp() {
         {aba === 'extras' && Extras()}
         {aba === 'financeiro' && <Financeiro d={d} up={up} aviso={aviso} />}
         {aba === 'sono' && <Sono d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
-        {aba === 'guarda-roupa' && <GuardaRoupa d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
         {aba === 'ingles' && <Ingles d={d} up={up} aviso={aviso} />}
         {aba === 'dopamina' && <Cursos d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
         {aba === 'cursos' && <Cursos d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}

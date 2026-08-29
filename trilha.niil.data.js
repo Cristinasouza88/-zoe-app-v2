@@ -111,7 +111,6 @@ export const moduloParaAba = {
   comida:'comida',
   cursos:'cursos',
   ingles:'ingles',
-  guardaRoupa:'guarda-roupa',
   visao:'progresso',
   treino:'inicio'
 };
