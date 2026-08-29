@@ -51,15 +51,19 @@ export function reconhecimentoDisponivel() {
   return typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
 }
 
-export function iniciarReconhecimentoVoz({ onResultado, onErro }) {
+export function iniciarReconhecimentoVoz({ onResultado, onErro, onFim, onInicio }) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { onErro && onErro('Reconhecimento de voz não é suportado neste navegador.'); return null; }
   const rec = new SR();
   rec.lang = 'pt-BR';
   rec.interimResults = false;
+  rec.continuous = false;
   rec.maxAlternatives = 1;
-  rec.onresult = (ev) => onResultado(ev.results[0][0].transcript);
+  rec.onstart = () => onInicio && onInicio();
+  rec.onresult = (ev) => onResultado && onResultado(ev.results?.[0]?.[0]?.transcript || '');
   rec.onerror = (ev) => onErro && onErro(ev.error);
-  rec.start();
+  rec.onend = () => onFim && onFim();
+  try { rec.start(); }
+  catch (e) { onErro && onErro(e?.name || 'start-error'); return null; }
   return rec;
 }
