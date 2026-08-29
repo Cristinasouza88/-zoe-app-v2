@@ -458,6 +458,51 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
         <div className="tn-sentence-bank">{(e.opcoesFrase||[]).map(x=><button type="button" key={x.valor} className={v===x.valor?'selected':''} onClick={()=>{salvar(e.chave,x.valor);feedback('tap',d)}}>{x.texto}</button>)}</div>
       </div>;
     }
+    if(e.interacao==='motivation-why'){
+      const objetivo=ler('meta-inicial')||'Outra coisa';
+      const importancia=Number(ler('meta-importancia')??5);
+      const menor=Math.max(1,importancia-3);
+      const perfil=perfilMotivacao(objetivo);
+      const pergunta=importancia>=4?`Você marcou ${importancia}/10. Por que ${importancia} e não ${menor}?`:'O que faz isso importar para você, mesmo que ainda não seja prioridade máxima?';
+      return <div className="tn-motivation-step">
+        <div className="tn-motivation-icon"><Sparkles size={32}/></div>
+        <span className="tn-motivation-kicker">ENCONTRE O SEU MOTIVO</span>
+        <h1>{pergunta}</h1>
+        <p>Escolha a razão que mais parece sua agora. Não a que “deveria” ser.</p>
+        <div className="tn-motivation-options">{perfil.motivos.map(x=><button key={x} onClick={()=>concluirMotivacaoRapido(e,x,'motivo')}>{x}<ChevronRight size={18}/></button>)}</div>
+      </div>;
+    }
+    if(e.interacao==='reward-choice'){
+      const objetivo=ler('meta-inicial')||'Outra coisa';
+      const perfil=perfilMotivacao(objetivo);
+      return <div className="tn-motivation-step tn-reward-step">
+        <div className="tn-motivation-icon"><Target size={32}/></div>
+        <span className="tn-motivation-kicker">RECOMPENSA QUE PUXA O ESFORÇO</span>
+        <h1>Se {objetivoLegivel(objetivo).toLowerCase()} mudar, o que você ganha de verdade?</h1>
+        <p>Procure o resultado que você conseguiria sentir ou perceber na vida real.</p>
+        <div className="tn-motivation-options">{perfil.recompensas.map(x=><button key={x} onClick={()=>concluirMotivacaoRapido(e,x,'recompensa')}>{x}<ChevronRight size={18}/></button>)}</div>
+      </div>;
+    }
+    if(e.interacao==='motivation-insight'){
+      const objetivo=ler('meta-inicial')||'Outra coisa';
+      const importancia=Number(ler('meta-importancia')??5);
+      const motivo=ler('meta-motivo')||'isso importa para você';
+      const recompensa=ler('meta-recompensa')||'ver uma mudança concreta';
+      const perfil=perfilMotivacao(objetivo);
+      return <div className="tn-motivation-insight">
+        <NIILOrb state="thinking" size={92} label="A NIIL percebeu algo"/>
+        <span>A NIIL PERCEBEU ALGO</span>
+        <h1>Você não escolheu apenas {objetivoLegivel(objetivo).toLowerCase()}.</h1>
+        <div className="tn-motivation-quote">Você quer <b>{recompensa.toLowerCase()}</b>.</div>
+        <div className="tn-motivation-summary">
+          <div><small>IMPORTÂNCIA</small><b>{importancia}/10</b></div>
+          <div><small>SEU MOTIVO</small><b>{motivo}</b></div>
+        </div>
+        <p>O NIIL vai guardar isso como sua motivação-base e usar essa informação para dar contexto aos próximos passos — sem prometer que motivação sozinha muda comportamento.</p>
+        <div className="tn-motivation-path"><small>QUANDO FIZER SENTIDO, A TRILHA VAI PRIORIZAR</small><div>{perfil.modulos.map(x=><span key={x}>{x}</span>)}</div></div>
+        <button className="tn-motivation-confirm" onClick={()=>confirmarMotivacaoBase(e)}>Usar isso na minha trilha <ChevronRight size={18}/></button>
+      </div>;
+    }
     if(['choice','binary','module-decision'].includes(e.interacao))return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}<ChevronRight size={16}/></button>)}</div>;
     if(e.interacao==='scale')return <div className="tn-scale tn-scale-reflect"><div className="tn-scale-icon"><Target size={30}/></div><strong>{v??5}/10</strong><input type="range" min="1" max="10" value={v??5} onChange={ev=>salvar(e.chave,Number(ev.target.value))}/><div><span>{e.minimo}</span><span>{e.maximo}</span></div><small>{Number(v??5)>=8?'Isso parece importante de verdade para você.':Number(v??5)>=5?'Isso tem peso, mas ainda disputa espaço com outras coisas.':'Talvez isso ainda não seja uma prioridade real agora.'}</small></div>;
     if(e.interacao==='dual-scale')return <div className="tn-stack">
@@ -486,13 +531,13 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
       <header className="tn-detail-head"><button onClick={()=>setAberta(null)}><ArrowLeft size={20}/></button><div><span>{passo.tipo==='roda'?'RODA DA VIDA':fase.marco+' · '+passo.min+' min'}</span><b>{passo.tipo==='roda'?(snapshotRoda?'Seu retrato':RODA_SETORES[rodaPasso]):passo.titulo}</b></div><i>{passo.tipo==='roda'&&!snapshotRoda?(rodaPasso+1)+'/'+RODA_SETORES.length:(fase.etapas.findIndex(x=>x.id===passo.id)+1)+'/'+fase.etapas.length}</i></header>
       <div className="tn-detail-progress"><i style={{width:(passo.tipo==='roda'&&!snapshotRoda?((rodaPasso+1)/RODA_SETORES.length)*100:((fase.etapas.findIndex(x=>x.id===passo.id)+1)/fase.etapas.length)*100)+'%'}}/></div>
       <main className="tn-detail-main">
-        {passo.tipo!=='roda'&&passo.interacao!=='sentence-choice'&&<><div className="tn-kicker">UMA COISA POR VEZ</div><h1>{passo.pergunta||passo.perguntaCurta||passo.titulo}</h1>{passo.perguntaCurta&&<p>{passo.perguntaCurta}</p>}</>}
+        {passo.tipo!=='roda'&&!['sentence-choice','motivation-why','reward-choice','motivation-insight'].includes(passo.interacao)&&<><div className="tn-kicker">UMA COISA POR VEZ</div><h1>{passo.pergunta||passo.perguntaCurta||passo.titulo}</h1>{passo.perguntaCurta&&<p>{passo.perguntaCurta}</p>}</>}
         <Interacao e={passo}/>
         {passo.modulo&&!['sleep','agenda','photo'].includes(passo.interacao)&&<button className="tn-open-module" onClick={()=>abrirModulo(passo.modulo)}>Abrir {passo.modulo==='financeiro'?'Financeiro':passo.modulo==='cursos'?'Cursos':passo.modulo==='sono'?'Sono':'módulo relacionado'} <ChevronRight size={16}/></button>}
         {passo.ciencia&&<details className="tn-science"><summary>Por que o NIIL pergunta isso?</summary><p>{passo.ciencia}</p>{passo.fonte&&<small>{passo.fonte}</small>}</details>}
         {passo.base&&<small className="tn-base">{passo.base}</small>}
       </main>
-      {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{passo.interacao==='sentence-choice'?'Confirmar':'Continuar'} <ChevronRight size={18}/></button></footer>}
+      {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum','motivation-why','reward-choice','motivation-insight'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{passo.interacao==='sentence-choice'?'Confirmar':'Continuar'} <ChevronRight size={18}/></button></footer>}
     </div>;
   }
 
