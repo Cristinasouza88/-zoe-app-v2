@@ -11,7 +11,7 @@
   to = "/index.html"
   status = 200
 
-# deploy-trigger: ios-voice-playback-container-20260828
+# deploy-trigger: remove-guarda-roupa-20260829
 
 
 [[headers]]
