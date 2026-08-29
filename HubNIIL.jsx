@@ -1,12 +1,11 @@
 import React from 'react';
-import { X, Moon, Utensils, Camera, Shirt } from 'lucide-react';
+import { X, Moon, Utensils, Camera } from 'lucide-react';
 
 const PALETA={
   roxoEscuro:'#17151D',
   roxoClaro:'#6C9700',
   verdeEscuro:'#6C9700',
   verdeLima:'#B7F20C',
-  laranja:'#17151D',
   cloud:'#F7F8F5',
   ink:'#17151D',
   muted:'#8B8791',
@@ -17,8 +16,7 @@ export default function HubNIIL({fechar,setAba}){
   const modulos=[
     {id:'sono',nome:'Sono',Icone:Moon,cor:PALETA.roxoEscuro},
     {id:'comida',nome:'Refeição',Icone:Utensils,cor:PALETA.verdeEscuro},
-    {id:'diario',nome:'Feed',Icone:Camera,cor:PALETA.roxoClaro},
-    {id:'guarda-roupa',nome:'Guarda-roupa',Icone:Shirt,cor:PALETA.laranja}
+    {id:'diario',nome:'Feed',Icone:Camera,cor:PALETA.roxoClaro}
   ];
 
   return <div className="hubx-overlay" onClick={fechar}>
@@ -33,7 +31,7 @@ export default function HubNIIL({fechar,setAba}){
       .hubx-head h2{font-size:24px;line-height:1.06;margin:4px 0 0;color:${PALETA.ink};letter-spacing:-.025em}
       .hubx-close{width:40px;height:40px;border:0;border-radius:14px;background:#F3F9DB;color:${PALETA.ink};display:grid;place-items:center}
       .hubx-label{font-size:10px;font-weight:900;letter-spacing:1.1px;color:${PALETA.ink};margin:0 0 14px}
-      .hubx-modules{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+      .hubx-modules{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
       .hubx-module{border:0;background:transparent;padding:0;font:inherit;color:${PALETA.ink};min-width:0;animation:hubxPop .4s cubic-bezier(.2,.9,.3,1) both}
       .hubx-module:active .hubx-disc{transform:scale(.93)}
       .hubx-disc{width:min(86px,20vw);height:min(86px,20vw);max-width:86px;max-height:86px;border-radius:50%;margin:0 auto 9px;display:grid;place-items:center;position:relative;box-shadow:0 8px 20px rgba(23,21,29,.12);transition:transform .14s ease;border:3px solid rgba(255,255,255,.72)}
