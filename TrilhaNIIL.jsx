@@ -126,6 +126,9 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const atual=useMemo(()=>faseAtualNIIL(d.etapas||{}),[d.etapas]);
   const marcos=useMemo(()=>marcosConcluidosNIIL(d.etapas||{}),[d.etapas]);
   const recomendacoes=useMemo(()=>recomendacoesContextuaisNIIL(d),[d]);
+  const temporadas=d.trilhaNIIL?.temporadas||[];
+  const temporadaAtual=temporadas.find(t=>t.id===d.trilhaNIIL?.temporadaAtualId)||null;
+  const temporadasConcluidas=temporadas.filter(t=>t.status==='concluida');
   const passo=TRILHA_NIIL.flatMap(f=>f.etapas.map(e=>({...e,fase:f}))).find(e=>e.id===aberta);
   const resp=d.trilhaNIIL?.respostas||{};
   const snapshotValido=(x,e=passo)=>x?.versao===(e?.versaoFerramenta||3)&&RODA_SETORES.every(s=>Number.isFinite(Number(x?.valores?.[s]))&&Number(x?.valores?.[s])>=0&&Number(x?.valores?.[s])<=10);
@@ -158,6 +161,18 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     const aba=moduloParaAba[modulo];
     if(!aba)return;
     setAba(aba);
+  };
+
+  const iniciarNovaTemporada=()=>{
+    const ids=new Set(TRILHA_NIIL.flatMap(f=>f.etapas.map(e=>e.id)));
+    up(s=>{
+      const trilha=s.trilhaNIIL||{};
+      const etapas=Object.fromEntries(Object.entries(s.etapas||{}).filter(([id])=>!ids.has(id)));
+      return{...s,etapas,trilhaNIIL:{...trilha,respostas:{},motivacaoBase:null,temporadaAtualId:null,rodaRascunhos:{},focoAtual:null,handoff:null}};
+    });
+    setAberta(null);
+    feedback('marco',d);
+    window.scrollTo({top:0,behavior:'smooth'});
   };
 
   const valido=e=>{
@@ -203,7 +218,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       }
       const base={...estado,etapas:{...(estado.etapas||{}),[e.id]:{feito:true,data:hoje(),concluidaEm:new Date().toISOString()}}};
       let next=registrarEventoGamificacao(base,{
-        key:`trilha:v2:${e.id}`,
+        key:`trilha:v3:${estado.trilhaNIIL?.temporadaAtualId||'sem-temporada'}:${e.id}`,
         tipo:e.tipo==='roda'?'trail.tool.completed':'trail.microstep.completed',
         pontos:Number(e.pontos)||10,
         titulo:e.titulo,
@@ -214,7 +229,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         contexto:{marco:e.fase?.id||null}
       });
       if(ultima)next=registrarEventoGamificacao(next,{
-        key:`trilha:v2:marco:${e.fase.id}`,
+        key:`trilha:v3:${next.trilhaNIIL?.temporadaAtualId||estado.trilhaNIIL?.temporadaAtualId||'sem-temporada'}:marco:${e.fase.id}`,
         tipo:'trail.phase.completed',
         pontos:50,
         titulo:`Marco concluído · ${e.fase.nome}`,
@@ -223,6 +238,15 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         trilhaId:'niil-central-v2',
         origemId:e.fase.id
       });
+      if(e.id==='m9-proximo'){
+        const trilha=next.trilhaNIIL||{},temporadas=Array.isArray(trilha.temporadas)?trilha.temporadas:[],tid=trilha.temporadaAtualId,agora=new Date().toISOString();
+        const concluidas=Object.keys(next.etapas||{}).filter(id=>next.etapas?.[id]?.feito);
+        next={...next,trilhaNIIL:{...trilha,temporadas:temporadas.map(t=>{
+          if(t.id!==tid)return t;
+          const inicio=Date.parse(t.iniciadaEm||agora),fim=Date.parse(agora);
+          return{...t,status:'concluida',encerradaEm:agora,duracaoDias:Math.max(0,Math.round((fim-inicio)/86400000)),etapasConcluidas:concluidas,motivacaoBase:trilha.motivacaoBase||t.motivacaoBase||null};
+        })}};
+      }
       return next;
     });
     if(!opts.semFeedback)feedback('snap',d);
