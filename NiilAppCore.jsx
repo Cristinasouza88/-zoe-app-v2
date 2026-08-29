@@ -463,7 +463,10 @@ export default function NIILApp() {
         setCarregando(false);
         return;
       }
-      if(event==='TOKEN_REFRESHED')return;
+      if(event==='TOKEN_REFRESHED'||event==='INITIAL_SESSION')return;
+      // Eventos transitórios sem sessão não devem derrubar uma conta válida.
+      // SIGNED_OUT continua limpando a sessão normalmente.
+      if(!session&&event!=='SIGNED_OUT')return;
       setTimeout(() => aplicarSessao(session), 0);
     });
 
@@ -2196,19 +2199,21 @@ export default function NIILApp() {
     <>
       <style>{CSS}</style>
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif', color: C.ink, maxWidth: 520, margin: '0 auto', position: 'relative' }}>
-        {aba === 'inicio' && Inicio()}
-        {aba === 'trilha' && Trilha()}
-        {aba === 'agenda' && <AgendaLeve d={d} data={data} setData={setData} agendaAtiva={agendaAtiva} toggleTarefaDe={toggleTarefaDe} abrirTreino={abrirTreino} streak={streak} setAba={setAba} up={up} />}
-        {aba === 'comida' && Comida()}
-        {aba === 'progresso' && Progresso()}
-        {aba === 'diario' && Diario()}
-        {aba === 'extras' && Extras()}
-        {aba === 'financeiro' && <Financeiro d={d} up={up} aviso={aviso} />}
-        {aba === 'sono' && <Sono d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
-        {aba === 'ingles' && <Ingles d={d} up={up} aviso={aviso} />}
-        {aba === 'dopamina' && <Cursos d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
-        {aba === 'cursos' && <Cursos d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
-        {aba === 'conquistas' && <Conquistas d={d} up={up} aviso={aviso} />}
+        <div key={aba} className="niil-app-stage">
+          {aba === 'inicio' && Inicio()}
+          {aba === 'trilha' && Trilha()}
+          {aba === 'agenda' && <AgendaLeve d={d} data={data} setData={setData} agendaAtiva={agendaAtiva} toggleTarefaDe={toggleTarefaDe} abrirTreino={abrirTreino} streak={streak} setAba={setAba} up={up} />}
+          {aba === 'comida' && Comida()}
+          {aba === 'progresso' && Progresso()}
+          {aba === 'diario' && Diario()}
+          {aba === 'extras' && Extras()}
+          {aba === 'financeiro' && <Financeiro d={d} up={up} aviso={aviso} />}
+          {aba === 'sono' && <Sono d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
+          {aba === 'ingles' && <Ingles d={d} up={up} aviso={aviso} />}
+          {aba === 'dopamina' && <Cursos d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
+          {aba === 'cursos' && <Cursos d={d} up={up} aviso={aviso} voltar={() => setAba('inicio')} />}
+          {aba === 'conquistas' && <Conquistas d={d} up={up} aviso={aviso} />}
+        </div>
 
         {QuickAdd()}
 
