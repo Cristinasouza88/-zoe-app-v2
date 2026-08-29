@@ -180,8 +180,11 @@ export const Barra = ({ v, max, cor, h = 8 }) => (
 );
 
 export const Sheet = ({ aberto, fechar, titulo, children }) => aberto ? (
-  <div onClick={fechar} style={{ position: 'fixed', inset: 0, background: 'rgba(23,21,29,.34)', zIndex: 90, display: 'flex', alignItems: 'flex-end', backdropFilter:'blur(4px)' }}>
-    <div onClick={e => e.stopPropagation()} className="niil-surge" style={{ background: C.card, width: '100%', maxHeight: '88vh', overflowY: 'auto', borderRadius: '28px 28px 0 0', padding: 20, paddingBottom: 'calc(28px + env(safe-area-inset-bottom))', borderTop:`1px solid ${C.line}`, boxShadow:'0 -18px 48px rgba(23,21,29,.14)' }}>
+  <div
+    onPointerDown={e => { if (e.target === e.currentTarget) fechar?.(); }}
+    style={{ position: 'fixed', inset: 0, background: 'rgba(23,21,29,.34)', zIndex: 90, display: 'flex', alignItems: 'flex-end', backdropFilter:'blur(4px)' }}
+  >
+    <div className="niil-surge" style={{ background: C.card, width: '100%', maxHeight: '88vh', overflowY: 'auto', borderRadius: '28px 28px 0 0', padding: 20, paddingBottom: 'calc(28px + env(safe-area-inset-bottom))', borderTop:`1px solid ${C.line}`, boxShadow:'0 -18px 48px rgba(23,21,29,.14)' }}>
       <div style={{ width: 40, height: 4, background: C.line, borderRadius: 99, margin: '0 auto 16px' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h2 style={{ fontSize: 20, fontWeight: 800, color: C.ink, margin: 0 }}>{titulo}</h2>
