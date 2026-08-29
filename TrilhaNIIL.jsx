@@ -179,7 +179,14 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const passo=TRILHA_NIIL.flatMap(f=>f.etapas.map(e=>({...e,fase:f}))).find(e=>e.id===aberta);
   const resp=d.trilhaNIIL?.respostas||{};
   const snapshotValido=(x,e=passo)=>x?.versao===(e?.versaoFerramenta||3)&&RODA_SETORES.every(s=>Number.isFinite(Number(x?.valores?.[s]))&&Number(x?.valores?.[s])>=0&&Number(x?.valores?.[s])<=10);
-  const snapshotRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===passo.id&&snapshotValido(x,passo)):null;
+  const snapshotDaTemporada=e=>{
+    if(!e||e.tipo!=='roda')return null;
+    const id=e.papel==='abertura'?temporadaAtual?.rodaInicialSnapshotId:e.papel==='fechamento'?temporadaAtual?.rodaFinalSnapshotId:null;
+    if(id)return(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.id===id&&x.etapaId===e.id&&snapshotValido(x,e))||null;
+    if(e.papel==='abertura'||e.papel==='fechamento')return null;
+    return(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id&&snapshotValido(x,e))||null;
+  };
+  const snapshotRoda=passo?.tipo==='roda'?snapshotDaTemporada(passo):null;
   const rascunhoRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaRascunhos?.[passo.rodaId]||{}):{};
 
   useEffect(()=>{
@@ -251,7 +258,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
 
   const valido=e=>{
     const v=ler(e.chave);
-    if(e.tipo==='roda')return !!(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id&&snapshotValido(x,e));
+    if(e.tipo==='roda')return !!snapshotDaTemporada(e);
     if(e.interacao==='sentence-choice'){
       const voz=d.trilhaNIIL?.vozCompromisso;
       return !!v&&voz?.objetivo===v&&(!!voz?.storageKey||voz?.pulado===true);
@@ -602,7 +609,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const Interacao=({e})=>{
     const v=ler(e.chave);
     if(e.tipo==='roda'){
-      const snap=(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id&&snapshotValido(x,e));
+      const snap=snapshotDaTemporada(e);
       if(snap){
         const ordenadas=[...RODA_SETORES].sort((a,b)=>Number(snap.valores[a])-Number(snap.valores[b]));
         const dataFmt=new Date(snap.concluidaEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
@@ -854,7 +861,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       const recompensa=ler('meta-recompensa')||'uma mudança concreta';
       const valores=Array.isArray(ler('meta-valores'))?ler('meta-valores'):[];
       const contraste=ler('meta-contraste')||{};
-      const snap=(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId==='m1-roda-v4');
+      const snapId=temporadaAtual?.rodaInicialSnapshotId;
+      const snap=snapId?(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.id===snapId):null;
       const area=RODA_AREA_POR_OBJETIVO[objetivo];
       const notaRoda=area&&snap?Number(snap.valores?.[area]):null;
       return <div className="tn-m1-synthesis">
