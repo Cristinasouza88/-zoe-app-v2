@@ -43,6 +43,11 @@ export default function HomeNIILV3({
   const cursosFixados = cursos.filter(c => c.fixadoInicio).slice(0, 2);
   const marcasHoje = d?.agenda?.[hojeIso] || {};
   const nome = primeiroNomeDe(d, usuario);
+  const totalMarcoAtual = Math.max(0, Number(marcoAtual?.total || 0));
+  const concluidasMarcoAtual = Math.max(0, Number(marcoAtual?.concluidas || 0));
+  const pctMarcoAtual = totalMarcoAtual
+    ? Math.max(0, Math.min(100, Math.round((concluidasMarcoAtual / totalMarcoAtual) * 100)))
+    : 0;
 
   const baseHoje = useMemo(() => (agendaAtiva?.tarefas || []).map((t, i) => ({
     id: `base-${i}`,
@@ -124,10 +129,14 @@ export default function HomeNIILV3({
           <div className="niil-home-v3-goal-title">
             <strong>{marcoAtual?.fase?.marco || 'M1'}</strong> · {marcoAtual?.fase?.nome || 'O que vale o esforço?'}
           </div>
-          <div className="niil-home-v3-goal-bar" aria-hidden="true">
-            <i style={{ width: `${Math.max(0, Math.min(100, pctVida))}%` }} />
+          <div style={{display:'flex',alignItems:'baseline',gap:7,margin:'10px 0 7px'}}>
+            <strong style={{fontSize:28,lineHeight:1,color:'#17151D',letterSpacing:'-.6px'}}>{pctMarcoAtual}%</strong>
+            <span style={{fontSize:11,fontWeight:800,color:'#5F5A66'}}>para concluir este marco</span>
           </div>
-          <small>{marcosConcluidos} de {totalMarcos} marcos · faltam {Math.max(0,(marcoAtual?.total||0)-(marcoAtual?.concluidas||0))} passos neste marco</small>
+          <div className="niil-home-v3-goal-bar" aria-hidden="true">
+            <i style={{ width: `${pctMarcoAtual}%` }} />
+          </div>
+          <small>{concluidasMarcoAtual} de {totalMarcoAtual || 0} passos concluídos · {marcosConcluidos} de {totalMarcos} marcos</small>
           <span className="niil-home-v3-goal-link">Continuar trilha <ChevronRight size={16} /></span>
         </div>
 
@@ -143,7 +152,7 @@ export default function HomeNIILV3({
               <path d="M233 0 C221 32 238 66 226 94 S218 137 238 170" />
             </g>
             <path className="niil-home-v3-route-base" pathLength="100" d="M20 132 C54 128 72 148 101 128 S135 90 160 101 S193 116 207 77 S244 52 260 38" />
-            <path className="niil-home-v3-route-progress" pathLength="100" strokeDasharray={`${Math.max(0, Math.min(100, pctVida))} ${100 - Math.max(0, Math.min(100, pctVida))}`} d="M20 132 C54 128 72 148 101 128 S135 90 160 101 S193 116 207 77 S244 52 260 38" />
+            <path className="niil-home-v3-route-progress" pathLength="100" strokeDasharray={`${pctMarcoAtual} ${100 - pctMarcoAtual}`} d="M20 132 C54 128 72 148 101 128 S135 90 160 101 S193 116 207 77 S244 52 260 38" />
             <circle cx="20" cy="132" r="9" fill="#ffffff" />
             <circle cx="20" cy="132" r="5" fill={GREEN} />
             <g transform="translate(244 12)"><MapPin size={38} color={GREEN} fill={GREEN} strokeWidth={1.8} /></g>
