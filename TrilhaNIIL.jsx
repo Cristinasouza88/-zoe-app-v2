@@ -75,6 +75,59 @@ const MOTIVACAO_PERFIS={
 const perfilMotivacao=objetivo=>MOTIVACAO_PERFIS[objetivo]||MOTIVACAO_PERFIS['Outra coisa'];
 const objetivoLegivel=objetivo=>objetivo==='Dinheiro'?'Finanças':objetivo||'isso';
 
+const RODA_AREA_POR_OBJETIVO={
+  'Saúde':'Saúde',
+  'Energia':'Saúde',
+  'Dinheiro':'Finanças',
+  'Carreira':'Carreira',
+  'Aprendizado':'Crescimento pessoal',
+  'Relacionamentos':'Relacionamentos'
+};
+
+const PRIMEIROS_MOVIMENTOS={
+  'Saúde':[
+    {acao:'Observar minha energia em 3 momentos de hoje',duracao:5},
+    {acao:'Registrar uma refeição principal hoje',duracao:5},
+    {acao:'Fazer 10 minutos de movimento possível hoje',duracao:10}
+  ],
+  'Energia':[
+    {acao:'Registrar minha energia ao acordar por 3 dias',duracao:3},
+    {acao:'Observar meu horário de sono por 3 noites',duracao:3},
+    {acao:'Fazer uma pausa real de 10 minutos hoje',duracao:10}
+  ],
+  'Dinheiro':[
+    {acao:'Registrar tudo que eu gastar hoje',duracao:5},
+    {acao:'Separar 15 minutos para olhar minhas contas',duracao:15},
+    {acao:'Listar meus compromissos financeiros fixos',duracao:15}
+  ],
+  'Carreira':[
+    {acao:'Separar 15 minutos para definir meu próximo passo profissional',duracao:15},
+    {acao:'Anotar uma oportunidade que eu quero perseguir',duracao:10},
+    {acao:'Revisar uma pendência profissional importante',duracao:15}
+  ],
+  'Aprendizado':[
+    {acao:'Reservar 15 minutos para retomar um aprendizado',duracao:15},
+    {acao:'Escolher uma aula ou capítulo para concluir',duracao:15},
+    {acao:'Aplicar uma coisa que eu já aprendi',duracao:15}
+  ],
+  'Relacionamentos':[
+    {acao:'Separar 15 minutos de presença real para uma relação importante',duracao:15},
+    {acao:'Enviar uma mensagem que estou adiando',duracao:5},
+    {acao:'Anotar uma conversa que merece acontecer',duracao:10}
+  ],
+  'Organizar minha vida':[
+    {acao:'Escolher uma única pendência para encerrar hoje',duracao:15},
+    {acao:'Organizar um espaço pequeno por 10 minutos',duracao:10},
+    {acao:'Definir as 3 coisas que realmente importam hoje',duracao:5}
+  ],
+  'Outra coisa':[
+    {acao:'Reservar 15 minutos para um primeiro movimento concreto',duracao:15},
+    {acao:'Escrever qual seria a menor evidência de progresso',duracao:10},
+    {acao:'Fazer uma ação de até 10 minutos na direção que escolhi',duracao:10}
+  ]
+};
+const primeirosMovimentos=objetivo=>PRIMEIROS_MOVIMENTOS[objetivo]||PRIMEIROS_MOVIMENTOS['Outra coisa'];
+
 
 const hoje=()=>new Date().toISOString().slice(0,10);
 const vibrar=()=>{try{navigator.vibrate?.(18)}catch{}};
@@ -126,7 +179,14 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const passo=TRILHA_NIIL.flatMap(f=>f.etapas.map(e=>({...e,fase:f}))).find(e=>e.id===aberta);
   const resp=d.trilhaNIIL?.respostas||{};
   const snapshotValido=(x,e=passo)=>x?.versao===(e?.versaoFerramenta||3)&&RODA_SETORES.every(s=>Number.isFinite(Number(x?.valores?.[s]))&&Number(x?.valores?.[s])>=0&&Number(x?.valores?.[s])<=10);
-  const snapshotRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===passo.id&&snapshotValido(x,passo)):null;
+  const snapshotDaTemporada=e=>{
+    if(!e||e.tipo!=='roda')return null;
+    const id=e.papel==='abertura'?temporadaAtual?.rodaInicialSnapshotId:e.papel==='fechamento'?temporadaAtual?.rodaFinalSnapshotId:null;
+    if(id)return(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.id===id&&x.etapaId===e.id&&snapshotValido(x,e))||null;
+    if(e.papel==='abertura'||e.papel==='fechamento')return null;
+    return(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id&&snapshotValido(x,e))||null;
+  };
+  const snapshotRoda=passo?.tipo==='roda'?snapshotDaTemporada(passo):null;
   const rascunhoRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaRascunhos?.[passo.rodaId]||{}):{};
 
   useEffect(()=>{
@@ -198,12 +258,14 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
 
   const valido=e=>{
     const v=ler(e.chave);
-    if(e.tipo==='roda')return !!(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id&&snapshotValido(x,e));
+    if(e.tipo==='roda')return !!snapshotDaTemporada(e);
     if(e.interacao==='sentence-choice'){
       const voz=d.trilhaNIIL?.vozCompromisso;
       return !!v&&voz?.objetivo===v&&(!!voz?.storageKey||voz?.pulado===true);
     }
     if(e.interacao==='multi'||e.interacao==='modules'||e.interacao==='swipe')return Array.isArray(v)&&v.length>0;
+    if(e.interacao==='contrast')return Number.isFinite(Number(v?.atual))&&Number.isFinite(Number(v?.desejado));
+    if(e.interacao==='m1-insight')return true;
     if(e.interacao==='energy')return true;
     if(e.interacao==='sleep')return true;
     if(e.interacao==='dual-scale')return true;
@@ -406,9 +468,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const confirmarMotivacaoBase=e=>{
     up(s=>{
       const trilha=s.trilhaNIIL||{},respostas=trilha.respostas||{},objetivo=respostas['meta-inicial']||'Outra coisa';
-      const perfil=perfilMotivacao(objetivo);
       const agora=new Date().toISOString();
-      const base={objetivo,importancia:Number(respostas['meta-importancia']??5),motivo:respostas['meta-motivo']||null,recompensa:respostas['meta-recompensa']||null,modulosPrioritarios:perfil.modulos,confirmadaEm:agora,versao:1};
+      const base={objetivo,importancia:Number(respostas['meta-importancia']??5),motivo:respostas['meta-motivo']||null,recompensa:respostas['meta-recompensa']||null,valores:Array.isArray(respostas['meta-valores'])?respostas['meta-valores']:[],contraste:respostas['meta-contraste']||null,confirmadaEm:agora,versao:2};
       const temporadas=Array.isArray(trilha.temporadas)?trilha.temporadas:[];
       const ativa=temporadas.find(t=>t.id===trilha.temporadaAtualId&&t.status==='ativa');
       const id=ativa?.id||('temporada-'+Date.now());
@@ -425,6 +486,34 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     let n=atual.includes(item)?atual.filter(x=>x!==item):[...atual,item];
     if(e.limite&&n.length>e.limite)n=n.slice(-e.limite);
     salvar(e.chave,n);feedback('tap',d);
+  };
+
+  const concluirPrimeiroMovimento=(e,movimento)=>{
+    const objetivo=ler('meta-inicial')||'Outra coisa';
+    const agora=new Date().toISOString();
+    up(s=>{
+      const trilha=s.trilhaNIIL||{},respostas=trilha.respostas||{},temporadas=Array.isArray(trilha.temporadas)?trilha.temporadas:[],tid=trilha.temporadaAtualId;
+      const planoAtual=s.jornada?.planoSemana;
+      const temAcaoAtiva=!!planoAtual?.ativo&&planoAtual?.origem!=='m1-primeiro-movimento';
+      const registro={...movimento,objetivo,criadoEm:agora,status:temAcaoAtiva?'guardado':'ativo',origem:'m1-primeiro-movimento'};
+      const jornada=temAcaoAtiva
+        ?{...(s.jornada||{}),movimentosGuardados:[...(s.jornada?.movimentosGuardados||[]),registro]}
+        :{...(s.jornada||{}),planoSemana:{ativo:true,acao:movimento.acao,contexto:'Primeiro movimento da temporada',hora:'Ao longo do dia',duracao:movimento.duracao||10,dias:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],origem:'m1-primeiro-movimento',recorrencia:'ate-concluir',criadoEm:agora}};
+      return{
+        ...s,
+        jornada,
+        trilhaNIIL:{
+          ...trilha,
+          respostas:{...respostas,[e.chave]:registro},
+          temporadas:temporadas.map(t=>t.id===tid?{...t,primeiroMovimento:registro}:t)
+        }
+      };
+    });
+    feedback('marco',d);
+    aviso(d.jornada?.planoSemana?.ativo&&d.jornada?.planoSemana?.origem!=='m1-primeiro-movimento'
+      ?'Seu movimento foi guardado. A Agenda já tem uma ação ativa.'
+      :'Um movimento entrou na sua Agenda.');
+    window.setTimeout(()=>concluir(e,{ignorarValidacao:true,semFeedback:true}),220);
   };
 
   const criarAgenda=()=>{
@@ -520,7 +609,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const Interacao=({e})=>{
     const v=ler(e.chave);
     if(e.tipo==='roda'){
-      const snap=(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id&&snapshotValido(x,e));
+      const snap=snapshotDaTemporada(e);
       if(snap){
         const ordenadas=[...RODA_SETORES].sort((a,b)=>Number(snap.valores[a])-Number(snap.valores[b]));
         const dataFmt=new Date(snap.concluidaEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
@@ -531,6 +620,21 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         const snapInicialId=temporadaAtiva?.rodaInicialSnapshotId;
         const snapInicial=(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.id===snapInicialId)||null;
         const comparacao=e.papel==='fechamento'&&snapInicial?RODA_SETORES.map(s=>({setor:s,antes:Number(snapInicial.valores?.[s]||0),agora:Number(snap.valores?.[s]||0),delta:Number(snap.valores?.[s]||0)-Number(snapInicial.valores?.[s]||0)})):[];
+        if(e.papel==='abertura'){
+          return <div className="tn-roda-result tn-roda-reveal tn-roda-opening">
+            <div className="tn-roda-result-head"><span>RETRATO INICIAL</span><b>{dataFmt}</b></div>
+            <h2>Agora existe um ponto de partida.</h2>
+            <p className="tn-roda-reveal-copy">A Roda não cria metas automaticamente. Ela guarda como você percebe sua vida hoje para que o NIIL possa comparar mudanças ao longo da temporada.</p>
+            <Radar valores={snap.valores}/>
+            <div className="tn-insight-callout">
+              <span>INSIGHT NIIL</span>
+              <h3>{ordenadas.slice(0,3).join(', ')} aparecem com as menores notas neste retrato.</h3>
+              <p>Isso não significa que precisam virar três metas. É contexto. A Trilha vai ativar poucas mudanças por vez.</p>
+            </div>
+            <button className="tn-roda-finish-compare" onClick={()=>concluir(e,{ignorarValidacao:true})}>Guardar este retrato e continuar <ChevronRight size={18}/></button>
+            <div className="tn-roda-locked-note"><Lock size={14}/><span>Este retrato fica fechado para comparação com o fim da temporada.</span></div>
+          </div>;
+        }
         if(rodaAtivacao.etapa==='razao'&&area){
           return <div className="tn-roda-activate">
             <span className="tn-roda-activate-kicker">{area} · {notaAtual}/10</span>
@@ -715,7 +819,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       const importancia=Number(ler('meta-importancia')??5);
       const motivo=ler('meta-motivo')||'isso importa para você';
       const recompensa=ler('meta-recompensa')||'ver uma mudança concreta';
-      const perfil=perfilMotivacao(objetivo);
+      const valores=Array.isArray(ler('meta-valores'))?ler('meta-valores'):[];
+      const contraste=ler('meta-contraste')||{};
       return <div className="tn-motivation-insight">
         <NIILOrb state="thinking" size={92} label="Insight NIIL"/>
         <span>INSIGHT NIIL</span>
@@ -724,10 +829,71 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         <div className="tn-motivation-summary">
           <div><small>IMPORTÂNCIA</small><b>{importancia}/10</b></div>
           <div><small>SEU MOTIVO</small><b>{motivo}</b></div>
+          {valores.length>0&&<div><small>O QUE REPRESENTA</small><b>{valores.join(' · ')}</b></div>}
+          {Number.isFinite(Number(contraste.atual))&&<div><small>PERCEPÇÃO</small><b>{contraste.atual} → {contraste.desejado}</b></div>}
         </div>
-        <p>O NIIL vai guardar isso como sua motivação-base e usar essa informação para dar contexto aos próximos passos — sem prometer que motivação sozinha muda comportamento.</p>
-        <div className="tn-motivation-path"><small>QUANDO FIZER SENTIDO, A TRILHA VAI PRIORIZAR</small><div>{perfil.modulos.map(x=><span key={x}>{x}</span>)}</div></div>
-        <button className="tn-motivation-confirm" onClick={()=>confirmarMotivacaoBase(e)}>Usar isso na minha trilha <ChevronRight size={18}/></button>
+        <p>Isso vira contexto para a temporada, não uma lista de tarefas. O NIIL pode encontrar várias oportunidades, mas vai ativar poucas mudanças por vez.</p>
+        <button className="tn-motivation-confirm" onClick={()=>confirmarMotivacaoBase(e)}>Guardar como ponto de partida <ChevronRight size={18}/></button>
+      </div>;
+    }
+    if(e.interacao==='contrast'){
+      const atual=v?.atual;
+      const desejado=v?.desejado;
+      const notas=Array.from({length:11},(_,i)=>i);
+      return <div className="tn-m1-contrast">
+        <div className="tn-m1-contrast-block">
+          <span>HOJE</span>
+          <h3>Onde você sente que está?</h3>
+          <div className="tn-m1-note-row">{notas.map(n=><button key={'a'+n} className={Number(atual)===n?'on':''} onClick={()=>{salvar(e.chave,{...(v||{}),atual:n});feedback('tap',d)}}>{n}</button>)}</div>
+        </div>
+        <ChevronRight className="tn-m1-contrast-arrow" size={24}/>
+        <div className="tn-m1-contrast-block">
+          <span>DESEJADO</span>
+          <h3>Onde gostaria de chegar?</h3>
+          <div className="tn-m1-note-row">{notas.map(n=><button key={'d'+n} className={Number(desejado)===n?'on':''} onClick={()=>{salvar(e.chave,{...(v||{}),desejado:n});feedback('tap',d)}}>{n}</button>)}</div>
+        </div>
+        <p>Isso não cria uma meta numérica. É só uma forma de tornar visível a distância que você percebe hoje.</p>
+      </div>;
+    }
+    if(e.interacao==='m1-insight'){
+      const objetivo=ler('meta-inicial')||'Outra coisa';
+      const importancia=Number(ler('meta-importancia')??5);
+      const recompensa=ler('meta-recompensa')||'uma mudança concreta';
+      const valores=Array.isArray(ler('meta-valores'))?ler('meta-valores'):[];
+      const contraste=ler('meta-contraste')||{};
+      const snapId=temporadaAtual?.rodaInicialSnapshotId;
+      const snap=snapId?(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.id===snapId):null;
+      const area=RODA_AREA_POR_OBJETIVO[objetivo];
+      const notaRoda=area&&snap?Number(snap.valores?.[area]):null;
+      return <div className="tn-m1-synthesis">
+        <NIILOrb state="thinking" size={100} label="Insight NIIL"/>
+        <span>INSIGHT NIIL</span>
+        <h1>Seu ponto de partida ficou mais claro.</h1>
+        <p>Você colocou <b>{objetivoLegivel(objetivo).toLowerCase()}</b> em primeiro lugar e marcou <b>{importancia}/10</b> de importância.</p>
+        <div className="tn-m1-synthesis-grid">
+          <div><small>O QUE VOCÊ QUER SENTIR OU GANHAR</small><b>{recompensa}</b></div>
+          {valores.length>0&&<div><small>O QUE ISSO REPRESENTA</small><b>{valores.join(' · ')}</b></div>}
+          {Number.isFinite(Number(contraste.atual))&&<div><small>COMO VOCÊ SE PERCEBE</small><b>{contraste.atual} → {contraste.desejado}</b></div>}
+          {Number.isFinite(notaRoda)&&<div><small>NA RODA · {area.toUpperCase()}</small><b>{notaRoda}/10</b></div>}
+        </div>
+        <div className="tn-m1-synthesis-rule">
+          <b>Descobrir não significa adicionar uma tarefa.</b>
+          <p>O NIIL vai guardar o restante como contexto e ativar apenas o próximo movimento que fizer sentido agora.</p>
+        </div>
+      </div>;
+    }
+    if(e.interacao==='first-movement'){
+      const objetivo=ler('meta-inicial')||'Outra coisa';
+      const jaTemOutraAcao=!!d.jornada?.planoSemana?.ativo&&d.jornada?.planoSemana?.origem!=='m1-primeiro-movimento';
+      return <div className="tn-first-movement">
+        <div className="tn-first-movement-head"><Footprints size={30}/><span>PRÓXIMO MOVIMENTO</span></div>
+        <h1>Uma coisa pequena. Só uma.</h1>
+        <p>Escolha a menor evidência de movimento que cabe na vida real agora. O restante continua guardado como contexto da temporada.</p>
+        {jaTemOutraAcao&&<div className="tn-load-guard"><Sparkles size={17}/><span>Sua Agenda já tem uma ação ativa. A escolha abaixo será guardada para depois, sem adicionar outra obrigação agora.</span></div>}
+        <div className="tn-first-movement-options">{primeirosMovimentos(objetivo).map((m,i)=><button key={m.acao} onClick={()=>concluirPrimeiroMovimento(e,m)}>
+          <span>{i+1}</span><div><b>{m.acao}</b><small>~{m.duracao||10} min</small></div><ChevronRight size={18}/>
+        </button>)}</div>
+        <small className="tn-first-movement-note">O próximo marco pode descobrir outras oportunidades. Elas não entram automaticamente na Agenda.</small>
       </div>;
     }
     if(['choice','binary','module-decision'].includes(e.interacao))return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}<ChevronRight size={16}/></button>)}</div>;
@@ -764,7 +930,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         {passo.ciencia&&<details className="tn-science"><summary>Por que o NIIL pergunta isso?</summary><p>{passo.ciencia}</p>{passo.fonte&&<small>{passo.fonte}</small>}</details>}
         {passo.base&&<small className="tn-base">{passo.base}</small>}
       </main>
-      {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum','motivation-why','reward-choice','motivation-insight'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{passo.interacao==='sentence-choice'?'Confirmar':'Continuar'} <ChevronRight size={18}/></button></footer>}
+      {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum','motivation-why','reward-choice','motivation-insight','first-movement'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{passo.interacao==='sentence-choice'?'Confirmar':'Continuar'} <ChevronRight size={18}/></button></footer>}
     </div>;
   }
 
