@@ -4,8 +4,11 @@ export const TRILHA_NIIL = [
     resumo:'Descubra o que você quer construir e por que isso importa de verdade.',
     base:'recompensa, motivação, autopercepção e visão sistêmica',
     etapas:[
-      {id:'m1-quer',tipo:'micro',titulo:'O que você quer há tempo demais?',min:2,interacao:'sentence-choice',chave:'meta-inicial',pergunta:'Complete a frase',fraseInicio:'Eu mudaria',fraseFim:'primeiro.',opcoesFrase:[{valor:'Saúde e energia',texto:'minha saúde e energia'},{valor:'Dinheiro',texto:'minhas finanças'},{valor:'Carreira',texto:'minha carreira'},{valor:'Aprendizado',texto:'meu aprendizado'},{valor:'Relacionamentos',texto:'meus relacionamentos'},{valor:'Organizar minha vida',texto:'minha organização'},{valor:'Outra coisa',texto:'outra coisa'}],pontos:10},
-      {id:'m1-importa',tipo:'micro',titulo:'Quanto isso importa?',min:1,interacao:'scale',chave:'meta-importancia',pergunta:'Hoje, quanto isso realmente importa para você?',minimo:'Pouco',maximo:'Muito',pontos:5,ciencia:'Importância percebida ajuda a entender intenção, mas intenção sozinha não garante comportamento.',fonte:'Ciência comportamental · intenção e execução'},
+      {id:'m1-quer-v2',tipo:'micro',titulo:'O que você quer há tempo demais?',min:2,interacao:'sentence-choice',chave:'meta-inicial',pergunta:'Complete a frase',fraseInicio:'Eu mudaria',fraseFim:'primeiro.',opcoesFrase:[{valor:'Saúde',texto:'minha saúde'},{valor:'Energia',texto:'minha energia'},{valor:'Dinheiro',texto:'minhas finanças'},{valor:'Carreira',texto:'minha carreira'},{valor:'Aprendizado',texto:'meu aprendizado'},{valor:'Relacionamentos',texto:'meus relacionamentos'},{valor:'Organizar minha vida',texto:'minha organização'},{valor:'Outra coisa',texto:'outra coisa'}],pontos:10},
+      {id:'m1-importa',tipo:'micro',titulo:'Quanto isso importa?',min:1,interacao:'scale',chave:'meta-importancia',pergunta:'Hoje, quanto isso realmente importa para você?',minimo:'Pouco',maximo:'Muito',pontos:5,ciencia:'Importância percebida ajuda a tornar a intenção explícita, mas uma nota alta não garante comportamento. O próximo passo procura as razões da própria pessoa para mudar.',fonte:'Entrevista motivacional · ciência comportamental'},
+      {id:'m1-motivo',tipo:'micro',titulo:'Por que isso importa?',min:1,interacao:'motivation-why',chave:'meta-motivo',pergunta:'Encontre a razão que é sua — não a que parece certa.',pontos:10,ciencia:'Perguntas que evocam as próprias razões para mudança são usadas em entrevista motivacional para favorecer “change talk”: a pessoa verbaliza por que mudar importa para ela.',fonte:'Miller & Rollnick · Motivational Interviewing'},
+      {id:'m1-recompensa',tipo:'micro',titulo:'O que você ganha de verdade?',min:1,interacao:'reward-choice',chave:'meta-recompensa',pergunta:'Se isso mudar, o que você ganha de verdade?',pontos:10,ciencia:'Sinais e recompensas antecipadas podem adquirir valor motivacional e orientar aproximação e aprendizagem. Dopamina não é um medidor simples de prazer; aqui o NIIL usa a recompensa desejada como pista de motivação.',fonte:'Berridge & Robinson · incentive salience / wanting'},
+      {id:'m1-motivacao-base',tipo:'micro',titulo:'Seu motivo ficou mais claro',min:1,interacao:'motivation-insight',chave:'motivacao-base-confirmada',pergunta:'A NIIL percebeu algo.',pontos:15},
       {id:'m1-roda-v3',tipo:'roda',rodaId:'m1-v3',titulo:'Roda da Vida',min:3,perguntaCurta:'Um scan rápido da sua vida, uma área por toque.',pontos:20,versaoFerramenta:3},
       {id:'m1-ecossistema',tipo:'micro',titulo:'Tudo isso está conectado',min:3,interacao:'modules',chave:'ecossistema',pergunta:'Quais partes da sua vida parecem ter relação com o que você quer construir?',opcoes:['Sono','Água','Alimentação','Movimento','Leitura','Cursos','Inglês','Finanças','Ambiente','Minha Visão','Agenda'],pontos:15},
     ]
@@ -105,6 +108,7 @@ export const moduloParaAba = {
   sono:'sono',
   agenda:'agenda',
   financeiro:'financeiro',
+  comida:'comida',
   cursos:'cursos',
   ingles:'ingles',
   guardaRoupa:'guarda-roupa',
@@ -128,6 +132,14 @@ export function marcosConcluidosNIIL(etapas={}){
 
 export function recomendacoesContextuaisNIIL(d={}){
   const r=[];
+  const foco=d.trilhaNIIL?.motivacaoBase?.objetivo;
+  if(foco==='Saúde'){
+    r.push({id:'saude-nutricao',modulo:'comida',titulo:'Sua saúde também passa pelo que você repete à mesa',texto:'Seu foco inicial é Saúde. Quando fizer sentido, uma dose curta de Nutrição ajuda a transformar intenção em escolhas observáveis.'});
+    if((d.treinos||[]).length===0)r.push({id:'saude-treino',modulo:'treino',titulo:'Movimento pode entrar como evidência, não como cobrança',texto:'Seu foco inicial é Saúde e ainda não há treinos registrados. O NIIL pode conectar movimento quando ele couber na sua rotina real.'});
+  }
+  if(foco==='Energia'&&!(d.sono?.registros||[]).length){
+    r.push({id:'energia-sono',modulo:'sono',titulo:'Sua energia precisa de contexto de sono',texto:'Seu foco inicial é Energia. Antes de exigir mais desempenho, vale observar algumas noites e o ritmo do seu dia.'});
+  }
   const fin=d.financeiro||{};
   const temDivida=(fin.dividas||[]).length>0;
   const diagFin=!!(d.financeiroDiagnosticoConcluido||fin.configuracao?.diagnosticoFinanceiroConcluido||fin.startFinanceiroConcluido||fin.onboardingConcluido);

@@ -29,6 +29,51 @@ const RODA_GUIA={
 };
 const RODA_MODULO=area=>RODA_GUIA[area]?.modulo||null;
 
+const MOTIVACAO_PERFIS={
+  'Saúde':{
+    motivos:['Quero me sentir melhor','Estou cansada de adiar','Quero cuidar do meu corpo','Quero prevenir problemas','Quero voltar a me priorizar'],
+    recompensas:['Gostar mais do meu corpo','Ter mais disposição','Me sentir confiante','Ter uma rotina mais saudável','Sentir que estou me cuidando'],
+    modulos:['Nutrição','Treino']
+  },
+  'Energia':{
+    motivos:['Acordo sem disposição','Minha energia cai no meio do dia','Meu sono não parece recuperar','Quero parar de viver no limite','Quero render sem me esgotar'],
+    recompensas:['Acordar com disposição','Ter energia mais estável','Chegar ao fim do dia melhor','Conseguir treinar ou estudar','Sentir menos cansaço'],
+    modulos:['Sono','Ritmo diário']
+  },
+  'Dinheiro':{
+    motivos:['Quero parar de me preocupar tanto','Quero organizar o que entra e sai','Quero sair de dívidas','Quero construir segurança','Quero conseguir realizar um plano'],
+    recompensas:['Ter tranquilidade com dinheiro','Ter uma reserva','Poder escolher com mais liberdade','Parar de apagar incêndios','Ver meu patrimônio crescer'],
+    modulos:['Financeiro']
+  },
+  'Carreira':{
+    motivos:['Quero crescer profissionalmente','Quero ser mais reconhecida','Estou cansada de me sentir parada','Quero mudar de trabalho','Quero ganhar mais autonomia'],
+    recompensas:['Sentir orgulho do meu trabalho','Ter mais autonomia','Aumentar minha renda','Chegar a uma nova posição','Trabalhar com mais propósito'],
+    modulos:['Cursos','Agenda']
+  },
+  'Aprendizado':{
+    motivos:['Quero parar de só consumir conteúdo','Quero aprender algo que importa','Tenho um projeto que depende disso','Quero me sentir mais preparada','Quero transformar estudo em prática'],
+    recompensas:['Dominar uma habilidade','Concluir um curso','Usar o que aprendi na vida real','Me sentir mais capaz','Abrir novas oportunidades'],
+    modulos:['Cursos']
+  },
+  'Relacionamentos':{
+    motivos:['Quero melhorar minhas relações','Quero me comunicar melhor','Quero me sentir mais próxima das pessoas','Quero colocar limites melhores','Quero construir relações mais recíprocas'],
+    recompensas:['Ter relações mais leves','Me sentir compreendida','Criar mais conexão','Ter limites mais claros','Viver relações mais recíprocas'],
+    modulos:['Trilha contextual']
+  },
+  'Organizar minha vida':{
+    motivos:['Estou cansada de apagar incêndios','Quero parar de esquecer coisas','Minha rotina está me consumindo','Quero ter mais clareza','Quero sentir que estou no controle'],
+    recompensas:['Ter uma semana mais leve','Saber o que fazer primeiro','Ter tempo para o que importa','Reduzir a sensação de caos','Conseguir cumprir o que planejo'],
+    modulos:['Agenda']
+  },
+  'Outra coisa':{
+    motivos:['Isso vem me incomodando há algum tempo','Quero parar de adiar','Quero provar para mim que consigo','Quero mudar como me sinto hoje','Quero construir uma versão diferente da minha vida'],
+    recompensas:['Sentir progresso de verdade','Me sentir mais confiante','Ter mais liberdade de escolha','Parar de carregar isso','Ver uma mudança concreta'],
+    modulos:['Trilha contextual']
+  }
+};
+const perfilMotivacao=objetivo=>MOTIVACAO_PERFIS[objetivo]||MOTIVACAO_PERFIS['Outra coisa'];
+const objetivoLegivel=objetivo=>objetivo==='Dinheiro'?'Finanças':objetivo||'isso';
+
 
 const hoje=()=>new Date().toISOString().slice(0,10);
 const vibrar=()=>{try{navigator.vibrate?.(18)}catch{}};
@@ -72,7 +117,7 @@ const Radar=({valores={}})=>{
   </svg>
 };
 
-export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
+export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const[aberta,setAberta]=useState(null);
   const[marco,setMarco]=useState(null);
   const[rodaPasso,setRodaPasso]=useState(0);
@@ -104,10 +149,14 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
   const liberado=id=>{const i=sequencia.findIndex(e=>e.id===id);return i<=Math.max(0,primeiroPendente<0?sequencia.length-1:primeiroPendente)};
 
   const abrirModulo=modulo=>{
-    const aba=moduloParaAba[modulo];
-    if(!aba)return;
     up(s=>({...s,trilhaNIIL:{...(s.trilhaNIIL||{}),modulosVisitados:{...(s.trilhaNIIL?.modulosVisitados||{}),[modulo]:true}}}));
     feedback('snap',d);
+    if(modulo==='treino'&&typeof abrirTreino==='function'){
+      abrirTreino({origem:'trilha-niil',titulo:'Treino'});
+      return;
+    }
+    const aba=moduloParaAba[modulo];
+    if(!aba)return;
     setAba(aba);
   };
 
@@ -191,6 +240,28 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
     salvar(e.chave,valor);
     feedback('snap',d);
     window.setTimeout(()=>concluir(e,{ignorarValidacao:true,semFeedback:true}),260);
+  };
+
+  const concluirMotivacaoRapido=(e,valor,campo)=>{
+    up(s=>{
+      const trilha=s.trilhaNIIL||{},respostas=trilha.respostas||{};
+      const objetivo=respostas['meta-inicial']||d.trilhaNIIL?.respostas?.['meta-inicial']||'Outra coisa';
+      const importancia=Number(respostas['meta-importancia']??d.trilhaNIIL?.respostas?.['meta-importancia']??5);
+      const atual=trilha.motivacaoBase||{};
+      return{...s,trilhaNIIL:{...trilha,respostas:{...respostas,[e.chave]:valor},motivacaoBase:{...atual,objetivo,importancia,[campo]:valor,atualizadaEm:new Date().toISOString()}}};
+    });
+    feedback('snap',d);
+    window.setTimeout(()=>concluir(e,{ignorarValidacao:true,semFeedback:true}),280);
+  };
+
+  const confirmarMotivacaoBase=e=>{
+    up(s=>{
+      const trilha=s.trilhaNIIL||{},respostas=trilha.respostas||{},objetivo=respostas['meta-inicial']||'Outra coisa';
+      const perfil=perfilMotivacao(objetivo);
+      const base={objetivo,importancia:Number(respostas['meta-importancia']??5),motivo:respostas['meta-motivo']||null,recompensa:respostas['meta-recompensa']||null,modulosPrioritarios:perfil.modulos,confirmadaEm:new Date().toISOString(),versao:1};
+      return{...s,trilhaNIIL:{...trilha,respostas:{...respostas,[e.chave]:'sim'},motivacaoBase:base}};
+    });
+    concluir(e,{ignorarValidacao:true});
   };
 
   const toggleMulti=(e,item)=>{
@@ -391,6 +462,51 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
         <div className="tn-sentence-bank">{(e.opcoesFrase||[]).map(x=><button type="button" key={x.valor} className={v===x.valor?'selected':''} onClick={()=>{salvar(e.chave,x.valor);feedback('tap',d)}}>{x.texto}</button>)}</div>
       </div>;
     }
+    if(e.interacao==='motivation-why'){
+      const objetivo=ler('meta-inicial')||'Outra coisa';
+      const importancia=Number(ler('meta-importancia')??5);
+      const menor=Math.max(1,importancia-3);
+      const perfil=perfilMotivacao(objetivo);
+      const pergunta=importancia>=4?`Você marcou ${importancia}/10. Por que ${importancia} e não ${menor}?`:'O que faz isso importar para você, mesmo que ainda não seja prioridade máxima?';
+      return <div className="tn-motivation-step">
+        <div className="tn-motivation-icon"><Sparkles size={32}/></div>
+        <span className="tn-motivation-kicker">ENCONTRE O SEU MOTIVO</span>
+        <h1>{pergunta}</h1>
+        <p>Escolha a razão que mais parece sua agora. Não a que “deveria” ser.</p>
+        <div className="tn-motivation-options">{perfil.motivos.map(x=><button key={x} onClick={()=>concluirMotivacaoRapido(e,x,'motivo')}>{x}<ChevronRight size={18}/></button>)}</div>
+      </div>;
+    }
+    if(e.interacao==='reward-choice'){
+      const objetivo=ler('meta-inicial')||'Outra coisa';
+      const perfil=perfilMotivacao(objetivo);
+      return <div className="tn-motivation-step tn-reward-step">
+        <div className="tn-motivation-icon"><Target size={32}/></div>
+        <span className="tn-motivation-kicker">RECOMPENSA QUE PUXA O ESFORÇO</span>
+        <h1>Se {objetivoLegivel(objetivo).toLowerCase()} mudar, o que você ganha de verdade?</h1>
+        <p>Procure o resultado que você conseguiria sentir ou perceber na vida real.</p>
+        <div className="tn-motivation-options">{perfil.recompensas.map(x=><button key={x} onClick={()=>concluirMotivacaoRapido(e,x,'recompensa')}>{x}<ChevronRight size={18}/></button>)}</div>
+      </div>;
+    }
+    if(e.interacao==='motivation-insight'){
+      const objetivo=ler('meta-inicial')||'Outra coisa';
+      const importancia=Number(ler('meta-importancia')??5);
+      const motivo=ler('meta-motivo')||'isso importa para você';
+      const recompensa=ler('meta-recompensa')||'ver uma mudança concreta';
+      const perfil=perfilMotivacao(objetivo);
+      return <div className="tn-motivation-insight">
+        <NIILOrb state="thinking" size={92} label="A NIIL percebeu algo"/>
+        <span>A NIIL PERCEBEU ALGO</span>
+        <h1>Você não escolheu apenas {objetivoLegivel(objetivo).toLowerCase()}.</h1>
+        <div className="tn-motivation-quote">Você quer <b>{recompensa.toLowerCase()}</b>.</div>
+        <div className="tn-motivation-summary">
+          <div><small>IMPORTÂNCIA</small><b>{importancia}/10</b></div>
+          <div><small>SEU MOTIVO</small><b>{motivo}</b></div>
+        </div>
+        <p>O NIIL vai guardar isso como sua motivação-base e usar essa informação para dar contexto aos próximos passos — sem prometer que motivação sozinha muda comportamento.</p>
+        <div className="tn-motivation-path"><small>QUANDO FIZER SENTIDO, A TRILHA VAI PRIORIZAR</small><div>{perfil.modulos.map(x=><span key={x}>{x}</span>)}</div></div>
+        <button className="tn-motivation-confirm" onClick={()=>confirmarMotivacaoBase(e)}>Usar isso na minha trilha <ChevronRight size={18}/></button>
+      </div>;
+    }
     if(['choice','binary','module-decision'].includes(e.interacao))return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}<ChevronRight size={16}/></button>)}</div>;
     if(e.interacao==='scale')return <div className="tn-scale tn-scale-reflect"><div className="tn-scale-icon"><Target size={30}/></div><strong>{v??5}/10</strong><input type="range" min="1" max="10" value={v??5} onChange={ev=>salvar(e.chave,Number(ev.target.value))}/><div><span>{e.minimo}</span><span>{e.maximo}</span></div><small>{Number(v??5)>=8?'Isso parece importante de verdade para você.':Number(v??5)>=5?'Isso tem peso, mas ainda disputa espaço com outras coisas.':'Talvez isso ainda não seja uma prioridade real agora.'}</small></div>;
     if(e.interacao==='dual-scale')return <div className="tn-stack">
@@ -419,13 +535,13 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
       <header className="tn-detail-head"><button onClick={()=>setAberta(null)}><ArrowLeft size={20}/></button><div><span>{passo.tipo==='roda'?'RODA DA VIDA':fase.marco+' · '+passo.min+' min'}</span><b>{passo.tipo==='roda'?(snapshotRoda?'Seu retrato':RODA_SETORES[rodaPasso]):passo.titulo}</b></div><i>{passo.tipo==='roda'&&!snapshotRoda?(rodaPasso+1)+'/'+RODA_SETORES.length:(fase.etapas.findIndex(x=>x.id===passo.id)+1)+'/'+fase.etapas.length}</i></header>
       <div className="tn-detail-progress"><i style={{width:(passo.tipo==='roda'&&!snapshotRoda?((rodaPasso+1)/RODA_SETORES.length)*100:((fase.etapas.findIndex(x=>x.id===passo.id)+1)/fase.etapas.length)*100)+'%'}}/></div>
       <main className="tn-detail-main">
-        {passo.tipo!=='roda'&&passo.interacao!=='sentence-choice'&&<><div className="tn-kicker">UMA COISA POR VEZ</div><h1>{passo.pergunta||passo.perguntaCurta||passo.titulo}</h1>{passo.perguntaCurta&&<p>{passo.perguntaCurta}</p>}</>}
+        {passo.tipo!=='roda'&&!['sentence-choice','motivation-why','reward-choice','motivation-insight'].includes(passo.interacao)&&<><div className="tn-kicker">UMA COISA POR VEZ</div><h1>{passo.pergunta||passo.perguntaCurta||passo.titulo}</h1>{passo.perguntaCurta&&<p>{passo.perguntaCurta}</p>}</>}
         <Interacao e={passo}/>
         {passo.modulo&&!['sleep','agenda','photo'].includes(passo.interacao)&&<button className="tn-open-module" onClick={()=>abrirModulo(passo.modulo)}>Abrir {passo.modulo==='financeiro'?'Financeiro':passo.modulo==='cursos'?'Cursos':passo.modulo==='sono'?'Sono':'módulo relacionado'} <ChevronRight size={16}/></button>}
         {passo.ciencia&&<details className="tn-science"><summary>Por que o NIIL pergunta isso?</summary><p>{passo.ciencia}</p>{passo.fonte&&<small>{passo.fonte}</small>}</details>}
         {passo.base&&<small className="tn-base">{passo.base}</small>}
       </main>
-      {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{passo.interacao==='sentence-choice'?'Confirmar':'Continuar'} <ChevronRight size={18}/></button></footer>}
+      {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum','motivation-why','reward-choice','motivation-insight'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{passo.interacao==='sentence-choice'?'Confirmar':'Continuar'} <ChevronRight size={18}/></button></footer>}
     </div>;
   }
 
