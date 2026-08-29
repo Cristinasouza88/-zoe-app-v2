@@ -2,7 +2,7 @@ import React,{useEffect,useMemo,useRef,useState}from'react';
 import{
   ArrowLeft,Target,Moon,Home,Repeat2,Network,Flag,CalendarDays,TrendingUp,
   Lock,Check,ChevronRight,BookOpen,Wallet,Dumbbell,Droplets,Utensils,GraduationCap,
-  Languages,Camera,Clock3,Mic,Square,Brain,Footprints,Sparkles,Play,RotateCcw
+  Languages,Camera,Clock3,Mic,Square,Brain,Footprints,Sparkles,RotateCcw
 }from'lucide-react';
 import NIILOrb from'./NIILOrb.jsx';
 import{RODA_SETORES}from'./conteudo.js';
@@ -641,8 +641,15 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
                 <button className="tn-ownvoice-record stop" type="button" onClick={pararGravacao}><Square size={17} fill="currentColor"/> Parar gravação</button>
                 :gravacaoValida?
                 <div className="tn-ownvoice-actions">
-                  <audio ref={audioPlayerRef} src={vozCommit.url} preload="metadata"/>
-                  <button className="play" type="button" onClick={()=>audioPlayerRef.current?.play()}><Play size={18} fill="currentColor"/> Ouvir minha voz</button>
+                  <div className="tn-ownvoice-ready"><Check size={16}/> Gravação pronta · toque no play para se ouvir</div>
+                  <audio
+                    key={vozCommit.url}
+                    ref={audioPlayerRef}
+                    src={vozCommit.url}
+                    preload="auto"
+                    controls
+                    playsInline
+                  />
                   <button className="redo" type="button" onClick={()=>iniciarGravacaoCompromisso(e,frase,v)}><RotateCcw size={16}/> Refazer</button>
                 </div>
                 :pulou?
@@ -652,7 +659,6 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
               }
               {vozCommit.status==='recording'&&<div className="tn-ownvoice-live"><i/> Gravando… fale a frase e toque em parar.</div>}
               {vozCommit.error&&<div className="tn-ownvoice-error"><span>{vozCommit.error}</span><button type="button" onClick={()=>seguirSemGravar(v,frase)}>Continuar sem gravar</button></div>}
-              {!vozCommit.error&&!pulou&&<em>Seu áudio fica neste dispositivo e não é enviado para IA.</em>}
             </>}
           </div>
         </div>
