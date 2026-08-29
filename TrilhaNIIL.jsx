@@ -193,12 +193,15 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const recRef=useRef(null);
   const[vozCommit,setVozCommit]=useState({status:'idle',url:null,error:''});
   const[vozTocando,setVozTocando]=useState(false);
+  const[recompensa,setRecompensa]=useState(null);
+  const recompensaTimerRef=useRef(null);
   const mediaRecorderRef=useRef(null);
   const mediaStreamRef=useRef(null);
   const audioChunksRef=useRef([]);
   const audioTimerRef=useRef(null);
   const audioPlayerRef=useRef(null);
   const vozPressionadaRef=useRef(false);
+  const gravacaoIniciadaEmRef=useRef(0);
   const atual=useMemo(()=>faseAtualNIIL(d.etapas||{}),[d.etapas]);
   const marcos=useMemo(()=>marcosConcluidosNIIL(d.etapas||{}),[d.etapas]);
   const brasaoMarco=marco?brasaoPorMarco(marco.id):null;
@@ -218,6 +221,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   };
   const snapshotRoda=passo?.tipo==='roda'?snapshotDaTemporada(passo):null;
   const rascunhoRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaRascunhos?.[passo.rodaId]||{}):{};
+
+  useEffect(()=>()=>clearTimeout(recompensaTimerRef.current),[]);
 
   useEffect(()=>{
     if(passo?.tipo!=='roda')return;
@@ -257,6 +262,11 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
 
   const salvar=(chave,valor)=>up(s=>({...s,trilhaNIIL:{...(s.trilhaNIIL||{}),respostas:{...(s.trilhaNIIL?.respostas||{}),[chave]:valor}}}));
   const ler=chave=>resp[chave];
+  const mostrarRecompensa=e=>{
+    clearTimeout(recompensaTimerRef.current);
+    setRecompensa({pontos:Math.max(0,Number(e?.pontos)||10),titulo:e?.titulo||'Movimento registrado',marco:e?.fase?.marco||''});
+    recompensaTimerRef.current=window.setTimeout(()=>setRecompensa(null),900);
+  };
   const feito=id=>!!d.etapas?.[id]?.feito;
   const sequencia=TRILHA_NIIL.flatMap(f=>f.etapas);
   const primeiroPendente=sequencia.findIndex(e=>!feito(e.id));
@@ -367,6 +377,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       return next;
     });
     if(!opts.semFeedback)feedback('snap',d);
+    if(!ja&&!ultima)mostrarRecompensa(e);
     if(ultima&&!ja){
       setMarco(e.fase);
       feedback('marco',d);
@@ -391,6 +402,15 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
 
   const finalizarPressaoVoz=()=>{
     vozPressionadaRef.current=false;
+    const rec=mediaRecorderRef.current;
+    const inicio=Number(gravacaoIniciadaEmRef.current||0);
+    if(rec&&rec.state!=='inactive'&&inicio){
+      const decorrido=Date.now()-inicio;
+      if(decorrido<650){
+        window.setTimeout(()=>pararGravacao(),650-decorrido);
+        return;
+      }
+    }
     pararGravacao();
   };
 
@@ -427,10 +447,17 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       mediaStreamRef.current=stream;
       const ua=String(navigator.userAgent||'');
       const ios=/iP(hone|ad|od)/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-      const candidatos=ios?[]:['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];
+      if(!vozPressionadaRef.current){
+        try{stream.getTracks?.().forEach(t=>t.stop())}catch{}
+        mediaStreamRef.current=null;
+        setVozCommit(prev=>({status:'armed',url:prev.url||null,error:''}));
+        return;
+      }
+      const candidatos=ios?['audio/mp4','audio/webm']:['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];
       const mime=candidatos.find(t=>MediaRecorder.isTypeSupported?.(t));
-      const recorder=ios?new MediaRecorder(stream):new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+      const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
       mediaRecorderRef.current=recorder;
+      gravacaoIniciadaEmRef.current=Date.now();
       audioChunksRef.current=[];
       recorder.ondataavailable=ev=>{if(ev.data?.size)audioChunksRef.current.push(ev.data)};
       recorder.onerror=()=>{
@@ -442,7 +469,9 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         const partes=audioChunksRef.current.filter(x=>x?.size);
         const tipo=partes.find(x=>x.type)?.type||recorder.mimeType||mime||(ios?'audio/mp4':'audio/webm');
         const blob=partes.length===1?partes[0]:new Blob(partes,{type:tipo});
-        if(blob.size<700){
+        const duracaoMs=Math.max(0,Date.now()-Number(gravacaoIniciadaEmRef.current||Date.now()));
+        gravacaoIniciadaEmRef.current=0;
+        if(blob.size<180||duracaoMs<450){
           setVozCommit({status:'error',url:null,error:'A gravação ficou curta demais. Segure o botão enquanto fala e solte ao terminar.'});
           return;
         }
@@ -479,6 +508,19 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     vozPressionadaRef.current=true;
     iniciarGravacaoCompromisso(e,frase,objetivo);
   };
+
+  useEffect(()=>{
+    if(vozCommit.status!=='recording')return;
+    const soltar=()=>finalizarPressaoVoz();
+    window.addEventListener('pointerup',soltar,true);
+    window.addEventListener('pointercancel',soltar,true);
+    window.addEventListener('touchend',soltar,true);
+    return()=>{
+      window.removeEventListener('pointerup',soltar,true);
+      window.removeEventListener('pointercancel',soltar,true);
+      window.removeEventListener('touchend',soltar,true);
+    };
+  },[vozCommit.status]);
 
   const ouvirVoz=async()=>{
     const player=audioPlayerRef.current;
@@ -832,9 +874,10 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
                 :pulou?
                 <div className="tn-ownvoice-skipped"><Check size={16}/> Etapa de voz ignorada neste dispositivo.</div>
                 :
-                <button className="tn-ownvoice-record" type="button" onPointerDown={ev=>{ev.preventDefault();try{ev.currentTarget.setPointerCapture?.(ev.pointerId)}catch{};iniciarPressaoVoz(e,frase,v)}} onPointerUp={finalizarPressaoVoz} onPointerCancel={finalizarPressaoVoz} onKeyDown={iniciarPeloTeclado} onKeyUp={finalizarPeloTeclado}><Mic size={18}/> Segure para gravar</button>
+                <button className="tn-ownvoice-record" type="button" onPointerDown={ev=>{ev.preventDefault();try{ev.currentTarget.setPointerCapture?.(ev.pointerId)}catch{};iniciarPressaoVoz(e,frase,v)}} onPointerUp={finalizarPressaoVoz} onPointerCancel={finalizarPressaoVoz} onKeyDown={iniciarPeloTeclado} onKeyUp={finalizarPeloTeclado}><Mic size={18}/> {vozCommit.status==='armed'?'Segure novamente para gravar':'Segure para gravar'}</button>
               }
               {vozCommit.status==='recording'&&<div className="tn-ownvoice-live"><i/> Gravando enquanto você segura.</div>}
+              {vozCommit.status==='armed'&&<div className="tn-ownvoice-armed"><Check size={15}/> Microfone autorizado. Segure novamente e fale sua frase.</div>}
               {vozCommit.error&&<div className="tn-ownvoice-error"><span>{vozCommit.error}</span><button type="button" onClick={()=>seguirSemGravar(v,frase)}>Continuar sem gravar</button></div>}
             </>}
           </div>
@@ -1015,7 +1058,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       <div className="tn-detail-progress"><i style={{width:(passo.tipo==='roda'&&!snapshotRoda?((rodaPasso+1)/RODA_SETORES.length)*100:((fase.etapas.findIndex(x=>x.id===passo.id)+1)/fase.etapas.length)*100)+'%'}}/></div>
       <main className="tn-detail-main">
         {passo.tipo!=='roda'&&!['sentence-choice','motivation-why','reward-choice','motivation-insight'].includes(passo.interacao)&&<><div className="tn-kicker">UMA COISA POR VEZ</div><h1>{passo.pergunta||passo.perguntaCurta||passo.titulo}</h1>{passo.perguntaCurta&&<p>{passo.perguntaCurta}</p>}</>}
-        <Interacao e={passo}/>
+        {Interacao({e:passo})}
         {passo.modulo&&!['sleep','agenda','photo'].includes(passo.interacao)&&<button className="tn-open-module" onClick={()=>abrirModulo(passo.modulo)}>Abrir {passo.modulo==='financeiro'?'Financeiro':passo.modulo==='cursos'?'Cursos':passo.modulo==='sono'?'Sono':'módulo relacionado'} <ChevronRight size={16}/></button>}
         {passo.ciencia&&fase.id!=='m1'&&<details className="tn-science"><summary>Por que o NIIL pergunta isso?</summary><p>{passo.ciencia}</p>{passo.fonte&&<small>{passo.fonte}</small>}</details>}
         {passo.base&&<small className="tn-base">{passo.base}</small>}
@@ -1101,6 +1144,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     </div>
 
     {marcos>=5&&recomendacoes.length>0&&<section className="tn-context"><span>INSIGHT NIIL · CAMINHOS PARA APROFUNDAR</span>{recomendacoes.map(r=><button key={r.id} onClick={()=>abrirModulo(r.modulo)}><Sparkles size={18}/><div><b>{r.titulo}</b><p>{r.texto}</p></div><ChevronRight size={17}/></button>)}</section>}
+
+    {recompensa&&<div className="tn-reward-pop" aria-live="polite"><div className="tn-reward-burst" aria-hidden="true"><i/><i/><i/><i/><i/><i/></div><strong>+{recompensa.pontos}</strong><span>PONTOS NIIL</span><small>{recompensa.titulo}</small></div>}
 
     {marco&&<div className="tn-marco-overlay" onClick={()=>setMarco(null)}><div onClick={e=>e.stopPropagation()}>{brasaoMarco?.imagem?<img className="tn-marco-badge" src={brasaoMarco.imagem} alt={`Brasão ${brasaoMarco.nome}`}/>:<NIILOrb state="done" size={140} label="Marco concluído"/>}<span>BRASÃO DESBLOQUEADO · {marco.marco}</span><h2>{brasaoMarco?.nome||marco.nome}</h2><p>{brasaoMarco?.frase||'Você fechou este marco. O próximo caminho usa o que você acabou de construir.'}</p><div className="tn-marco-points">+{brasaoMarco?.bonusMarco||PONTOS_NIIL.FASE} Pontos NIIL</div><div className="tn-marco-rule">O brasão foi liberado porque todos os passos deste marco foram concluídos. Pontos acompanham o movimento, mas não substituem a conclusão.</div><button onClick={()=>setMarco(null)}>Conhecer o próximo marco</button></div></div>}
   </div>;
