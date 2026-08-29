@@ -128,8 +128,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const recomendacoes=useMemo(()=>recomendacoesContextuaisNIIL(d),[d]);
   const passo=TRILHA_NIIL.flatMap(f=>f.etapas.map(e=>({...e,fase:f}))).find(e=>e.id===aberta);
   const resp=d.trilhaNIIL?.respostas||{};
-  const snapshotValido=x=>x?.versao===3&&RODA_SETORES.every(s=>Number.isFinite(Number(x?.valores?.[s]))&&Number(x?.valores?.[s])>=0&&Number(x?.valores?.[s])<=10);
-  const snapshotRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===passo.id&&snapshotValido(x)):null;
+  const snapshotValido=(x,e=passo)=>x?.versao===(e?.versaoFerramenta||3)&&RODA_SETORES.every(s=>Number.isFinite(Number(x?.valores?.[s]))&&Number(x?.valores?.[s])>=0&&Number(x?.valores?.[s])<=10);
+  const snapshotRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===passo.id&&snapshotValido(x,passo)):null;
   const rascunhoRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaRascunhos?.[passo.rodaId]||{}):{};
 
   useEffect(()=>{
@@ -162,7 +162,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
 
   const valido=e=>{
     const v=ler(e.chave);
-    if(e.tipo==='roda')return !!(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id&&snapshotValido(x));
+    if(e.tipo==='roda')return !!(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id&&snapshotValido(x,e));
     if(e.interacao==='multi'||e.interacao==='modules'||e.interacao==='swipe')return Array.isArray(v)&&v.length>0;
     if(e.interacao==='energy')return true;
     if(e.interacao==='sleep')return true;
@@ -258,8 +258,14 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     up(s=>{
       const trilha=s.trilhaNIIL||{},respostas=trilha.respostas||{},objetivo=respostas['meta-inicial']||'Outra coisa';
       const perfil=perfilMotivacao(objetivo);
-      const base={objetivo,importancia:Number(respostas['meta-importancia']??5),motivo:respostas['meta-motivo']||null,recompensa:respostas['meta-recompensa']||null,modulosPrioritarios:perfil.modulos,confirmadaEm:new Date().toISOString(),versao:1};
-      return{...s,trilhaNIIL:{...trilha,respostas:{...respostas,[e.chave]:'sim'},motivacaoBase:base}};
+      const agora=new Date().toISOString();
+      const base={objetivo,importancia:Number(respostas['meta-importancia']??5),motivo:respostas['meta-motivo']||null,recompensa:respostas['meta-recompensa']||null,modulosPrioritarios:perfil.modulos,confirmadaEm:agora,versao:1};
+      const temporadas=Array.isArray(trilha.temporadas)?trilha.temporadas:[];
+      const ativa=temporadas.find(t=>t.id===trilha.temporadaAtualId&&t.status==='ativa');
+      const id=ativa?.id||('temporada-'+Date.now());
+      const temporada=ativa?{...ativa,objetivo,motivacaoBase:base}:{id,numero:temporadas.length+1,status:'ativa',iniciadaEm:agora,objetivo,motivacaoBase:base,rodaInicialSnapshotId:null,rodaFinalSnapshotId:null};
+      const novas=ativa?temporadas.map(t=>t.id===id?temporada:t):[...temporadas,temporada];
+      return{...s,trilhaNIIL:{...trilha,respostas:{...respostas,[e.chave]:'sim'},motivacaoBase:base,temporadas:novas,temporadaAtualId:id}};
     });
     concluir(e,{ignorarValidacao:true});
   };
@@ -307,9 +313,21 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     }
     const respostas={...rascunhoRoda,[setor]:{nota}};
     const valores={};RODA_SETORES.forEach(s=>valores[s]=Number(respostas[s]?.nota));
-    const snap={id:'roda-'+e.rodaId+'-'+Date.now(),versao:3,rodaId:e.rodaId,etapaId:e.id,concluidaEm:new Date().toISOString(),data:hoje(),valores};
+    const snap={id:'roda-'+e.rodaId+'-'+Date.now(),versao:e.versaoFerramenta||3,papel:e.papel||'registro',rodaId:e.rodaId,etapaId:e.id,concluidaEm:new Date().toISOString(),data:hoje(),valores};
     window.setTimeout(()=>{
-      up(s=>({...s,rodas:{...(s.rodas||{}),[e.rodaId]:valores},trilhaNIIL:{...(s.trilhaNIIL||{}),rodaSnapshots:[...(s.trilhaNIIL?.rodaSnapshots||[]),snap]}}));
+      up(s=>{
+        const trilha=s.trilhaNIIL||{},temporadas=Array.isArray(trilha.temporadas)?trilha.temporadas:[],tid=trilha.temporadaAtualId;
+        const temporadasAtualizadas=temporadas.map(t=>{
+          if(t.id!==tid)return t;
+          if(e.papel==='abertura')return{...t,rodaInicialSnapshotId:snap.id,rodaInicialEm:snap.concluidaEm};
+          if(e.papel==='fechamento'){
+            const inicio=Date.parse(t.iniciadaEm||snap.concluidaEm),fim=Date.parse(snap.concluidaEm);
+            return{...t,rodaFinalSnapshotId:snap.id,rodaFinalEm:snap.concluidaEm,status:'em_fechamento',duracaoDias:Math.max(0,Math.round((fim-inicio)/86400000))};
+          }
+          return t;
+        });
+        return{...s,rodas:{...(s.rodas||{}),[e.rodaId]:valores},trilhaNIIL:{...trilha,rodaSnapshots:[...(trilha.rodaSnapshots||[]),snap],temporadas:temporadasAtualizadas}};
+      });
       feedback('marco',d);
     },300);
   };
@@ -352,7 +370,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const Interacao=({e})=>{
     const v=ler(e.chave);
     if(e.tipo==='roda'){
-      const snap=(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id&&snapshotValido(x));
+      const snap=(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id&&snapshotValido(x,e));
       if(snap){
         const ordenadas=[...RODA_SETORES].sort((a,b)=>Number(snap.valores[a])-Number(snap.valores[b]));
         const dataFmt=new Date(snap.concluidaEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
