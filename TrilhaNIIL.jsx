@@ -2,7 +2,7 @@ import React,{useEffect,useMemo,useRef,useState}from'react';
 import{
   ArrowLeft,Target,Moon,Home,Repeat2,Network,Flag,CalendarDays,TrendingUp,
   Lock,Check,ChevronRight,BookOpen,Wallet,Dumbbell,Droplets,Utensils,GraduationCap,
-  Languages,Camera,Clock3,Mic,Square,Brain,Footprints,Sparkles,Play,RotateCcw
+  Languages,Camera,Clock3,Mic,Square,Brain,Footprints,Sparkles,RotateCcw
 }from'lucide-react';
 import NIILOrb from'./NIILOrb.jsx';
 import{RODA_SETORES}from'./conteudo.js';
@@ -117,8 +117,6 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const audioChunksRef=useRef([]);
   const audioTimerRef=useRef(null);
   const audioPlayerRef=useRef(null);
-  const audioFallbackRef=useRef(null);
-  const[vozPlaying,setVozPlaying]=useState(false);
   const atual=useMemo(()=>faseAtualNIIL(d.etapas||{}),[d.etapas]);
   const marcos=useMemo(()=>marcosConcluidosNIIL(d.etapas||{}),[d.etapas]);
   const recomendacoes=useMemo(()=>recomendacoesContextuaisNIIL(d),[d]);
@@ -361,7 +359,6 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         }
       };
       recorder.start(180);
-      setVozPlaying(false);
       setVozCommit(prev=>({status:'recording',url:prev.url||null,error:''}));
       feedback('tap',d);
       audioTimerRef.current=setTimeout(()=>pararGravacao(),12000);
@@ -375,38 +372,6 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const seguirSemGravar=(objetivo,frase)=>{
     up(s=>({...s,trilhaNIIL:{...(s.trilhaNIIL||{}),vozCompromisso:{objetivo,frase,storageKey:null,gravadaEm:null,localOnly:true,pulado:true,motivo:'microfone-indisponivel'}}}));
     setVozCommit({status:'skipped',url:null,error:''});
-  };
-
-  const ouvirGravacao=async()=>{
-    const url=vozCommit.url;
-    if(!url)return;
-    try{
-      try{audioFallbackRef.current?.pause?.()}catch{}
-      const el=audioPlayerRef.current;
-      if(el){
-        el.pause();
-        el.currentTime=0;
-        el.muted=false;
-        el.volume=1;
-        el.load();
-        setVozPlaying(true);
-        await el.play();
-        return;
-      }
-    }catch{}
-    try{
-      const a=new Audio(url);
-      audioFallbackRef.current=a;
-      a.muted=false;
-      a.volume=1;
-      a.onended=()=>setVozPlaying(false);
-      a.onerror=()=>setVozPlaying(false);
-      setVozPlaying(true);
-      await a.play();
-    }catch{
-      setVozPlaying(false);
-      setVozCommit(prev=>({...prev,error:'Não consegui reproduzir este áudio. Grave novamente e tente ouvir de novo.'}));
-    }
   };
 
   const concluirRapido=(e,valor)=>{
@@ -676,17 +641,15 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
                 <button className="tn-ownvoice-record stop" type="button" onClick={pararGravacao}><Square size={17} fill="currentColor"/> Parar gravação</button>
                 :gravacaoValida?
                 <div className="tn-ownvoice-actions">
+                  <div className="tn-ownvoice-ready"><Check size={16}/> Gravação pronta · toque no play para se ouvir</div>
                   <audio
                     key={vozCommit.url}
                     ref={audioPlayerRef}
                     src={vozCommit.url}
                     preload="auto"
-                    onEnded={()=>setVozPlaying(false)}
-                    onPause={()=>setVozPlaying(false)}
-                    onCanPlay={()=>setVozPlaying(false)}
+                    controls
+                    playsInline
                   />
-                  <div className="tn-ownvoice-ready"><Check size={16}/> Gravação pronta</div>
-                  <button className="play" type="button" onClick={ouvirGravacao}><Play size={18} fill="currentColor"/> {vozPlaying?'Ouvindo…':'Ouvir o que eu disse'}</button>
                   <button className="redo" type="button" onClick={()=>iniciarGravacaoCompromisso(e,frase,v)}><RotateCcw size={16}/> Refazer</button>
                 </div>
                 :pulou?
