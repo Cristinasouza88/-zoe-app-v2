@@ -1556,7 +1556,7 @@ export default function NIILApp() {
   const Trilha = () => (
     <TrilhaNIILBoundary fallback={<TrilhaLegada />}>
       <React.Suspense fallback={<div style={{padding:'36px 18px',color:C.ink2,fontSize:13}}>Carregando sua trilha…</div>}>
-        <TrilhaNIILLazy d={d} up={up} setAba={setAba} aviso={aviso} />
+        <TrilhaNIILLazy d={d} up={up} setAba={setAba} aviso={aviso} abrirTreino={abrirTreino} />
       </React.Suspense>
     </TrilhaNIILBoundary>
   );
