@@ -147,6 +147,34 @@ const aplicarMarcaTrilha=(scope=document)=>{
   });
 };
 
+const voltarAoInicio=()=>{
+  const botoes=[...document.querySelectorAll('button')];
+  const inicio=botoes.find(btn=>texto(btn)==='Início')||botoes.find(btn=>/\bInício\b/i.test(texto(btn)));
+  if(inicio){inicio.click();return true;}
+  return false;
+};
+
+const aplicarPerformance=(scope=document)=>{
+  const titulos=todos(scope,'h1').filter(h=>texto(h)==='Performance');
+  titulos.forEach(h1=>{
+    const topo=h1.parentElement;
+    if(!topo||topo.querySelector('.niil-performance-back'))return;
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.className='niil-performance-back';
+    btn.setAttribute('aria-label','Voltar ao início');
+    btn.innerHTML='‹';
+    Object.assign(btn.style,{
+      width:'42px',height:'42px',borderRadius:'14px',border:'1px solid #E7E4EA',background:'#FFFFFF',
+      color:'#17151D',display:'grid',placeItems:'center',fontSize:'30px',lineHeight:'1',fontWeight:'500',
+      cursor:'pointer',marginBottom:'12px',boxShadow:'0 5px 14px rgba(23,21,29,.05)'
+    });
+    btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();voltarAoInicio();});
+    topo.insertBefore(btn,h1);
+    topo.dataset.niilPerformance='1';
+  });
+};
+
 const aplicar=(root=document)=>{
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
@@ -155,6 +183,7 @@ const aplicar=(root=document)=>{
   root.querySelectorAll?.('button').forEach(btn=>{if(/trocar avatar/i.test(btn.textContent||''))btn.style.display='none'});
   aplicarMarcaInicio(root);
   aplicarMarcaTrilha(root);
+  aplicarPerformance(root);
 };
 
 if(typeof document!=='undefined'){
@@ -164,6 +193,7 @@ if(typeof document!=='undefined'){
       ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)aplicar(n)}));
       aplicarMarcaInicio(document);
       aplicarMarcaTrilha(document);
+      aplicarPerformance(document);
     });
     obs.observe(document.body,{childList:true,subtree:true});
   };
