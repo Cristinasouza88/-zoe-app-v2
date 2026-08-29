@@ -256,44 +256,84 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
       if(snap){
         const ordenadas=[...RODA_SETORES].sort((a,b)=>Number(snap.valores[a])-Number(snap.valores[b]));
         const dataFmt=new Date(snap.concluidaEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-        return <div className="tn-roda-result">
-          <div className="tn-roda-result-head"><span>RETRATO CONCLUÍDO</span><b>{dataFmt}</b></div>
+        const area=rodaAtivacao.area;
+        const notaAtual=area?Number(snap.valores[area]):null;
+        const guia=area?(RODA_GUIA[area]||{exemplos:[]}):null;
+        if(rodaAtivacao.etapa==='razao'&&area){
+          return <div className="tn-roda-activate">
+            <span className="tn-roda-activate-kicker">{area} · {notaAtual}/10</span>
+            <h2>O que mais puxou essa nota?</h2>
+            <p>Escolha o ponto que mais explica sua percepção agora.</p>
+            <div className="tn-roda-activate-options">{[...(guia?.exemplos||[]),'Outro'].map(x=><button key={x} onClick={()=>escolherRazaoRoda(x)}>{x}<ChevronRight size={18}/></button>)}</div>
+            <button className="tn-roda-text-back" onClick={()=>setRodaAtivacao({area:null,etapa:'foco',razoes:[],metaNota:null})}>Voltar ao retrato</button>
+          </div>;
+        }
+        if(rodaAtivacao.etapa==='meta'&&area){
+          const metas=Array.from({length:11},(_,i)=>i).filter(n=>n>notaAtual);
+          const opcoes=metas.length?metas:[10];
+          return <div className="tn-roda-activate">
+            <span className="tn-roda-activate-kicker">{area} · hoje {notaAtual}/10</span>
+            <h2>Onde você gostaria que isso estivesse?</h2>
+            <p>Escolha um próximo patamar. Não precisa ser perfeito.</p>
+            <div className="tn-roda-targets">{opcoes.map(n=><button key={n} onClick={()=>escolherMetaRoda(n)}>{n}</button>)}</div>
+            <button className="tn-roda-text-back" onClick={()=>setRodaAtivacao(a=>({...a,etapa:'razao'}))}>Voltar</button>
+          </div>;
+        }
+        if(rodaAtivacao.etapa==='confirmar'&&area){
+          const modulo=RODA_MODULO(area);
+          const destino=modulo?(modulo==='financeiro'?'Financeiro':modulo==='sono'?'Sono':modulo==='cursos'?'Cursos':modulo==='agenda'?'Agenda':'Diário'):'uma trilha contextual';
+          return <div className="tn-roda-activate tn-roda-confirm">
+            <span className="tn-roda-activate-kicker">FOCO ESCOLHIDO</span>
+            <h2>Quer transformar {area} em um foco agora?</h2>
+            <div className="tn-roda-goal-shift"><span>{notaAtual}</span><ChevronRight size={22}/><b>{rodaAtivacao.metaNota}</b></div>
+            <p>O NIIL vai guardar este retrato como ponto de partida e conectar o foco a {destino}.</p>
+            <button className="tn-roda-create-goal" onClick={()=>ativarFocoRoda(e,snap)}>Sim, criar meta</button>
+            <button className="tn-roda-text-back" onClick={()=>setRodaAtivacao(a=>({...a,etapa:'meta'}))}>Voltar</button>
+          </div>;
+        }
+        return <div className="tn-roda-result tn-roda-reveal">
+          <div className="tn-roda-result-head"><span>SEU RETRATO</span><b>{dataFmt}</b></div>
+          <h2>Agora dá para ver o todo.</h2>
+          <p className="tn-roda-reveal-copy">Este é o seu ponto de partida de hoje. Ele fica fechado para você comparar com uma próxima Roda no futuro.</p>
           <Radar valores={snap.valores}/>
           <div className="tn-roda-score-grid">{RODA_SETORES.map(s=><div key={s}><span>{s}</span><b>{snap.valores[s]}/10</b></div>)}</div>
           <div className="tn-roda-focus">
-            <span>AGORA, ESCOLHA UM FOCO</span>
-            <h3>Qual ponto merece entrar primeiro no seu sistema?</h3>
-            <p>O NIIL sugere começar por áreas com notas mais baixas, mas a escolha é sua.</p>
-            <div className="tn-roda-focus-list">{ordenadas.slice(0,4).map(area=>{
-              const mod=RODA_MODULO(area);
+            <span>A NIIL PERCEBEU 3 PONTOS DE ATENÇÃO</span>
+            <h3>Qual merece entrar primeiro no seu sistema?</h3>
+            <p>Começamos pelas menores notas, mas você decide o foco.</p>
+            <div className="tn-roda-focus-list">{ordenadas.slice(0,3).map(areaItem=>{
+              const mod=RODA_MODULO(areaItem);
               const destino=mod?(mod==='financeiro'?'Financeiro':mod==='sono'?'Sono':mod==='cursos'?'Cursos':mod==='agenda'?'Agenda':'Diário'):'trilha contextual';
-              return <button key={area} onClick={()=>ativarFocoRoda(e,snap,area)}>
-                <div><b>{area}</b><small>{snap.valores[area]+'/10 · '+(mod?'conectar ao módulo '+destino:'criar '+destino)}</small></div>
+              return <button key={areaItem} onClick={()=>escolherFocoRoda(areaItem)}>
+                <div><b>{areaItem}</b><small>{snap.valores[areaItem]}/10 · {mod?'conectar a '+destino:'criar '+destino}</small></div>
                 <ChevronRight size={18}/>
               </button>;
             })}</div>
-            <details className="tn-roda-all"><summary>Escolher outra área</summary><div>{ordenadas.slice(4).map(area=><button key={area} onClick={()=>ativarFocoRoda(e,snap,area)}><span>{area}</span><b>{snap.valores[area]}/10</b></button>)}</div></details>
+            <details className="tn-roda-all"><summary>Escolher outra área</summary><div>{ordenadas.slice(3).map(areaItem=><button key={areaItem} onClick={()=>escolherFocoRoda(areaItem)}><span>{areaItem}</span><b>{snap.valores[areaItem]}/10</b></button>)}</div></details>
           </div>
-          <div className="tn-roda-locked-note"><Lock size={14}/><span>Este retrato foi fechado e não pode ser editado. Em uma nova revisão, o NIIL cria outro retrato para comparação.</span></div>
+          <div className="tn-roda-locked-note"><Lock size={14}/><span>Retrato fechado em {dataFmt}. Uma nova avaliação criará outro registro para comparação.</span></div>
         </div>;
       }
-      const setor=RODA_SETORES[rodaPasso],item=rascunhoRoda?.[setor]||{},guia=RODA_GUIA[setor]||{dica:'Pense na sua realidade recente.',exemplos:[]};
-      const nota=Number(item.nota||0);
-      const reflexao=!nota?'Escolha pensando na sua realidade das últimas semanas.':nota<=4?'O que está deixando essa área tão distante do que você gostaria?':nota<=7?'O que já funciona — e o que ainda está faltando?':'O que está funcionando bem e merece ser protegido?';
-      return <div className="tn-roda-wizard">
-        <div className="tn-roda-tool-title"><span>FERRAMENTA · RODA DA VIDA</span><small>1 área por vez · seu retrato só fecha no final</small></div>
-        <div className="tn-roda-step"><span>{rodaPasso+1} de {RODA_SETORES.length}</span><b>{setor}</b></div>
-        <h2>Que nota você dá para {setor.toLowerCase()} hoje?</h2>
-        <p className="tn-roda-tip">{guia.dica}</p>
-        <div className="tn-roda-notas">{Array.from({length:10},(_,i)=>i+1).map(n=><button key={n} className={nota===n?'on':''} onClick={()=>salvarRodaCampo(e,setor,{nota:n})}>{n}</button>)}</div>
-        <div className="tn-roda-reflection"><Sparkles size={17}/><div><b>Antes de seguir, reflita:</b><span>{reflexao}</span></div></div>
-        <div className="tn-roda-why">
-          <span>Por que você deu essa nota?</span>
-          <small>Marque o que mais influenciou sua resposta. Os exemplos servem só para ajudar a pensar.</small>
-          <div className="tn-roda-reasons">{guia.exemplos.map(x=>{const on=(item.razoes||[]).includes(x);return <button key={x} className={on?'on':''} onClick={()=>alternarRazaoRoda(e,setor,x)}>{x}{on&&<Check size={14}/>}</button>})}</div>
-          <textarea value={item.detalhe||''} onChange={ev=>salvarRodaCampo(e,setor,{detalhe:ev.target.value})} placeholder="Se quiser, conte em uma frase o que está acontecendo nessa área."/>
-          <div className="tn-roda-requirement">Para continuar: escolha uma nota e pelo menos um motivo.</div>
+
+      const setor=RODA_SETORES[rodaPasso];
+      const nota=rascunhoRoda?.[setor]?.nota;
+      const respondidas=RODA_SETORES.filter(s=>rascunhoRoda?.[s]?.nota!==undefined).length;
+      return <div className="tn-roda-scan">
+        <div className="tn-roda-scan-top">
+          <div className="tn-roda-scan-orbit" aria-hidden="true">
+            {RODA_SETORES.map((_,i)=><i key={i} className={i<respondidas?'on':''} style={{transform:'rotate('+(i*30)+'deg) translateY(-25px)'}}/>)}
+            <b>{respondidas}</b>
+          </div>
+          <span>{rodaPasso+1} de {RODA_SETORES.length}</span>
         </div>
+        <div className="tn-roda-scan-question">
+          <small>DE 0 A 10, QUE NOTA VOCÊ DÁ PARA</small>
+          <h1>{setor}</h1>
+          <p>na sua vida hoje?</p>
+        </div>
+        <div className="tn-roda-scan-notes">{Array.from({length:11},(_,i)=>i).map(n=><button key={n} className={Number(nota)===n?'on':''} onClick={()=>responderRoda(e,setor,n)}>{n}</button>)}</div>
+        <div className="tn-roda-scan-hint">{RODA_GUIA[setor]?.dica||'Pense na sua realidade das últimas semanas.'}</div>
+        <small className="tn-roda-scan-auto">Toque em uma nota. O próximo item abre sozinho.</small>
       </div>;
     }
     if(['choice','binary','module-decision'].includes(e.interacao))return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}<ChevronRight size={16}/></button>)}</div>;
@@ -330,7 +370,6 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
         {passo.ciencia&&<details className="tn-science"><summary>Por que o NIIL pergunta isso?</summary><p>{passo.ciencia}</p>{passo.fonte&&<small>{passo.fonte}</small>}</details>}
         {passo.base&&<small className="tn-base">{passo.base}</small>}
       </main>
-      {passo.tipo==='roda'&&!snapshotRoda&&(()=>{const setor=RODA_SETORES[rodaPasso],item=rascunhoRoda?.[setor]||{},ok=!!item.nota&&(((item.razoes||[]).length>0)||String(item.detalhe||'').trim().length>=3);return <footer className="tn-detail-foot tn-roda-foot">{rodaPasso>0&&<button className="tn-roda-back-step" onClick={()=>{setRodaPasso(x=>Math.max(0,x-1));window.setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),30)}}>Anterior</button>}<button className="tn-roda-continue" disabled={!ok} onClick={()=>concluirAreaRoda(passo)}>{rodaPasso===RODA_SETORES.length-1?'Ver meu retrato':'Continuar'} <ChevronRight size={18}/></button></footer>})()}
       {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum','scale'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{feito(passo.id)?'Continuar':'Concluir e seguir'} <ChevronRight size={18}/></button></footer>}
     </div>;
   }
