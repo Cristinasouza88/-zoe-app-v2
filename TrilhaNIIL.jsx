@@ -829,6 +829,65 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         <button className="tn-motivation-confirm" onClick={()=>confirmarMotivacaoBase(e)}>Guardar como ponto de partida <ChevronRight size={18}/></button>
       </div>;
     }
+    if(e.interacao==='contrast'){
+      const atual=v?.atual;
+      const desejado=v?.desejado;
+      const notas=Array.from({length:11},(_,i)=>i);
+      return <div className="tn-m1-contrast">
+        <div className="tn-m1-contrast-block">
+          <span>HOJE</span>
+          <h3>Onde você sente que está?</h3>
+          <div className="tn-m1-note-row">{notas.map(n=><button key={'a'+n} className={Number(atual)===n?'on':''} onClick={()=>{salvar(e.chave,{...(v||{}),atual:n});feedback('tap',d)}}>{n}</button>)}</div>
+        </div>
+        <ChevronRight className="tn-m1-contrast-arrow" size={24}/>
+        <div className="tn-m1-contrast-block">
+          <span>DESEJADO</span>
+          <h3>Onde gostaria de chegar?</h3>
+          <div className="tn-m1-note-row">{notas.map(n=><button key={'d'+n} className={Number(desejado)===n?'on':''} onClick={()=>{salvar(e.chave,{...(v||{}),desejado:n});feedback('tap',d)}}>{n}</button>)}</div>
+        </div>
+        <p>Isso não cria uma meta numérica. É só uma forma de tornar visível a distância que você percebe hoje.</p>
+      </div>;
+    }
+    if(e.interacao==='m1-insight'){
+      const objetivo=ler('meta-inicial')||'Outra coisa';
+      const importancia=Number(ler('meta-importancia')??5);
+      const recompensa=ler('meta-recompensa')||'uma mudança concreta';
+      const valores=Array.isArray(ler('meta-valores'))?ler('meta-valores'):[];
+      const contraste=ler('meta-contraste')||{};
+      const snap=(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId==='m1-roda-v4');
+      const area=RODA_AREA_POR_OBJETIVO[objetivo];
+      const notaRoda=area&&snap?Number(snap.valores?.[area]):null;
+      return <div className="tn-m1-synthesis">
+        <NIILOrb state="thinking" size={100} label="Insight NIIL"/>
+        <span>INSIGHT NIIL</span>
+        <h1>Seu ponto de partida ficou mais claro.</h1>
+        <p>Você colocou <b>{objetivoLegivel(objetivo).toLowerCase()}</b> em primeiro lugar e marcou <b>{importancia}/10</b> de importância.</p>
+        <div className="tn-m1-synthesis-grid">
+          <div><small>O QUE VOCÊ QUER SENTIR OU GANHAR</small><b>{recompensa}</b></div>
+          {valores.length>0&&<div><small>O QUE ISSO REPRESENTA</small><b>{valores.join(' · ')}</b></div>}
+          {Number.isFinite(Number(contraste.atual))&&<div><small>COMO VOCÊ SE PERCEBE</small><b>{contraste.atual} → {contraste.desejado}</b></div>}
+          {Number.isFinite(notaRoda)&&<div><small>NA RODA · {area.toUpperCase()}</small><b>{notaRoda}/10</b></div>}
+        </div>
+        <div className="tn-m1-synthesis-rule">
+          <b>Descobrir não significa adicionar uma tarefa.</b>
+          <p>O NIIL vai guardar o restante como contexto e ativar apenas o próximo movimento que fizer sentido agora.</p>
+        </div>
+      </div>;
+    }
+    if(e.interacao==='first-movement'){
+      const objetivo=ler('meta-inicial')||'Outra coisa';
+      const jaTemOutraAcao=!!d.jornada?.planoSemana?.ativo&&d.jornada?.planoSemana?.origem!=='m1-primeiro-movimento';
+      return <div className="tn-first-movement">
+        <div className="tn-first-movement-head"><Footprints size={30}/><span>PRÓXIMO MOVIMENTO</span></div>
+        <h1>Uma coisa pequena. Só uma.</h1>
+        <p>Escolha a menor evidência de movimento que cabe na vida real agora. O restante continua guardado como contexto da temporada.</p>
+        {jaTemOutraAcao&&<div className="tn-load-guard"><Sparkles size={17}/><span>Sua Agenda já tem uma ação ativa. A escolha abaixo será guardada para depois, sem adicionar outra obrigação agora.</span></div>}
+        <div className="tn-first-movement-options">{primeirosMovimentos(objetivo).map((m,i)=><button key={m.acao} onClick={()=>concluirPrimeiroMovimento(e,m)}>
+          <span>{i+1}</span><div><b>{m.acao}</b><small>~{m.duracao||10} min</small></div><ChevronRight size={18}/>
+        </button>)}</div>
+        <small className="tn-first-movement-note">O próximo marco pode descobrir outras oportunidades. Elas não entram automaticamente na Agenda.</small>
+      </div>;
+    }
     if(['choice','binary','module-decision'].includes(e.interacao))return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}<ChevronRight size={16}/></button>)}</div>;
     if(e.interacao==='scale')return <div className="tn-scale tn-scale-reflect"><div className="tn-scale-icon"><Target size={30}/></div><strong>{v??5}/10</strong><input type="range" min="1" max="10" value={v??5} onChange={ev=>salvar(e.chave,Number(ev.target.value))}/><div><span>{e.minimo}</span><span>{e.maximo}</span></div><small>{Number(v??5)>=8?'Isso parece importante de verdade para você.':Number(v??5)>=5?'Isso tem peso, mas ainda disputa espaço com outras coisas.':'Talvez isso ainda não seja uma prioridade real agora.'}</small></div>;
     if(e.interacao==='dual-scale')return <div className="tn-stack">
@@ -863,7 +922,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         {passo.ciencia&&<details className="tn-science"><summary>Por que o NIIL pergunta isso?</summary><p>{passo.ciencia}</p>{passo.fonte&&<small>{passo.fonte}</small>}</details>}
         {passo.base&&<small className="tn-base">{passo.base}</small>}
       </main>
-      {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum','motivation-why','reward-choice','motivation-insight'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{passo.interacao==='sentence-choice'?'Confirmar':'Continuar'} <ChevronRight size={18}/></button></footer>}
+      {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum','motivation-why','reward-choice','motivation-insight','first-movement'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{passo.interacao==='sentence-choice'?'Confirmar':'Continuar'} <ChevronRight size={18}/></button></footer>}
     </div>;
   }
 
