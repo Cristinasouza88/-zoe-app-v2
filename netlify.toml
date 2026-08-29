@@ -11,7 +11,7 @@
   to = "/index.html"
   status = 200
 
-# deploy-trigger: voz-propria-compromisso-20260828
+# deploy-trigger: voz-propria-replay-fix-20260828
 
 
 [[headers]]
