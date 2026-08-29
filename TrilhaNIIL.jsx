@@ -103,14 +103,14 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
     const v=ler(e.chave);
     if(e.tipo==='roda')return !!(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id&&snapshotValido(x));
     if(e.interacao==='multi'||e.interacao==='modules'||e.interacao==='swipe')return Array.isArray(v)&&v.length>0;
-    if(e.interacao==='energy')return v&&Object.keys(v).length>=4;
-    if(e.interacao==='sleep')return v?.dormir&&v?.acordar;
-    if(e.interacao==='dual-scale')return Number(v?.querer)>0&&Number(v?.fazer)>0;
+    if(e.interacao==='energy')return true;
+    if(e.interacao==='sleep')return true;
+    if(e.interacao==='dual-scale')return true;
     if(e.interacao==='chain')return v?.sinal&&v?.acao&&v?.resultado;
     if(e.interacao==='tradeoff')return v?.agora&&v?.depois;
     if(e.interacao==='anchor')return v?.ancora&&v?.acao;
     if(e.interacao==='minimum')return !!v;
-    if(e.interacao==='budget')return v&&Number(v.tempo)>=0&&Number(v.dinheiro)>=0&&Number(v.atencao)>=0;
+    if(e.interacao==='budget')return true;
     if(e.interacao==='agenda')return !!d.jornada?.planoSemana?.ativo||!!v;
     if(e.interacao==='photo'||e.interacao==='insight')return true;
     if(e.interacao==='voice')return String(v||'').trim().length>2;
@@ -123,7 +123,24 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
     const idx=e.fase.etapas.findIndex(x=>x.id===e.id);
     const ultima=idx===e.fase.etapas.length-1;
     if(!ja)up(s=>{
-      const base={...s,etapas:{...(s.etapas||{}),[e.id]:{feito:true,data:hoje(),concluidaEm:new Date().toISOString()}}};
+      let estado=s;
+      if(e.interacao==='energy'){
+        const v=s.trilhaNIIL?.respostas?.[e.chave]||{};
+        estado={...s,trilhaNIIL:{...(s.trilhaNIIL||{}),respostas:{...(s.trilhaNIIL?.respostas||{}),[e.chave]:{acordar:v.acordar??5,manha:v.manha??5,tarde:v.tarde??5,noite:v.noite??5}}}};
+      }
+      if(e.interacao==='sleep'){
+        const v=estado.trilhaNIIL?.respostas?.[e.chave]||{};
+        estado={...estado,trilhaNIIL:{...(estado.trilhaNIIL||{}),respostas:{...(estado.trilhaNIIL?.respostas||{}),[e.chave]:{dormir:v.dormir||'23:00',acordar:v.acordar||'07:00'}}}};
+      }
+      if(e.interacao==='dual-scale'){
+        const v=estado.trilhaNIIL?.respostas?.[e.chave]||{};
+        estado={...estado,trilhaNIIL:{...(estado.trilhaNIIL||{}),respostas:{...(estado.trilhaNIIL?.respostas||{}),[e.chave]:{querer:v.querer??5,fazer:v.fazer??5}}}};
+      }
+      if(e.interacao==='budget'){
+        const v=estado.trilhaNIIL?.respostas?.[e.chave]||{};
+        estado={...estado,trilhaNIIL:{...(estado.trilhaNIIL||{}),respostas:{...(estado.trilhaNIIL?.respostas||{}),[e.chave]:{tempo:v.tempo??5,dinheiro:v.dinheiro??5,atencao:v.atencao??5}}}};
+      }
+      const base={...estado,etapas:{...(estado.etapas||{}),[e.id]:{feito:true,data:hoje(),concluidaEm:new Date().toISOString()}}};
       let next=registrarEventoGamificacao(base,{
         key:`trilha:v2:${e.id}`,
         tipo:e.tipo==='roda'?'trail.tool.completed':'trail.microstep.completed',
@@ -337,7 +354,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
       </div>;
     }
     if(['choice','binary','module-decision'].includes(e.interacao))return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}<ChevronRight size={16}/></button>)}</div>;
-    if(e.interacao==='scale')return <div className="tn-scale"><strong>{v||5}/10</strong><input type="range" min="1" max="10" value={v||5} onChange={ev=>salvar(e.chave,Number(ev.target.value))} onPointerUp={ev=>concluirRapido(e,Number(ev.currentTarget.value))}/><div><span>{e.minimo}</span><span>{e.maximo}</span></div></div>;
+    if(e.interacao==='scale')return <div className="tn-scale tn-scale-reflect"><div className="tn-scale-icon"><Target size={30}/></div><strong>{v??5}/10</strong><input type="range" min="1" max="10" value={v??5} onChange={ev=>salvar(e.chave,Number(ev.target.value))}/><div><span>{e.minimo}</span><span>{e.maximo}</span></div><small>{Number(v??5)>=8?'Isso parece importante de verdade para você.':Number(v??5)>=5?'Isso tem peso, mas ainda disputa espaço com outras coisas.':'Talvez isso ainda não seja uma prioridade real agora.'}</small></div>;
     if(e.interacao==='dual-scale')return <div className="tn-stack">
       {[['querer','Quanto eu quero'],['fazer','Quanto eu faço']].map(([k,l])=><label className="tn-slider" key={k}><span>{l}<b>{v?.[k]||5}/10</b></span><input type="range" min="1" max="10" value={v?.[k]||5} onChange={ev=>salvar(e.chave,{...(v||{}),[k]:Number(ev.target.value)})}/></label>)}
     </div>;
@@ -370,7 +387,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
         {passo.ciencia&&<details className="tn-science"><summary>Por que o NIIL pergunta isso?</summary><p>{passo.ciencia}</p>{passo.fonte&&<small>{passo.fonte}</small>}</details>}
         {passo.base&&<small className="tn-base">{passo.base}</small>}
       </main>
-      {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum','scale'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{feito(passo.id)?'Continuar':'Concluir e seguir'} <ChevronRight size={18}/></button></footer>}
+      {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{feito(passo.id)?'Continuar':'Continuar'} <ChevronRight size={18}/></button></footer>}
     </div>;
   }
 

@@ -201,3 +201,10 @@ body:has(.tn-detail) .niil-bottom-nav{display:none!important}
   .tn-roda-scan-notes button{height:54px;font-size:17px}
   .tn-roda-activate h2{font-size:32px}
 }
+
+
+/* Trilha: CTA claro + estímulo visual nas perguntas reflexivas */
+.tn-scale-reflect{position:relative;padding-top:6px}
+.tn-scale-icon{width:66px;height:66px;border-radius:22px;background:#F3F9DB;color:#6C9700;display:grid;place-items:center;margin:2px auto 14px}
+.tn-scale-reflect>small{display:block;margin-top:16px;padding:11px 13px;border-radius:14px;background:#F7F9F0;color:#66636B;font-size:10px;line-height:1.45;text-align:center}
+.tn-detail-foot>button{min-height:56px}
