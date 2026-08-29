@@ -2,7 +2,7 @@ import React,{useEffect,useMemo,useRef,useState}from'react';
 import{
   ArrowLeft,Target,Moon,Home,Repeat2,Network,Flag,CalendarDays,TrendingUp,
   Lock,Check,ChevronRight,BookOpen,Wallet,Dumbbell,Droplets,Utensils,GraduationCap,
-  Languages,Camera,Clock3,Mic,Square,Brain,Footprints,Sparkles,RotateCcw
+  Languages,Camera,Clock3,Mic,Square,Brain,Footprints,Sparkles,Play,RotateCcw
 }from'lucide-react';
 import NIILOrb from'./NIILOrb.jsx';
 import{RODA_SETORES}from'./conteudo.js';
@@ -111,12 +111,15 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const[rodaPasso,setRodaPasso]=useState(0);
   const[rodaAtivacao,setRodaAtivacao]=useState({area:null,etapa:'foco',razoes:[],metaNota:null});
   const recRef=useRef(null);
-  const[vozCommit,setVozCommit]=useState({status:'idle',url:null,error:''});
+  const[vozCommit,setVozCommit]=useState({status:'idle',url:null,blob:null,error:''});
   const mediaRecorderRef=useRef(null);
   const mediaStreamRef=useRef(null);
   const audioChunksRef=useRef([]);
   const audioTimerRef=useRef(null);
   const audioPlayerRef=useRef(null);
+  const audioContextRef=useRef(null);
+  const audioSourceRef=useRef(null);
+  const[vozPlaying,setVozPlaying]=useState(false);
   const atual=useMemo(()=>faseAtualNIIL(d.etapas||{}),[d.etapas]);
   const marcos=useMemo(()=>marcosConcluidosNIIL(d.etapas||{}),[d.etapas]);
   const recomendacoes=useMemo(()=>recomendacoesContextuaisNIIL(d),[d]);
@@ -144,7 +147,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     if(passo?.interacao!=='sentence-choice'||!meta?.storageKey||meta?.objetivo!==objetivo||meta?.pulado){
       setVozCommit(prev=>{
         if(prev.url)try{URL.revokeObjectURL(prev.url)}catch{}
-        return{status:'idle',url:null,error:''};
+        return{status:'idle',url:null,blob:null,error:''};
       });
       return;
     }
@@ -155,12 +158,12 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         const url=URL.createObjectURL(blob);
         setVozCommit(prev=>{
           if(prev.url)try{URL.revokeObjectURL(prev.url)}catch{}
-          return{status:'ready',url,error:''};
+          return{status:'ready',url,blob,error:''};
         });
       }else{
-        setVozCommit({status:'idle',url:null,error:''});
+        setVozCommit({status:'idle',url:null,blob:null,error:''});
       }
-    }).catch(()=>!cancelado&&setVozCommit({status:'idle',url:null,error:''}));
+    }).catch(()=>!cancelado&&setVozCommit({status:'idle',url:null,blob:null,error:''}));
     return()=>{cancelado=true};
   },[passo?.id,resp['meta-inicial'],d.trilhaNIIL?.vozCompromisso?.storageKey]);
 
@@ -303,7 +306,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     if(anterior?.objetivo&&anterior.objetivo!==item.valor&&anterior.storageKey)store.set(anterior.storageKey,null).catch(()=>{});
     setVozCommit(prev=>{
       if(prev.url)try{URL.revokeObjectURL(prev.url)}catch{}
-      return{status:'idle',url:null,error:''};
+      return{status:'idle',url:null,blob:null,error:''};
     });
     up(s=>({
       ...s,
@@ -319,7 +322,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const iniciarGravacaoCompromisso=async(e,frase,objetivo)=>{
     if(!objetivo)return;
     if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
-      setVozCommit({status:'error',url:null,error:'Este dispositivo não disponibilizou gravação de áudio.'});
+      setVozCommit({status:'error',url:null,blob:null,error:'Este dispositivo não disponibilizou gravação de áudio.'});
       return;
     }
     try{
@@ -333,13 +336,13 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       recorder.ondataavailable=ev=>{if(ev.data?.size)audioChunksRef.current.push(ev.data)};
       recorder.onerror=()=>{
         encerrarStreamAudio();
-        setVozCommit({status:'error',url:null,error:'Não foi possível concluir a gravação. Tente novamente.'});
+        setVozCommit({status:'error',url:null,blob:null,error:'Não foi possível concluir a gravação. Tente novamente.'});
       };
       recorder.onstop=async()=>{
         encerrarStreamAudio();
         const blob=new Blob(audioChunksRef.current,{type:recorder.mimeType||mime||'audio/webm'});
         if(blob.size<700){
-          setVozCommit({status:'error',url:null,error:'A gravação ficou curta demais. Tente falar a frase novamente.'});
+          setVozCommit({status:'error',url:null,blob:null,error:'A gravação ficou curta demais. Tente falar a frase novamente.'});
           return;
         }
         const existente=d.trilhaNIIL?.vozCompromisso;
@@ -350,28 +353,85 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
           const url=URL.createObjectURL(blob);
           setVozCommit(prev=>{
             if(prev.url)try{URL.revokeObjectURL(prev.url)}catch{}
-            return{status:'ready',url,error:''};
+            return{status:'ready',url,blob,error:''};
           });
           up(s=>({...s,trilhaNIIL:{...(s.trilhaNIIL||{}),vozCompromisso:{objetivo,frase,storageKey,mimeType:blob.type,gravadaEm:new Date().toISOString(),localOnly:true,pulado:false}}}));
           feedback('snap',d);
         }catch{
-          setVozCommit({status:'error',url:null,error:'Não consegui salvar o áudio neste dispositivo.'});
+          setVozCommit({status:'error',url:null,blob:null,error:'Não consegui salvar o áudio neste dispositivo.'});
         }
       };
       recorder.start(180);
-      setVozCommit(prev=>({status:'recording',url:prev.url||null,error:''}));
+      setVozPlaying(false);
+      setVozCommit(prev=>({status:'recording',url:prev.url||null,blob:prev.blob||null,error:''}));
       feedback('tap',d);
       audioTimerRef.current=setTimeout(()=>pararGravacao(),12000);
     }catch(err){
       encerrarStreamAudio();
       const negado=err?.name==='NotAllowedError'||err?.name==='SecurityError';
-      setVozCommit({status:'error',url:null,error:negado?'O acesso ao microfone foi recusado.':'Não foi possível acessar o microfone.'});
+      setVozCommit({status:'error',url:null,blob:null,error:negado?'O acesso ao microfone foi recusado.':'Não foi possível acessar o microfone.'});
     }
   };
 
   const seguirSemGravar=(objetivo,frase)=>{
     up(s=>({...s,trilhaNIIL:{...(s.trilhaNIIL||{}),vozCompromisso:{objetivo,frase,storageKey:null,gravadaEm:null,localOnly:true,pulado:true,motivo:'microfone-indisponivel'}}}));
-    setVozCommit({status:'skipped',url:null,error:''});
+    setVozCommit({status:'skipped',url:null,blob:null,error:''});
+  };
+
+  const ouvirGravacao=async()=>{
+    const meta=d.trilhaNIIL?.vozCompromisso;
+    let blob=vozCommit.blob;
+    try{
+      if(!(blob instanceof Blob)&&meta?.storageKey)blob=await store.get(meta.storageKey);
+      if(!(blob instanceof Blob)||blob.size===0)throw new Error('audio-vazio');
+
+      const Ctx=window.AudioContext||window.webkitAudioContext;
+      if(Ctx){
+        let ctx=audioContextRef.current;
+        if(!ctx||ctx.state==='closed'){
+          ctx=new Ctx();
+          audioContextRef.current=ctx;
+        }
+        if(ctx.state==='suspended')await ctx.resume();
+        try{audioSourceRef.current?.stop?.()}catch{}
+        const bytes=await blob.arrayBuffer();
+        const buffer=await ctx.decodeAudioData(bytes.slice(0));
+        const source=ctx.createBufferSource();
+        source.buffer=buffer;
+        source.connect(ctx.destination);
+        source.onended=()=>setVozPlaying(false);
+        audioSourceRef.current=source;
+        setVozPlaying(true);
+        source.start(0);
+        return;
+      }
+
+      const el=audioPlayerRef.current;
+      if(!el)throw new Error('sem-player');
+      el.pause();
+      el.currentTime=0;
+      el.muted=false;
+      el.volume=1;
+      setVozPlaying(true);
+      el.onended=()=>setVozPlaying(false);
+      await el.play();
+    }catch{
+      try{
+        const el=audioPlayerRef.current;
+        if(el){
+          el.pause();
+          el.currentTime=0;
+          el.muted=false;
+          el.volume=1;
+          setVozPlaying(true);
+          el.onended=()=>setVozPlaying(false);
+          await el.play();
+          return;
+        }
+      }catch{}
+      setVozPlaying(false);
+      setVozCommit(prev=>({...prev,error:'Não consegui reproduzir esta gravação. Toque em Refazer e grave novamente.'}));
+    }
   };
 
   const concluirRapido=(e,valor)=>{
@@ -641,15 +701,9 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
                 <button className="tn-ownvoice-record stop" type="button" onClick={pararGravacao}><Square size={17} fill="currentColor"/> Parar gravação</button>
                 :gravacaoValida?
                 <div className="tn-ownvoice-actions">
-                  <div className="tn-ownvoice-ready"><Check size={16}/> Gravação pronta · toque no play para se ouvir</div>
-                  <audio
-                    key={vozCommit.url}
-                    ref={audioPlayerRef}
-                    src={vozCommit.url}
-                    preload="auto"
-                    controls
-                    playsInline
-                  />
+                  <div className="tn-ownvoice-ready"><Check size={16}/> Gravação pronta</div>
+                  <audio key={vozCommit.url} ref={audioPlayerRef} src={vozCommit.url} preload="auto" playsInline/>
+                  <button className="play" type="button" onClick={ouvirGravacao}><Play size={18} fill="currentColor"/> {vozPlaying?'Ouvindo…':'Ouvir minha voz'}</button>
                   <button className="redo" type="button" onClick={()=>iniciarGravacaoCompromisso(e,frase,v)}><RotateCcw size={16}/> Refazer</button>
                 </div>
                 :pulou?
