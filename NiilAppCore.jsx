@@ -319,7 +319,7 @@ const inicial = {
   desafio100: {}, ativacao40: { frase: '', marcas: {} }, caracteristicas: [],
   visao: {}, medidas: [], biblioteca: [], ritual: {}, jejum: null, alarmes: [],
   metasSOL: [], redes: [], cartas: {}, gratidoes: [], fotos: [], cursos: [], agendaCursos: [],
-  jornada: { checkins: [], mapaNos: [], planoSemana: null },
+  jornada: { checkins: [], mapaNos: [], planoSemana: null, movimentosGuardados: [] },
   trilhaNIIL: { respostas: {}, modulosVisitados: {}, temporadas: [], temporadaAtualId: null, vozCompromisso: null },
   sono: { objetivoHoras: 8, registros: [], despertador: { ativo:false, hora:'07:00', janelaMin:30, dias:[1,2,3,4,5] }, integracoes:{} },
   treinos: [],
@@ -718,6 +718,15 @@ export default function NIILApp() {
       if (v && novoValor && v.ferramenta === 'ritual') {
         const m = {}; RITUAL_ACORDAR.forEach(r => m[r.n] = true);
         n = { ...n, ritual: { ...n.ritual, [dataAlvo]: m } };
+      }
+      const plano=s.jornada?.planoSemana;
+      if(etapa.id==='niil-agenda-viva'&&novoValor&&plano?.origem==='m1-primeiro-movimento'){
+        const agora=new Date().toISOString(),tid=s.trilhaNIIL?.temporadaAtualId;
+        n={
+          ...n,
+          jornada:{...(s.jornada||{}),planoSemana:{...plano,ativo:false,concluidoEm:agora}},
+          trilhaNIIL:{...(s.trilhaNIIL||{}),temporadas:(s.trilhaNIIL?.temporadas||[]).map(t=>t.id===tid&&t.primeiroMovimento?{...t,primeiroMovimento:{...t.primeiroMovimento,status:'concluido',concluidoEm:agora}}:t)}
+        };
       }
       return n;
     });
@@ -1606,10 +1615,10 @@ export default function NIILApp() {
           <Barra v={realizadas} max={Math.max(1, tarefas.length)} cor={C.lima} h={8} />
           <div style={{ fontSize: 11, opacity: .75, marginTop: 7 }}>{realizadas} de {tarefas.length} tarefas realizadas</div>
         </Card>
-        {planoNesteDia && <Card cls="niil-surge" onClick={() => up(s => ({ ...s, agenda: { ...s.agenda, [data]: { ...(s.agenda[data] || {}), 'niil-experimento': !(s.agenda[data] || {})['niil-experimento'] } } }))} style={{ marginBottom: 14, border: `2px solid ${marcas['niil-experimento'] ? C.green : C.roxo}`, background: marcas['niil-experimento'] ? C.mint : '#FBF7FF', cursor: 'pointer' }}>
+        {planoNesteDia && <Card cls="niil-surge" onClick={() => toggleTarefaDe(agendaAtiva,0)} style={{ marginBottom: 14, border: `2px solid ${marcas[`${agendaAtiva.id}-0`] ? C.green : C.roxo}`, background: marcas[`${agendaAtiva.id}-0`] ? C.mint : '#FBF7FF', cursor: 'pointer' }}>
           <div style={{ display:'flex',gap:11,alignItems:'center' }}>
-            <div style={{ width:38,height:38,borderRadius:13,background:marcas['niil-experimento']?C.green:C.roxo,color:'#fff',display:'grid',placeItems:'center' }}>{marcas['niil-experimento']?<Check size={20}/>:<Sparkles size={19}/>}</div>
-            <div style={{ flex:1,minWidth:0 }}><div style={{ color:C.ink,fontSize:10,fontWeight:900,letterSpacing:.7 }}>EXPERIMENTO NIIL</div><div style={{ color:C.ink,fontSize:13.5,fontWeight:850,marginTop:3,textDecoration:marcas['niil-experimento']?'line-through':'none' }}>{planoNIIL.acao}</div><div style={{ color:C.ink3,fontSize:10.5,marginTop:4 }}>{planoNIIL.hora} · {planoNIIL.duracao} min</div></div>
+            <div style={{ width:38,height:38,borderRadius:13,background:marcas[`${agendaAtiva.id}-0`]?C.green:C.roxo,color:'#fff',display:'grid',placeItems:'center' }}>{marcas[`${agendaAtiva.id}-0`]?<Check size={20}/>:<Sparkles size={19}/>}</div>
+            <div style={{ flex:1,minWidth:0 }}><div style={{ color:C.ink,fontSize:10,fontWeight:900,letterSpacing:.7 }}>{planoNIIL.origem==='m1-primeiro-movimento'?'PRIMEIRO MOVIMENTO':'EXPERIMENTO NIIL'}</div><div style={{ color:C.ink,fontSize:13.5,fontWeight:850,marginTop:3,textDecoration:marcas[`${agendaAtiva.id}-0`]?'line-through':'none' }}>{planoNIIL.acao}</div><div style={{ color:C.ink3,fontSize:10.5,marginTop:4 }}>{planoNIIL.hora} · {planoNIIL.duracao} min</div></div>
           </div>
         </Card>}
         {eventosCursos.length>0&&<><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'18px 2px 10px'}}><h2 style={{margin:0,fontSize:17,color:C.ink}}>Cursos na agenda</h2><span style={{fontSize:10,color:C.roxo,fontWeight:850}}>{eventosCursos.filter(e=>e.feito).length}/{eventosCursos.length}</span></div>{eventosCursos.map(e=><Card key={e.id} onClick={()=>setAba('cursos')} style={{marginBottom:9,border:`1.5px solid ${e.feito?C.green:'#E3D8F1'}`,background:e.feito?C.mint:'#FBF8FF',cursor:'pointer'}}><div style={{display:'flex',gap:11,alignItems:'center'}}><div style={{width:38,height:38,borderRadius:13,background:e.feito?C.green:C.roxo,color:'#fff',display:'grid',placeItems:'center'}}>{e.feito?<Check size={19}/>:<BookOpen size={18}/>}</div><div style={{flex:1}}><div style={{fontSize:9,fontWeight:900,color:C.roxo,letterSpacing:.6}}>{e.modulo||'CURSO'} · {e.hora}</div><div style={{fontSize:13,fontWeight:850,color:C.ink,marginTop:3,textDecoration:e.feito?'line-through':'none'}}>{e.titulo}</div></div><ChevronRight size={18} color={C.ink3}/></div></Card>)}</>}
