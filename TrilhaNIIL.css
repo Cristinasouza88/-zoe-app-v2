@@ -208,3 +208,47 @@ body:has(.tn-detail) .niil-bottom-nav{display:none!important}
 .tn-scale-icon{width:66px;height:66px;border-radius:22px;background:#F3F9DB;color:#6C9700;display:grid;place-items:center;margin:2px auto 14px}
 .tn-scale-reflect>small{display:block;margin-top:16px;padding:11px 13px;border-radius:14px;background:#F7F9F0;color:#66636B;font-size:10px;line-height:1.45;text-align:center}
 .tn-detail-foot>button{min-height:56px}
+
+
+/* ══════════ M1 · exercício de completar frase ══════════ */
+.tn-sentence-exercise{padding:2px 0 120px}
+.tn-sentence-label{font-size:11px;font-weight:950;letter-spacing:1.15px;color:#6C9700;margin-bottom:20px}
+.tn-sentence-exercise>h1{font-size:38px!important;line-height:1.04!important;letter-spacing:-1.15px!important;margin:0 0 34px!important;font-weight:700!important;color:#17151D}
+.tn-sentence-exercise>h1 span{display:inline;color:#6C9700;border-bottom:3px solid #B7F20C;padding-bottom:1px}
+
+.tn-sentence-stage{display:grid;grid-template-columns:112px minmax(0,1fr);gap:18px;align-items:center;margin:6px 0 34px}
+.tn-sentence-symbol{width:108px;height:108px;border-radius:34px;background:#F3F9DB;color:#6C9700;display:grid;place-items:center;position:relative}
+.tn-sentence-symbol:after{content:"";position:absolute;width:14px;height:14px;border-radius:50%;background:#B7F20C;right:11px;top:11px}
+.tn-sentence-bubble{position:relative;min-height:96px;border:2px solid #E2E1E5;border-radius:22px;background:#fff;display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center;padding:13px 16px}
+.tn-sentence-bubble:before{content:"";position:absolute;left:-14px;top:42px;width:24px;height:24px;background:#fff;border-left:2px solid #E2E1E5;border-bottom:2px solid #E2E1E5;transform:rotate(45deg)}
+.tn-sentence-bubble.ready{border-color:#C9D990}
+.tn-sentence-bubble.ready:before{border-color:#C9D990}
+.tn-sentence-bubble>button{position:relative;z-index:2;width:46px;height:46px;border:0;border-radius:15px;background:#B7F20C;color:#17151D;display:grid;place-items:center}
+.tn-sentence-bubble>button:disabled{background:#E9E9E5;color:#AAA7AE}
+.tn-sentence-bubble div{position:relative;z-index:2;min-width:0}
+.tn-sentence-bubble small{display:block;font-size:8px;font-weight:950;letter-spacing:.9px;color:#99959E;margin-bottom:5px}
+.tn-sentence-bubble b{display:block;font-size:15px;line-height:1.32;font-weight:760;color:#17151D}
+.tn-sentence-bubble mark{background:transparent;color:#6C9700;font-weight:900}
+
+.tn-sentence-answer{min-height:76px;border-top:2px solid #ECEBEF;border-bottom:2px solid #ECEBEF;display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:13px 4px;font-size:15px;color:#17151D}
+.tn-sentence-answer>span{font-weight:650}
+.tn-sentence-answer>button{min-height:40px;border-radius:13px;padding:8px 11px;font:inherit;font-size:14px;font-weight:800}
+.tn-sentence-answer>button.blank{border:0;border-bottom:2px dashed #C5C2C9;border-radius:0;background:transparent;color:#9C99A1}
+.tn-sentence-answer>button.filled{border:1.5px solid #8AB500;background:#F3F9DB;color:#17151D;box-shadow:0 3px 0 rgba(108,151,0,.16)}
+.tn-sentence-divider{height:28px}
+.tn-sentence-bank{display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start}
+.tn-sentence-bank button{min-height:46px;border:2px solid #E1E0E4;border-radius:15px;background:#fff;padding:8px 13px;color:#17151D;font:inherit;font-size:13px;font-weight:720;box-shadow:0 4px 0 #E8E7EA}
+.tn-sentence-bank button:active{transform:translateY(2px);box-shadow:0 2px 0 #E8E7EA}
+.tn-sentence-bank button.selected{border-color:#8AB500;background:#F3F9DB;box-shadow:0 4px 0 rgba(108,151,0,.18)}
+.tn-detail:has(.tn-sentence-exercise) .tn-detail-foot{border-top:0;padding-top:14px}
+.tn-detail:has(.tn-sentence-exercise) .tn-detail-foot button{min-height:58px;text-transform:uppercase;letter-spacing:.25px}
+
+@media(max-width:560px){
+  .tn-sentence-exercise>h1{font-size:33px!important}
+  .tn-sentence-stage{grid-template-columns:86px minmax(0,1fr);gap:14px}
+  .tn-sentence-symbol{width:84px;height:84px;border-radius:27px}
+  .tn-sentence-symbol svg{width:44px;height:44px}
+  .tn-sentence-bubble{min-height:86px;padding:11px 12px;grid-template-columns:46px 1fr}
+  .tn-sentence-bubble>button{width:42px;height:42px}
+  .tn-sentence-bubble b{font-size:13px}
+}
