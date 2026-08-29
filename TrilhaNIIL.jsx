@@ -257,6 +257,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       return !!v&&voz?.objetivo===v&&(!!voz?.storageKey||voz?.pulado===true);
     }
     if(e.interacao==='multi'||e.interacao==='modules'||e.interacao==='swipe')return Array.isArray(v)&&v.length>0;
+    if(e.interacao==='contrast')return Number.isFinite(Number(v?.atual))&&Number.isFinite(Number(v?.desejado));
+    if(e.interacao==='m1-insight')return true;
     if(e.interacao==='energy')return true;
     if(e.interacao==='sleep')return true;
     if(e.interacao==='dual-scale')return true;
@@ -459,9 +461,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const confirmarMotivacaoBase=e=>{
     up(s=>{
       const trilha=s.trilhaNIIL||{},respostas=trilha.respostas||{},objetivo=respostas['meta-inicial']||'Outra coisa';
-      const perfil=perfilMotivacao(objetivo);
       const agora=new Date().toISOString();
-      const base={objetivo,importancia:Number(respostas['meta-importancia']??5),motivo:respostas['meta-motivo']||null,recompensa:respostas['meta-recompensa']||null,modulosPrioritarios:perfil.modulos,confirmadaEm:agora,versao:1};
+      const base={objetivo,importancia:Number(respostas['meta-importancia']??5),motivo:respostas['meta-motivo']||null,recompensa:respostas['meta-recompensa']||null,valores:Array.isArray(respostas['meta-valores'])?respostas['meta-valores']:[],contraste:respostas['meta-contraste']||null,confirmadaEm:agora,versao:2};
       const temporadas=Array.isArray(trilha.temporadas)?trilha.temporadas:[];
       const ativa=temporadas.find(t=>t.id===trilha.temporadaAtualId&&t.status==='ativa');
       const id=ativa?.id||('temporada-'+Date.now());
@@ -478,6 +479,34 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     let n=atual.includes(item)?atual.filter(x=>x!==item):[...atual,item];
     if(e.limite&&n.length>e.limite)n=n.slice(-e.limite);
     salvar(e.chave,n);feedback('tap',d);
+  };
+
+  const concluirPrimeiroMovimento=(e,movimento)=>{
+    const objetivo=ler('meta-inicial')||'Outra coisa';
+    const agora=new Date().toISOString();
+    up(s=>{
+      const trilha=s.trilhaNIIL||{},respostas=trilha.respostas||{},temporadas=Array.isArray(trilha.temporadas)?trilha.temporadas:[],tid=trilha.temporadaAtualId;
+      const planoAtual=s.jornada?.planoSemana;
+      const temAcaoAtiva=!!planoAtual?.ativo&&planoAtual?.origem!=='m1-primeiro-movimento';
+      const registro={...movimento,objetivo,criadoEm:agora,status:temAcaoAtiva?'guardado':'ativo',origem:'m1-primeiro-movimento'};
+      const jornada=temAcaoAtiva
+        ?{...(s.jornada||{}),movimentosGuardados:[...(s.jornada?.movimentosGuardados||[]),registro]}
+        :{...(s.jornada||{}),planoSemana:{ativo:true,acao:movimento.acao,contexto:'Primeiro movimento da temporada',hora:'Ao longo do dia',duracao:movimento.duracao||10,dias:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],origem:'m1-primeiro-movimento',recorrencia:'ate-concluir',criadoEm:agora}};
+      return{
+        ...s,
+        jornada,
+        trilhaNIIL:{
+          ...trilha,
+          respostas:{...respostas,[e.chave]:registro},
+          temporadas:temporadas.map(t=>t.id===tid?{...t,primeiroMovimento:registro}:t)
+        }
+      };
+    });
+    feedback('marco',d);
+    aviso(d.jornada?.planoSemana?.ativo&&d.jornada?.planoSemana?.origem!=='m1-primeiro-movimento'
+      ?'Seu movimento foi guardado. A Agenda já tem uma ação ativa.'
+      :'Um movimento entrou na sua Agenda.');
+    window.setTimeout(()=>concluir(e,{ignorarValidacao:true,semFeedback:true}),220);
   };
 
   const criarAgenda=()=>{
