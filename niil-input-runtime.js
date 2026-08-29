@@ -1,6 +1,6 @@
 import {iniciarReconhecimentoVoz,reconhecimentoDisponivel} from './ia.jsx';
 
-const FLAG_HINT='niil:dictation-hint-seen-v1';
+const FLAG_HINT='niil:dictation-hint-seen-v2';
 const ATTR='data-niil-dictation-ready';
 let campoAtivo=null;
 let reconhecimento=null;
@@ -8,16 +8,16 @@ let pressionando=false;
 let mic=null;
 let hint=null;
 let toast=null;
+let inicioReconhecimento=0;
+let stopTimer=null;
 
 const tipoTexto=el=>{
   if(!el||el.disabled||el.readOnly)return false;
   if(el.isContentEditable)return true;
   if(el.tagName==='TEXTAREA')return true;
   if(el.tagName!=='INPUT')return false;
-  const tipo=String(el.type||'text').toLowerCase();
-  return ['text','search','email','url','tel'].includes(tipo);
+  return ['text','search','email','url','tel'].includes(String(el.type||'text').toLowerCase());
 };
-
 const elegivel=el=>tipoTexto(el)&&!el.closest?.('[data-niil-no-dictation="true"],.niil-no-dictation');
 
 const mostrarToast=mensagem=>{
@@ -32,12 +32,14 @@ const mostrarToast=mensagem=>{
   toast._t=setTimeout(()=>toast?.classList.remove('show'),2600);
 };
 
-const valorAtual=el=>el.isContentEditable?(el.textContent||''):(el.value||'');
+const valorAtual=el=>el?.isContentEditable?(el.textContent||''):(el?.value||'');
 
 const definirValorReact=(el,valor)=>{
+  if(!el)return;
   if(el.isContentEditable){
     el.textContent=valor;
-    el.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:valor}));
+    try{el.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:valor}))}
+    catch{el.dispatchEvent(new Event('input',{bubbles:true}))}
     return;
   }
   const anterior=el.value;
@@ -45,12 +47,12 @@ const definirValorReact=(el,valor)=>{
   const setter=Object.getOwnPropertyDescriptor(proto,'value')?.set;
   if(setter)setter.call(el,valor);else el.value=valor;
   try{el._valueTracker?.setValue(anterior)}catch{}
-  try{el.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:valor}))}catch{el.dispatchEvent(new Event('input',{bubbles:true}))}
-  el.dispatchEvent(new Event('change',{bubbles:true}));
+  try{el.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:valor}))}
+  catch{el.dispatchEvent(new Event('input',{bubbles:true}))}
 };
 
 const inserirTranscricao=(el,texto)=>{
-  if(!el||!texto)return;
+  if(!el||!texto||!document.contains(el))return;
   const atual=valorAtual(el);
   if(el.isContentEditable){
     definirValorReact(el,(atual.trim()?atual.trimEnd()+' ':'')+texto.trim());
@@ -58,45 +60,65 @@ const inserirTranscricao=(el,texto)=>{
   }
   const inicio=Number.isFinite(el.selectionStart)?el.selectionStart:atual.length;
   const fim=Number.isFinite(el.selectionEnd)?el.selectionEnd:inicio;
-  const antes=atual.slice(0,inicio);
-  const depois=atual.slice(fim);
+  const antes=atual.slice(0,inicio),depois=atual.slice(fim);
   const espaco=antes&&/\S$/.test(antes)?' ':'';
-  const novo=antes+espaco+texto.trim()+depois;
+  const trecho=texto.trim();
+  const novo=antes+espaco+trecho+depois;
   definirValorReact(el,novo);
-  const cursor=(antes+espaco+texto.trim()).length;
+  const cursor=(antes+espaco+trecho).length;
   requestAnimationFrame(()=>{try{el.focus({preventScroll:true});el.setSelectionRange(cursor,cursor)}catch{}});
+};
+
+const limparReconhecimento=()=>{
+  clearTimeout(stopTimer);stopTimer=null;
+  pressionando=false;
+  inicioReconhecimento=0;
+  mic?.classList.remove('listening');
 };
 
 const parar=()=>{
   pressionando=false;
   mic?.classList.remove('listening');
-  try{reconhecimento?.stop?.()}catch{}
-  reconhecimento=null;
+  const rec=reconhecimento;
+  if(!rec)return;
+  const decorrido=Date.now()-inicioReconhecimento;
+  const executar=()=>{
+    try{rec.stop?.()}catch{}
+  };
+  if(decorrido<550)stopTimer=setTimeout(executar,550-decorrido);
+  else executar();
 };
 
 const iniciar=()=>{
   if(!campoAtivo||!elegivel(campoAtivo))return;
   if(!reconhecimentoDisponivel()){
-    mostrarToast('Ditado por voz não está disponível neste navegador.');
+    mostrarToast('Ditado por voz não está disponível neste navegador. Você ainda pode usar o microfone do teclado.');
     return;
   }
+  try{reconhecimento?.abort?.()}catch{}
   pressionando=true;
+  inicioReconhecimento=Date.now();
   mic?.classList.add('listening');
   try{localStorage.setItem(FLAG_HINT,'1')}catch{}
   if(hint)hint.hidden=true;
-  try{reconhecimento?.stop?.()}catch{}
+  const alvo=campoAtivo;
   reconhecimento=iniciarReconhecimentoVoz({
     onResultado:texto=>{
-      inserirTranscricao(campoAtivo,texto);
+      inserirTranscricao(alvo,texto);
       reconhecimento=null;
-      mic?.classList.remove('listening');
+      limparReconhecimento();
     },
     onErro:erro=>{
       reconhecimento=null;
-      mic?.classList.remove('listening');
-      if(!['aborted','no-speech'].includes(String(erro)))mostrarToast('Não consegui ouvir. Segure o microfone e tente novamente.');
+      limparReconhecimento();
+      if(!['aborted','no-speech'].includes(String(erro)))mostrarToast('Não consegui ouvir. Segure o microfone enquanto fala e tente novamente.');
+    },
+    onFim:()=>{
+      reconhecimento=null;
+      limparReconhecimento();
     }
   });
+  if(!reconhecimento)limparReconhecimento();
 };
 
 const posicionar=()=>{
@@ -109,14 +131,18 @@ const posicionar=()=>{
   const vv=window.visualViewport;
   const vw=vv?.width||window.innerWidth;
   const vh=vv?.height||window.innerHeight;
-  if(r.bottom<0||r.top>vh||r.right<0||r.left>vw){mic.hidden=true;if(hint)hint.hidden=true;return;}
+  if(r.bottom<0||r.top>vh||r.right<0||r.left>vw){
+    mic.hidden=true;if(hint)hint.hidden=true;return;
+  }
   const size=38;
   const left=Math.max(8,Math.min(vw-size-8,r.right-size-7));
   const top=Math.max(8,Math.min(vh-size-8,r.top+Math.max(4,(r.height-size)/2)));
   mic.style.left=left+'px';
   mic.style.top=top+'px';
   mic.hidden=false;
-  if(hint&&!localStorage.getItem(FLAG_HINT)){
+  let viu=false;
+  try{viu=!!localStorage.getItem(FLAG_HINT)}catch{}
+  if(hint&&!viu){
     hint.hidden=false;
     hint.style.left=Math.max(10,Math.min(vw-238,left-190))+'px';
     hint.style.top=Math.max(8,top-52)+'px';
@@ -126,9 +152,6 @@ const posicionar=()=>{
 const prepararCampo=el=>{
   if(!elegivel(el)||el.hasAttribute(ATTR))return;
   el.setAttribute(ATTR,'1');
-  // Impede que um clique para editar suba para cards/sheets clicáveis e feche a própria edição.
-  el.addEventListener('click',ev=>ev.stopPropagation());
-  el.addEventListener('pointerdown',ev=>ev.stopPropagation());
 };
 
 const criarUI=()=>{
@@ -148,6 +171,8 @@ const criarUI=()=>{
   const soltar=ev=>{ev?.preventDefault?.();ev?.stopPropagation?.();parar()};
   mic.addEventListener('pointerup',soltar);
   mic.addEventListener('pointercancel',soltar);
+  window.addEventListener('pointerup',()=>{if(pressionando)parar()},true);
+  window.addEventListener('pointercancel',()=>{if(pressionando)parar()},true);
   mic.addEventListener('contextmenu',ev=>ev.preventDefault());
   document.body.appendChild(mic);
 
@@ -159,7 +184,7 @@ const criarUI=()=>{
 
   const style=document.createElement('style');
   style.textContent=`
-    .niil-dictation-mic{position:fixed;z-index:2147483000;width:38px;height:38px;border:0;border-radius:13px;background:#17151D;color:#fff;display:grid;place-items:center;box-shadow:0 7px 18px rgba(23,21,29,.18);touch-action:none;-webkit-user-select:none;user-select:none}
+    .niil-dictation-mic{position:fixed;z-index:2147483000;width:38px;height:38px;border:0;border-radius:13px;background:#17151D;color:#fff;display:grid;place-items:center;box-shadow:0 7px 18px rgba(23,21,29,.18);touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
     .niil-dictation-mic[hidden]{display:none!important}.niil-dictation-mic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.niil-dictation-mic>span{position:absolute;right:5px;top:5px;width:6px;height:6px;border-radius:50%;background:#B7F20C}.niil-dictation-mic.listening{background:#6C9700;transform:scale(1.04)}.niil-dictation-mic.listening>span{animation:niilMicPulse .8s ease infinite alternate}
     .niil-dictation-hint{position:fixed;z-index:2147482999;max-width:228px;padding:9px 11px;border-radius:12px;background:#17151D;color:#fff;font:700 11px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 22px rgba(23,21,29,.16);pointer-events:none}.niil-dictation-hint[hidden]{display:none!important}
     .niil-dictation-toast{position:fixed;z-index:2147483001;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translate(-50%,12px);width:min(88vw,360px);padding:11px 14px;border-radius:14px;background:#17151D;color:#fff;font:700 12px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-align:center;opacity:0;pointer-events:none;transition:.2s ease}.niil-dictation-toast.show{opacity:1;transform:translate(-50%,0)}
@@ -183,14 +208,13 @@ const ativarCampo=el=>{
 
 const desativarCampo=el=>{
   el?.removeAttribute?.('data-niil-editing');
-  // Não escondemos imediatamente: tocar no microfone tira foco do campo em alguns WebKit.
   setTimeout(()=>{
     if(document.activeElement!==campoAtivo&&!pressionando){
       campoAtivo=null;
       if(mic)mic.hidden=true;
       if(hint)hint.hidden=true;
     }
-  },180);
+  },220);
 };
 
 if(typeof document!=='undefined'){
