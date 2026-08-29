@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Menu, Target, CheckCircle2, BookOpen, Wallet, Plus, ChevronRight, CalendarDays, MapPin, BarChart3 } from 'lucide-react';
 import './HomeNIILV3.css';
 import NIILOrb from './NIILOrb.jsx';
+import PerformanceNIIL from './PerformanceNIIL.jsx';
 
 const GREEN = '#B7F20C';
 
@@ -36,6 +37,7 @@ export default function HomeNIILV3({
   toggleTarefaDe,
   abrirTreino
 }) {
+  const [performanceAberta,setPerformanceAberta]=useState(false);
   const hojeIso = new Date().toISOString().slice(0, 10);
   const cursos = d?.cursos || [];
   const cursosFixados = cursos.filter(c => c.fixadoInicio).slice(0, 2);
@@ -89,6 +91,10 @@ export default function HomeNIILV3({
 
   const slots = [cursosFixados[0] || null, cursosFixados[1] || null];
 
+  if(performanceAberta){
+    return <PerformanceNIIL d={d||{}} voltar={()=>setPerformanceAberta(false)}/>;
+  }
+
   return (
     <section className="niil-home-v3-first">
       <header className="niil-home-v3-header">
@@ -102,7 +108,7 @@ export default function HomeNIILV3({
         </div>
 
         <div className="niil-home-v3-header-actions">
-          <button className="niil-home-v3-performance" onClick={() => setAba?.('progresso')} aria-label="Abrir Performance" title="Performance">
+          <button className="niil-home-v3-performance" onClick={() => setPerformanceAberta(true)} aria-label="Abrir Performance" title="Performance">
             <BarChart3 size={21} strokeWidth={2.1} />
           </button>
           <button className="niil-home-v3-avatar" onClick={() => setSheet?.('perfil')} aria-label="Abrir perfil">
@@ -136,22 +142,11 @@ export default function HomeNIILV3({
               <path d="M192 0 C178 35 199 67 188 100 S181 141 197 170" />
               <path d="M233 0 C221 32 238 66 226 94 S218 137 238 170" />
             </g>
-            <path
-              className="niil-home-v3-route-base"
-              pathLength="100"
-              d="M20 132 C54 128 72 148 101 128 S135 90 160 101 S193 116 207 77 S244 52 260 38"
-            />
-            <path
-              className="niil-home-v3-route-progress"
-              pathLength="100"
-              strokeDasharray={`${Math.max(0, Math.min(100, pctVida))} ${100 - Math.max(0, Math.min(100, pctVida))}`}
-              d="M20 132 C54 128 72 148 101 128 S135 90 160 101 S193 116 207 77 S244 52 260 38"
-            />
+            <path className="niil-home-v3-route-base" pathLength="100" d="M20 132 C54 128 72 148 101 128 S135 90 160 101 S193 116 207 77 S244 52 260 38" />
+            <path className="niil-home-v3-route-progress" pathLength="100" strokeDasharray={`${Math.max(0, Math.min(100, pctVida))} ${100 - Math.max(0, Math.min(100, pctVida))}`} d="M20 132 C54 128 72 148 101 128 S135 90 160 101 S193 116 207 77 S244 52 260 38" />
             <circle cx="20" cy="132" r="9" fill="#ffffff" />
             <circle cx="20" cy="132" r="5" fill={GREEN} />
-            <g transform="translate(244 12)">
-              <MapPin size={38} color={GREEN} fill={GREEN} strokeWidth={1.8} />
-            </g>
+            <g transform="translate(244 12)"><MapPin size={38} color={GREEN} fill={GREEN} strokeWidth={1.8} /></g>
             <text x="210" y="65" className="niil-home-v3-map-label">Sua meta</text>
           </svg>
         </div>
@@ -160,80 +155,58 @@ export default function HomeNIILV3({
       <div className="niil-home-v3-quick" aria-label="Atalhos do início">
         <button onClick={() => setAba?.('trilha')}>
           <span className="niil-home-v3-quick-icon active"><Target size={19} /></span>
-          <b>Missão do dia</b>
-          <small>{totalMissao ? `${feitasMissao}/${totalMissao}` : 'Abrir trilha'}</small>
+          <b>Missão do dia</b><small>{totalMissao ? `${feitasMissao}/${totalMissao}` : 'Abrir trilha'}</small>
         </button>
 
         {slots.map((curso, idx) => {
           if (!curso) return (
             <button key={`empty-${idx}`} onClick={() => setAba?.('cursos')}>
-              <span className="niil-home-v3-quick-icon"><Plus size={19} /></span>
-              <b>Fixar trilha</b>
-              <small>{idx + 1} de 2</small>
+              <span className="niil-home-v3-quick-icon"><Plus size={19} /></span><b>Fixar trilha</b><small>{idx + 1} de 2</small>
             </button>
           );
           const feitas = (curso.aulas || []).filter(a => a.feito).length;
           const total = (curso.aulas || []).length;
           return (
             <button key={curso.id} onClick={() => setAba?.('cursos')}>
-              <span className="niil-home-v3-quick-icon"><BookOpen size={19} /></span>
-              <b>{curso.nome}</b>
-              <small>{total ? `${feitas}/${total}` : 'Trilha'}</small>
+              <span className="niil-home-v3-quick-icon"><BookOpen size={19} /></span><b>{curso.nome}</b><small>{total ? `${feitas}/${total}` : 'Trilha'}</small>
             </button>
           );
         })}
 
         <button onClick={() => setAba?.('financeiro')}>
-          <span className="niil-home-v3-quick-icon"><Wallet size={19} /></span>
-          <b>Finanças</b>
-          <small>Fixo</small>
+          <span className="niil-home-v3-quick-icon"><Wallet size={19} /></span><b>Finanças</b><small>Fixo</small>
         </button>
 
         <button onClick={() => setSheet?.('ia')} aria-label="Conversar com a NIIL">
-          <span className="niil-home-v3-quick-icon niil-home-v3-quick-orb"><NIILOrb state="idle" size={32} label="NIIL IA"/></span>
-          <b>NIIL</b>
-          <small>Conversar</small>
+          <span className="niil-home-v3-quick-icon niil-home-v3-quick-orb"><NIILOrb state="idle" size={32} label="NIIL IA"/></span><b>NIIL</b><small>Conversar</small>
         </button>
       </div>
 
       <section className="niil-home-v3-agenda">
         <div className="niil-home-v3-section-head">
-          <div>
-            <span>Agenda</span>
-            <small>{totalMissao ? `${feitasMissao} de ${totalMissao} concluídas hoje` : 'Hoje'}</small>
-          </div>
+          <div><span>Agenda</span><small>{totalMissao ? `${feitasMissao} de ${totalMissao} concluídas hoje` : 'Hoje'}</small></div>
           <button onClick={abrirAgenda}>Ver tudo <ChevronRight size={16} /></button>
         </div>
 
         {agendaPreview.length ? (
           <div className="niil-home-v3-agenda-list">
-            {agendaPreview.map((item, idx) => (
+            {agendaPreview.map((item) => (
               <button key={item.id} className={item.feito ? 'done' : ''} onClick={() => abrirItemAgenda(item)}>
-                <span className="niil-home-v3-agenda-time">{item.hora}</span>
-                <i className="niil-home-v3-agenda-dot" />
-                <span className="niil-home-v3-agenda-icon">
-                  {item.origem === 'curso' ? <BookOpen size={16} /> : <CalendarDays size={16} />}
-                </span>
-                <span className="niil-home-v3-agenda-copy">
-                  <b>{item.titulo}</b>
-                  <small>{item.detalhe}</small>
-                </span>
+                <span className="niil-home-v3-agenda-time">{item.hora}</span><i className="niil-home-v3-agenda-dot" />
+                <span className="niil-home-v3-agenda-icon">{item.origem === 'curso' ? <BookOpen size={16} /> : <CalendarDays size={16} />}</span>
+                <span className="niil-home-v3-agenda-copy"><b>{item.titulo}</b><small>{item.detalhe}</small></span>
                 {item.feito ? <CheckCircle2 size={18} /> : <ChevronRight size={18} />}
               </button>
             ))}
           </div>
         ) : (
           <button className="niil-home-v3-empty" onClick={abrirAgenda}>
-            <CalendarDays size={21} />
-            <span><b>Seu dia está livre por enquanto.</b><small>Abra a agenda para organizar o próximo compromisso.</small></span>
-            <ChevronRight size={18} />
+            <CalendarDays size={21} /><span><b>Seu dia está livre por enquanto.</b><small>Abra a agenda para organizar o próximo compromisso.</small></span><ChevronRight size={18} />
           </button>
         )}
 
         <div className="niil-home-v3-mission-progress">
-          <span>Missão do dia</span>
-          <div><i style={{ width: `${pctMissao}%` }} /></div>
-          <strong>{pctMissao}%</strong>
+          <span>Missão do dia</span><div><i style={{ width: `${pctMissao}%` }} /></div><strong>{pctMissao}%</strong>
         </div>
       </section>
     </section>
