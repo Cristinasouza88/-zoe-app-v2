@@ -619,10 +619,31 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       <div className="tn-hero-stat"><b>{marcos}</b><small>de {TRILHA_NIIL.length}<br/>marcos</small></div>
     </header>
 
-    <section className="tn-now">
-      <div><span>AGORA · {atual.fase.marco}</span><b>{atual.fase.nome}</b><small>Faltam {Math.max(0,atual.total-atual.concluidas)} passos para fechar este marco.</small></div>
-      <button onClick={()=>setAberta(atual.fase.etapas.find(e=>!feito(e.id))?.id||atual.fase.etapas[0].id)}>Continuar <ChevronRight size={17}/></button>
-    </section>
+    {atual.concluida?
+      <section className="tn-season-complete">
+        <span>TEMPORADA CONCLUÍDA</span>
+        <h2>Este ciclo fica no seu histórico.</h2>
+        <p>Quando fizer sentido começar outro, você percorre o mesmo método novamente. O valor está em comparar quem você era, o que escolheu e como seus padrões mudaram.</p>
+        <button onClick={iniciarNovaTemporada}>Iniciar nova temporada <ChevronRight size={17}/></button>
+      </section>
+      :
+      <section className="tn-now">
+        <div><span>AGORA · {atual.fase.marco}</span><b>{atual.fase.nome}</b><small>Faltam {Math.max(0,atual.total-atual.concluidas)} passos para fechar este marco.</small></div>
+        <button onClick={()=>setAberta(atual.fase.etapas.find(e=>!feito(e.id))?.id||atual.fase.etapas[0].id)}>Continuar <ChevronRight size={17}/></button>
+      </section>
+    }
+
+    {temporadasConcluidas.length>0&&<section className="tn-season-history">
+      <div className="tn-season-history-head"><span>HISTÓRICO</span><b>{temporadasConcluidas.length} {temporadasConcluidas.length===1?'temporada':'temporadas'}</b></div>
+      {temporadasConcluidas.slice().reverse().slice(0,4).map(t=>{
+        const ini=t.iniciadaEm?new Date(t.iniciadaEm).toLocaleDateString('pt-BR',{month:'short',year:'numeric'}):'';
+        const fim=t.encerradaEm?new Date(t.encerradaEm).toLocaleDateString('pt-BR',{month:'short',year:'numeric'}):'';
+        return <div className="tn-season-history-item" key={t.id}>
+          <div><small>TEMPORADA {t.numero||'—'} · {ini}{fim?' → '+fim:''}</small><b>{objetivoLegivel(t.objetivo||t.motivacaoBase?.objetivo)}</b></div>
+          <span>{Number.isFinite(Number(t.duracaoDias))?t.duracaoDias+' dias':'Concluída'}</span>
+        </div>;
+      })}
+    </section>}
 
     <div className="tn-olympo">
       {TRILHA_NIIL.map((f,fi)=>{
