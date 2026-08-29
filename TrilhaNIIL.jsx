@@ -117,7 +117,7 @@ const Radar=({valores={}})=>{
   </svg>
 };
 
-export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
+export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const[aberta,setAberta]=useState(null);
   const[marco,setMarco]=useState(null);
   const[rodaPasso,setRodaPasso]=useState(0);
@@ -149,10 +149,14 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
   const liberado=id=>{const i=sequencia.findIndex(e=>e.id===id);return i<=Math.max(0,primeiroPendente<0?sequencia.length-1:primeiroPendente)};
 
   const abrirModulo=modulo=>{
-    const aba=moduloParaAba[modulo];
-    if(!aba)return;
     up(s=>({...s,trilhaNIIL:{...(s.trilhaNIIL||{}),modulosVisitados:{...(s.trilhaNIIL?.modulosVisitados||{}),[modulo]:true}}}));
     feedback('snap',d);
+    if(modulo==='treino'&&typeof abrirTreino==='function'){
+      abrirTreino({origem:'trilha-niil',titulo:'Treino'});
+      return;
+    }
+    const aba=moduloParaAba[modulo];
+    if(!aba)return;
     setAba(aba);
   };
 
