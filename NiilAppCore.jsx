@@ -3,7 +3,7 @@ import {
   Home, Route, Plus, Utensils, TrendingUp, Camera, ImagePlus, Bell, BellRing, ChevronLeft, ChevronRight,
   X, Check, Lock, Timer, Droplets, Dumbbell, BookOpen, Film, Video, Sparkles, Target,
   Heart, Scale, Circle, LogOut, Flame, Trash2, Compass, PenLine, ClipboardList, Sun,
-  Wallet, Languages, Trophy, Moon, Smile, CheckCircle2, Zap, CalendarDays, ChevronDown, ChevronUp, MessageCircle, RotateCcw
+  Wallet, Languages, Trophy, Moon, Smile, CheckCircle2, Zap, CalendarDays, ChevronDown, ChevronUp, MessageCircle
 } from 'lucide-react';
 import { TRILHA, RODA_SETORES, RITUAL_ACORDAR, VISAO_PILARES, RESUMO_VISAO, PILARES, VINCULOS } from './conteudo';
 import { store, C, sobre, CLARAS, hoje, CSS, Card, Btn, Campo, Area, Barra, Sheet, Wordmark, Foto, GraficoBarras, GraficoLinha } from './ui.jsx';
@@ -578,9 +578,11 @@ export default function NIILApp() {
     });
     setCarregando(false);
   };
-  const reiniciarProgressoTrilha = async () => {
-    const ok=window.confirm('Reiniciar o progresso da Trilha? Isso apaga respostas, temporadas, Rodas e ações geradas pela Trilha, mas preserva sua conta e os demais módulos.');
-    if(!ok)return;
+  const reiniciarProgressoTrilha = async ({confirmar=true}={}) => {
+    if(confirmar){
+      const ok=window.confirm('Reiniciar o progresso da Trilha? Isso apaga respostas, temporadas, Rodas e ações geradas pela Trilha, mas preserva sua conta e os demais módulos.');
+      if(!ok)return;
+    }
     const audioKey=d.trilhaNIIL?.vozCompromisso?.storageKey;
     if(audioKey)await store.set(audioKey,null).catch(()=>false);
     const idsTrilha=new Set(TRILHA_NIIL.flatMap(f=>f.etapas.map(e=>e.id)));
@@ -615,6 +617,15 @@ export default function NIILApp() {
     setAba('trilha');
     aviso('Trilha reiniciada. Você pode testar desde o M1.');
   };
+
+  useEffect(() => {
+    if(carregando||!usuario)return;
+    const url=new URL(window.location.href);
+    if(url.searchParams.get('niil_test')!=='reset-trilha-20260829')return;
+    url.searchParams.delete('niil_test');
+    window.history.replaceState({},document.title,url.pathname+url.search+url.hash);
+    reiniciarProgressoTrilha({confirmar:false});
+  }, [carregando, usuario]);
 
   const sair = async () => {
     if(usuario)await persistirEstadoUsuario(usuario,d);
@@ -2213,11 +2224,6 @@ export default function NIILApp() {
             <button onClick={() => { setSheet(null); permissao(); }} style={{ minHeight: 54, padding: '0 14px', borderRadius: 16, border: `1px solid ${C.line}`, background: '#fff', color: C.ink, display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left' }}>
               <span style={{ width: 34, height: 34, borderRadius: 11, background: C.aquaSuave, display: 'grid', placeItems: 'center', color: C.petroleo }}><Bell size={17} /></span>
               <span style={{ flex: 1, fontSize: 13.5, fontWeight: 850 }}>Notificações</span>
-              <ChevronRight size={17} color={C.ink3} />
-            </button>
-            <button onClick={reiniciarProgressoTrilha} style={{ minHeight: 54, padding: '0 14px', borderRadius: 16, border: `1px solid ${C.line}`, background: '#fff', color: C.ink, display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left' }}>
-              <span style={{ width: 34, height: 34, borderRadius: 11, background: C.mint, display: 'grid', placeItems: 'center', color: C.greenDark }}><RotateCcw size={17} /></span>
-              <span style={{ flex: 1 }}><span style={{ display:'block',fontSize:13.5,fontWeight:850 }}>Reiniciar progresso da Trilha</span><small style={{ display:'block',fontSize:9.5,color:C.ink3,marginTop:2 }}>Mantém sua conta e os outros módulos</small></span>
               <ChevronRight size={17} color={C.ink3} />
             </button>
             <button onClick={async () => { setSheet(null); await sair(); }} style={{ minHeight: 54, padding: '0 14px', borderRadius: 16, border: '1px solid #F1DEDE', background: '#FFF9F9', color: '#A43C3C', display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left' }}>
