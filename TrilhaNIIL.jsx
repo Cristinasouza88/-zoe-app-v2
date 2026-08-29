@@ -2,13 +2,14 @@ import React,{useEffect,useMemo,useRef,useState}from'react';
 import{
   ArrowLeft,Target,Moon,Home,Repeat2,Network,Flag,CalendarDays,TrendingUp,
   Lock,Check,ChevronRight,BookOpen,Wallet,Dumbbell,Droplets,Utensils,GraduationCap,
-  Languages,Camera,Clock3,Mic,Square,Brain,Footprints,Sparkles,Volume2
+  Languages,Camera,Clock3,Mic,Square,Brain,Footprints,Sparkles,Play,RotateCcw
 }from'lucide-react';
 import NIILOrb from'./NIILOrb.jsx';
 import{RODA_SETORES}from'./conteudo.js';
 import{TRILHA_NIIL,moduloParaAba,faseAtualNIIL,marcosConcluidosNIIL,recomendacoesContextuaisNIIL}from'./trilha.niil.data.js';
 import{iniciarReconhecimentoVoz,reconhecimentoDisponivel}from'./ia.jsx';
 import{registrarEventoGamificacao}from'./gamificacao.core.js';
+import{store}from'./ui.jsx';
 import'./TrilhaNIIL.css';
 
 const ICONS={target:Target,moon:Moon,home:Home,repeat:Repeat2,network:Network,flag:Flag,calendar:CalendarDays,chart:TrendingUp};
@@ -92,19 +93,6 @@ const som=(kind='tap',enabled=true)=>{
   }catch{}
 };
 const feedback=(kind,d)=>{vibrar();som(kind,d?.preferencias?.sonsNIIL!==false)};
-const falarFrase=texto=>{
-  try{
-    if(!window.speechSynthesis||!texto)return;
-    window.speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(texto);
-    u.lang='pt-BR';u.rate=.92;u.pitch=1;
-    const vozes=window.speechSynthesis.getVoices?.()||[];
-    const pt=vozes.find(v=>String(v.lang||'').toLowerCase().startsWith('pt-br'))||vozes.find(v=>String(v.lang||'').toLowerCase().startsWith('pt'));
-    if(pt)u.voice=pt;
-    window.speechSynthesis.speak(u);
-  }catch{}
-};
-
 const Radar=({valores={}})=>{
   const n=RODA_SETORES.length,cx=150,cy=150,r=110;
   const pt=(i,v=10)=>{const a=-Math.PI/2+i*2*Math.PI/n,rr=r*(Number(v||0)/10);return[cx+Math.cos(a)*rr,cy+Math.sin(a)*rr]};
@@ -123,6 +111,12 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const[rodaPasso,setRodaPasso]=useState(0);
   const[rodaAtivacao,setRodaAtivacao]=useState({area:null,etapa:'foco',razoes:[],metaNota:null});
   const recRef=useRef(null);
+  const[vozCommit,setVozCommit]=useState({status:'idle',url:null,error:''});
+  const mediaRecorderRef=useRef(null);
+  const mediaStreamRef=useRef(null);
+  const audioChunksRef=useRef([]);
+  const audioTimerRef=useRef(null);
+  const audioPlayerRef=useRef(null);
   const atual=useMemo(()=>faseAtualNIIL(d.etapas||{}),[d.etapas]);
   const marcos=useMemo(()=>marcosConcluidosNIIL(d.etapas||{}),[d.etapas]);
   const recomendacoes=useMemo(()=>recomendacoesContextuaisNIIL(d),[d]);
@@ -142,6 +136,33 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     setRodaPasso(i<0?0:i);
     setRodaAtivacao({area:null,etapa:'foco',razoes:[],metaNota:null});
   },[passo?.id,snapshotRoda?.id]);
+
+  useEffect(()=>{
+    let cancelado=false;
+    const meta=d.trilhaNIIL?.vozCompromisso;
+    const objetivo=resp['meta-inicial'];
+    if(passo?.interacao!=='sentence-choice'||!meta?.storageKey||meta?.objetivo!==objetivo||meta?.pulado){
+      setVozCommit(prev=>{
+        if(prev.url)try{URL.revokeObjectURL(prev.url)}catch{}
+        return{status:'idle',url:null,error:''};
+      });
+      return;
+    }
+    setVozCommit(prev=>({...prev,status:'loading',error:''}));
+    store.get(meta.storageKey).then(blob=>{
+      if(cancelado)return;
+      if(blob instanceof Blob&&blob.size>0){
+        const url=URL.createObjectURL(blob);
+        setVozCommit(prev=>{
+          if(prev.url)try{URL.revokeObjectURL(prev.url)}catch{}
+          return{status:'ready',url,error:''};
+        });
+      }else{
+        setVozCommit({status:'idle',url:null,error:''});
+      }
+    }).catch(()=>!cancelado&&setVozCommit({status:'idle',url:null,error:''}));
+    return()=>{cancelado=true};
+  },[passo?.id,resp['meta-inicial'],d.trilhaNIIL?.vozCompromisso?.storageKey]);
 
 
   const salvar=(chave,valor)=>up(s=>({...s,trilhaNIIL:{...(s.trilhaNIIL||{}),respostas:{...(s.trilhaNIIL?.respostas||{}),[chave]:valor}}}));
@@ -168,7 +189,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     up(s=>{
       const trilha=s.trilhaNIIL||{};
       const etapas=Object.fromEntries(Object.entries(s.etapas||{}).filter(([id])=>!ids.has(id)));
-      return{...s,etapas,trilhaNIIL:{...trilha,respostas:{},motivacaoBase:null,temporadaAtualId:null,rodaRascunhos:{},focoAtual:null,handoff:null}};
+      return{...s,etapas,trilhaNIIL:{...trilha,respostas:{},motivacaoBase:null,vozCompromisso:null,temporadaAtualId:null,rodaRascunhos:{},focoAtual:null,handoff:null}};
     });
     setAberta(null);
     feedback('marco',d);
@@ -178,6 +199,10 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const valido=e=>{
     const v=ler(e.chave);
     if(e.tipo==='roda')return !!(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id&&snapshotValido(x,e));
+    if(e.interacao==='sentence-choice'){
+      const voz=d.trilhaNIIL?.vozCompromisso;
+      return !!v&&voz?.objetivo===v&&(!!voz?.storageKey||voz?.pulado===true);
+    }
     if(e.interacao==='multi'||e.interacao==='modules'||e.interacao==='swipe')return Array.isArray(v)&&v.length>0;
     if(e.interacao==='energy')return true;
     if(e.interacao==='sleep')return true;
@@ -260,6 +285,95 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     setAberta(prox?.id||null);
   };
 
+  const encerrarStreamAudio=()=>{
+    if(audioTimerRef.current){clearTimeout(audioTimerRef.current);audioTimerRef.current=null;}
+    try{mediaStreamRef.current?.getTracks?.().forEach(t=>t.stop())}catch{}
+    mediaStreamRef.current=null;
+  };
+
+  const pararGravacao=()=>{
+    try{
+      if(mediaRecorderRef.current&&mediaRecorderRef.current.state!=='inactive')mediaRecorderRef.current.stop();
+    }catch{}
+  };
+
+  const selecionarObjetivoFrase=(e,item)=>{
+    if(mediaRecorderRef.current?.state==='recording')pararGravacao();
+    const anterior=d.trilhaNIIL?.vozCompromisso;
+    if(anterior?.objetivo&&anterior.objetivo!==item.valor&&anterior.storageKey)store.set(anterior.storageKey,null).catch(()=>{});
+    setVozCommit(prev=>{
+      if(prev.url)try{URL.revokeObjectURL(prev.url)}catch{}
+      return{status:'idle',url:null,error:''};
+    });
+    up(s=>({
+      ...s,
+      trilhaNIIL:{
+        ...(s.trilhaNIIL||{}),
+        respostas:{...(s.trilhaNIIL?.respostas||{}),[e.chave]:item.valor},
+        vozCompromisso:s.trilhaNIIL?.vozCompromisso?.objetivo===item.valor?s.trilhaNIIL.vozCompromisso:null
+      }
+    }));
+    feedback('tap',d);
+  };
+
+  const iniciarGravacaoCompromisso=async(e,frase,objetivo)=>{
+    if(!objetivo)return;
+    if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
+      setVozCommit({status:'error',url:null,error:'Este dispositivo não disponibilizou gravação de áudio.'});
+      return;
+    }
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+      mediaStreamRef.current=stream;
+      const candidatos=['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'];
+      const mime=candidatos.find(t=>MediaRecorder.isTypeSupported?.(t));
+      const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+      mediaRecorderRef.current=recorder;
+      audioChunksRef.current=[];
+      recorder.ondataavailable=ev=>{if(ev.data?.size)audioChunksRef.current.push(ev.data)};
+      recorder.onerror=()=>{
+        encerrarStreamAudio();
+        setVozCommit({status:'error',url:null,error:'Não foi possível concluir a gravação. Tente novamente.'});
+      };
+      recorder.onstop=async()=>{
+        encerrarStreamAudio();
+        const blob=new Blob(audioChunksRef.current,{type:recorder.mimeType||mime||'audio/webm'});
+        if(blob.size<700){
+          setVozCommit({status:'error',url:null,error:'A gravação ficou curta demais. Tente falar a frase novamente.'});
+          return;
+        }
+        const existente=d.trilhaNIIL?.vozCompromisso;
+        const usuario=String(d.perfil?.email||'local').trim().toLowerCase().replace(/[^a-z0-9@._-]+/g,'-');
+        const storageKey=existente?.objetivo===objetivo&&existente?.storageKey?existente.storageKey:`niil:voz-compromisso:${usuario}:${Date.now()}`;
+        try{
+          await store.set(storageKey,blob);
+          const url=URL.createObjectURL(blob);
+          setVozCommit(prev=>{
+            if(prev.url)try{URL.revokeObjectURL(prev.url)}catch{}
+            return{status:'ready',url,error:''};
+          });
+          up(s=>({...s,trilhaNIIL:{...(s.trilhaNIIL||{}),vozCompromisso:{objetivo,frase,storageKey,mimeType:blob.type,gravadaEm:new Date().toISOString(),localOnly:true,pulado:false}}}));
+          feedback('snap',d);
+        }catch{
+          setVozCommit({status:'error',url:null,error:'Não consegui salvar o áudio neste dispositivo.'});
+        }
+      };
+      recorder.start(180);
+      setVozCommit(prev=>({status:'recording',url:prev.url||null,error:''}));
+      feedback('tap',d);
+      audioTimerRef.current=setTimeout(()=>pararGravacao(),12000);
+    }catch(err){
+      encerrarStreamAudio();
+      const negado=err?.name==='NotAllowedError'||err?.name==='SecurityError';
+      setVozCommit({status:'error',url:null,error:negado?'O acesso ao microfone foi recusado.':'Não foi possível acessar o microfone.'});
+    }
+  };
+
+  const seguirSemGravar=(objetivo,frase)=>{
+    up(s=>({...s,trilhaNIIL:{...(s.trilhaNIIL||{}),vozCompromisso:{objetivo,frase,storageKey:null,gravadaEm:null,localOnly:true,pulado:true,motivo:'microfone-indisponivel'}}}));
+    setVozCommit({status:'skipped',url:null,error:''});
+  };
+
   const concluirRapido=(e,valor)=>{
     salvar(e.chave,valor);
     feedback('snap',d);
@@ -287,7 +401,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       const temporadas=Array.isArray(trilha.temporadas)?trilha.temporadas:[];
       const ativa=temporadas.find(t=>t.id===trilha.temporadaAtualId&&t.status==='ativa');
       const id=ativa?.id||('temporada-'+Date.now());
-      const temporada=ativa?{...ativa,objetivo,motivacaoBase:base}:{id,numero:temporadas.length+1,status:'ativa',iniciadaEm:agora,objetivo,motivacaoBase:base,rodaInicialSnapshotId:null,rodaFinalSnapshotId:null};
+      const vozCompromisso=trilha.vozCompromisso||null;
+      const temporada=ativa?{...ativa,objetivo,motivacaoBase:base,vozCompromisso}:{id,numero:temporadas.length+1,status:'ativa',iniciadaEm:agora,objetivo,motivacaoBase:base,vozCompromisso,rodaInicialSnapshotId:null,rodaFinalSnapshotId:null};
       const novas=ativa?temporadas.map(t=>t.id===id?temporada:t):[...temporadas,temporada];
       return{...s,trilhaNIIL:{...trilha,respostas:{...respostas,[e.chave]:'sim'},motivacaoBase:base,temporadas:novas,temporadaAtualId:id}};
     });
@@ -508,26 +623,48 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       const escolhida=(e.opcoesFrase||[]).find(x=>x.valor===v);
       const textoEscolhido=escolhida?.texto||'';
       const frase=textoEscolhido?(e.fraseInicio+' '+textoEscolhido+' '+e.fraseFim):(e.fraseInicio+' ... '+e.fraseFim);
+      const vozMeta=d.trilhaNIIL?.vozCompromisso;
+      const gravacaoValida=vozMeta?.objetivo===v&&!!vozMeta?.storageKey&&vozCommit.status==='ready'&&!!vozCommit.url;
+      const pulou=vozMeta?.objetivo===v&&vozMeta?.pulado===true;
       return <div className="tn-sentence-exercise">
         <div className="tn-sentence-label">COMPLETE A FRASE</div>
         <h1>Eu mudaria <span>{textoEscolhido||'________'}</span> primeiro.</h1>
 
-        <div className="tn-sentence-stage">
+        <div className="tn-sentence-stage tn-sentence-stage-voice">
           <div className="tn-sentence-symbol" aria-hidden="true"><Target size={56} strokeWidth={1.7}/></div>
-          <div className={`tn-sentence-bubble ${textoEscolhido?'ready':''}`}>
-            <button type="button" aria-label="Ouvir frase" disabled={!textoEscolhido} onClick={()=>falarFrase(frase)}><Volume2 size={25}/></button>
-            <div><small>OUÇA SUA FRASE</small><b>{e.fraseInicio} {textoEscolhido?<mark>{textoEscolhido}</mark>:'______'} {e.fraseFim}</b></div>
+          <div className={`tn-ownvoice-card ${gravacaoValida?'ready':''} ${vozCommit.status==='recording'?'recording':''}`}>
+            {!textoEscolhido&&<><small>PRIMEIRO, MONTE SUA FRASE</small><b>Escolha uma opção abaixo.</b></>}
+            {textoEscolhido&&<>
+              <small>AGORA DIGA COM A SUA VOZ</small>
+              <b>“{frase}”</b>
+              {vozCommit.status==='recording'?
+                <button className="tn-ownvoice-record stop" type="button" onClick={pararGravacao}><Square size={17} fill="currentColor"/> Parar gravação</button>
+                :gravacaoValida?
+                <div className="tn-ownvoice-actions">
+                  <audio ref={audioPlayerRef} src={vozCommit.url} preload="metadata"/>
+                  <button className="play" type="button" onClick={()=>audioPlayerRef.current?.play()}><Play size={18} fill="currentColor"/> Ouvir minha voz</button>
+                  <button className="redo" type="button" onClick={()=>iniciarGravacaoCompromisso(e,frase,v)}><RotateCcw size={16}/> Refazer</button>
+                </div>
+                :pulou?
+                <div className="tn-ownvoice-skipped"><Check size={16}/> Etapa de voz ignorada neste dispositivo.</div>
+                :
+                <button className="tn-ownvoice-record" type="button" onClick={()=>iniciarGravacaoCompromisso(e,frase,v)}><Mic size={18}/> Gravar minha frase</button>
+              }
+              {vozCommit.status==='recording'&&<div className="tn-ownvoice-live"><i/> Gravando… fale a frase e toque em parar.</div>}
+              {vozCommit.error&&<div className="tn-ownvoice-error"><span>{vozCommit.error}</span><button type="button" onClick={()=>seguirSemGravar(v,frase)}>Continuar sem gravar</button></div>}
+              {!vozCommit.error&&!pulou&&<em>Seu áudio fica neste dispositivo e não é enviado para IA.</em>}
+            </>}
           </div>
         </div>
 
         <div className="tn-sentence-answer">
           <span>Eu mudaria</span>
-          <button className={textoEscolhido?'filled':'blank'} type="button" onClick={()=>textoEscolhido&&salvar(e.chave,null)}>{textoEscolhido||'escolha uma opção'}</button>
+          <button className={textoEscolhido?'filled':'blank'} type="button" onClick={()=>textoEscolhido&&selecionarObjetivoFrase(e,{valor:null,texto:''})}>{textoEscolhido||'escolha uma opção'}</button>
           <span>primeiro.</span>
         </div>
 
         <div className="tn-sentence-divider"/>
-        <div className="tn-sentence-bank">{(e.opcoesFrase||[]).map(x=><button type="button" key={x.valor} className={v===x.valor?'selected':''} onClick={()=>{salvar(e.chave,x.valor);feedback('tap',d)}}>{x.texto}</button>)}</div>
+        <div className="tn-sentence-bank">{(e.opcoesFrase||[]).map(x=><button type="button" key={x.valor} className={v===x.valor?'selected':''} onClick={()=>selecionarObjetivoFrase(e,x)}>{x.texto}</button>)}</div>
       </div>;
     }
     if(e.interacao==='motivation-why'){

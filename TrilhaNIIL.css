@@ -329,3 +329,37 @@ body:has(.tn-detail) .niil-bottom-nav{display:none!important}
 .tn-season-history-item small{display:block;font-size:7.5px;font-weight:850;letter-spacing:.5px;color:#918D95;margin-bottom:3px;text-transform:uppercase}
 .tn-season-history-item b{font-size:12px}
 .tn-season-history-item>span{font-size:9px;font-weight:850;color:#6C9700;background:#F3F9DB;border-radius:999px;padding:6px 8px;white-space:nowrap}
+
+
+/* ══════════ M1 · compromisso com a própria voz ══════════ */
+.tn-sentence-stage-voice{align-items:stretch}
+.tn-ownvoice-card{position:relative;min-height:118px;border:2px solid #E2E1E5;border-radius:22px;background:#fff;padding:14px 15px;display:flex;flex-direction:column;justify-content:center}
+.tn-ownvoice-card:before{content:"";position:absolute;left:-13px;top:42px;width:22px;height:22px;background:#fff;border-left:2px solid #E2E1E5;border-bottom:2px solid #E2E1E5;transform:rotate(45deg)}
+.tn-ownvoice-card.ready{border-color:#B9CC7C}
+.tn-ownvoice-card.ready:before{border-color:#B9CC7C}
+.tn-ownvoice-card.recording{border-color:#FF8A3D;background:#FFF8F3}
+.tn-ownvoice-card.recording:before{border-color:#FF8A3D;background:#FFF8F3}
+.tn-ownvoice-card>small{position:relative;z-index:2;display:block;font-size:8px;font-weight:950;letter-spacing:.9px;color:#8D8992;margin-bottom:6px}
+.tn-ownvoice-card>b{position:relative;z-index:2;display:block;font-size:14px;line-height:1.38;color:#17151D;margin-bottom:12px}
+.tn-ownvoice-card>em{position:relative;z-index:2;display:block;font-style:normal;font-size:8px;line-height:1.4;color:#97939B;margin-top:9px}
+.tn-ownvoice-record{position:relative;z-index:2;width:100%;min-height:47px;border:0;border-radius:14px;background:#17151D;color:#fff;font:inherit;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:7px}
+.tn-ownvoice-record.stop{background:#FF8A3D;color:#17151D}
+.tn-ownvoice-actions{position:relative;z-index:2;display:grid;grid-template-columns:1fr auto;gap:8px}
+.tn-ownvoice-actions audio{display:none}
+.tn-ownvoice-actions button{min-height:46px;border-radius:14px;font:inherit;font-size:10.5px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:6px}
+.tn-ownvoice-actions .play{border:0;background:#B7F20C;color:#17151D}
+.tn-ownvoice-actions .redo{border:1.5px solid #E0DEE3;background:#fff;color:#17151D;padding:0 12px}
+.tn-ownvoice-live{position:relative;z-index:2;margin-top:9px;font-size:8.5px;font-weight:750;color:#7D593E;display:flex;align-items:center;gap:6px}
+.tn-ownvoice-live i{width:8px;height:8px;border-radius:50%;background:#FF8A3D;animation:tnVoicePulse 1s ease-in-out infinite}
+@keyframes tnVoicePulse{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+.tn-ownvoice-error{position:relative;z-index:2;margin-top:9px;padding:9px 10px;border-radius:12px;background:#FFF3EB;display:grid;gap:7px}
+.tn-ownvoice-error span{font-size:8.5px;line-height:1.4;color:#70594B}
+.tn-ownvoice-error button{border:0;background:transparent;color:#17151D;font:inherit;font-size:8.5px;font-weight:900;text-decoration:underline;text-align:left;padding:0}
+.tn-ownvoice-skipped{position:relative;z-index:2;display:flex;align-items:center;gap:6px;background:#F4F5F1;border-radius:12px;padding:10px;font-size:9px;font-weight:800;color:#69666E}
+@media(max-width:560px){
+  .tn-sentence-stage-voice{grid-template-columns:78px minmax(0,1fr)}
+  .tn-ownvoice-card{padding:12px;min-height:112px}
+  .tn-ownvoice-actions{grid-template-columns:1fr}
+  .tn-ownvoice-actions .redo{min-height:40px}
+}
+@media(prefers-reduced-motion:reduce){.tn-ownvoice-live i{animation:none!important}}
