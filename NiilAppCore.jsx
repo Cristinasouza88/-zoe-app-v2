@@ -3,7 +3,7 @@ import {
   Home, Route, Plus, Utensils, TrendingUp, Camera, ImagePlus, Bell, BellRing, ChevronLeft, ChevronRight,
   X, Check, Lock, Timer, Droplets, Dumbbell, BookOpen, Film, Video, Sparkles, Target,
   Heart, Scale, Circle, LogOut, Flame, Trash2, Compass, PenLine, ClipboardList, Sun,
-  Wallet, Languages, Trophy, Moon, Smile, CheckCircle2, Zap, CalendarDays, ChevronDown, ChevronUp, MessageCircle
+  Wallet, Languages, Trophy, Moon, Smile, CheckCircle2, Zap, CalendarDays, ChevronDown, ChevronUp, MessageCircle, RotateCcw
 } from 'lucide-react';
 import { TRILHA, RODA_SETORES, RITUAL_ACORDAR, VISAO_PILARES, RESUMO_VISAO, PILARES, VINCULOS } from './conteudo';
 import { store, C, sobre, CLARAS, hoje, CSS, Card, Btn, Campo, Area, Barra, Sheet, Wordmark, Foto, GraficoBarras, GraficoLinha } from './ui.jsx';
@@ -33,7 +33,7 @@ class TrilhaNIILBoundary extends React.Component {
   componentDidCatch(err){try{console.error('NIIL trail runtime error',err)}catch{}}
   render(){return this.state.erro ? this.props.fallback : this.props.children;}
 }
-import { GAMIFICACAO_INICIAL, PONTOS_NIIL, reconciliarGamificacao, resumoGamificacao, desafiosGamificacao } from './gamificacao.core.js';
+import { GAMIFICACAO_INICIAL, PONTOS_NIIL, normalizarGamificacao, reconciliarGamificacao, resumoGamificacao, desafiosGamificacao } from './gamificacao.core.js';
 
 /* ══════════ FOTOS ══════════
    As imagens são comprimidas antes de salvar (lado maior 900px, jpeg 72%),
@@ -578,6 +578,44 @@ export default function NIILApp() {
     });
     setCarregando(false);
   };
+  const reiniciarProgressoTrilha = async () => {
+    const ok=window.confirm('Reiniciar o progresso da Trilha? Isso apaga respostas, temporadas, Rodas e ações geradas pela Trilha, mas preserva sua conta e os demais módulos.');
+    if(!ok)return;
+    const audioKey=d.trilhaNIIL?.vozCompromisso?.storageKey;
+    if(audioKey)await store.set(audioKey,null).catch(()=>false);
+    const idsTrilha=new Set(TRILHA_NIIL.flatMap(f=>f.etapas.map(e=>e.id)));
+    up(s=>{
+      const etapas=Object.fromEntries(Object.entries(s.etapas||{}).filter(([id])=>!idsTrilha.has(id)));
+      const rodas=Object.fromEntries(Object.entries(s.rodas||{}).filter(([id])=>!/^m[19]-/i.test(String(id))));
+      const agenda=Object.fromEntries(Object.entries(s.agenda||{}).map(([dataDia,marcas])=>[
+        dataDia,
+        Object.fromEntries(Object.entries(marcas||{}).filter(([k])=>!String(k).startsWith('niil-agenda-viva')&&k!=='niil-experimento'))
+      ]));
+      const plano=s.jornada?.planoSemana;
+      const planoDaTrilha=plano&&['trilha-niil','m1-primeiro-movimento'].includes(plano.origem);
+      const jornada={
+        ...(s.jornada||{}),
+        planoSemana:planoDaTrilha?null:plano||null,
+        movimentosGuardados:(s.jornada?.movimentosGuardados||[]).filter(x=>x?.origem!=='m1-primeiro-movimento')
+      };
+      const ledger=(s.gamificacao?.ledger||[]).filter(ev=>ev?.trilhaId!=='niil-central-v2'&&!String(ev?.key||'').startsWith('trilha:v3:'));
+      let next={
+        ...s,
+        etapas,
+        rodas,
+        agenda,
+        jornada,
+        trilhaNIIL:{respostas:{},modulosVisitados:{},temporadas:[],temporadaAtualId:null,vozCompromisso:null,rodaSnapshots:[],rodaRascunhos:{},motivacaoBase:null,focoAtual:null,handoff:null,metas:[],trilhasContextuais:{}},
+        gamificacao:normalizarGamificacao({...s.gamificacao,ledger,badges:[]})
+      };
+      next=reconciliarGamificacao(next);
+      return next;
+    });
+    setSheet(null);
+    setAba('trilha');
+    aviso('Trilha reiniciada. Você pode testar desde o M1.');
+  };
+
   const sair = async () => {
     if(usuario)await persistirEstadoUsuario(usuario,d);
     await aguardarSalvamentosRemotos();
@@ -2175,6 +2213,11 @@ export default function NIILApp() {
             <button onClick={() => { setSheet(null); permissao(); }} style={{ minHeight: 54, padding: '0 14px', borderRadius: 16, border: `1px solid ${C.line}`, background: '#fff', color: C.ink, display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left' }}>
               <span style={{ width: 34, height: 34, borderRadius: 11, background: C.aquaSuave, display: 'grid', placeItems: 'center', color: C.petroleo }}><Bell size={17} /></span>
               <span style={{ flex: 1, fontSize: 13.5, fontWeight: 850 }}>Notificações</span>
+              <ChevronRight size={17} color={C.ink3} />
+            </button>
+            <button onClick={reiniciarProgressoTrilha} style={{ minHeight: 54, padding: '0 14px', borderRadius: 16, border: `1px solid ${C.line}`, background: '#fff', color: C.ink, display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left' }}>
+              <span style={{ width: 34, height: 34, borderRadius: 11, background: C.mint, display: 'grid', placeItems: 'center', color: C.greenDark }}><RotateCcw size={17} /></span>
+              <span style={{ flex: 1 }}><span style={{ display:'block',fontSize:13.5,fontWeight:850 }}>Reiniciar progresso da Trilha</span><small style={{ display:'block',fontSize:9.5,color:C.ink3,marginTop:2 }}>Mantém sua conta e os outros módulos</small></span>
               <ChevronRight size={17} color={C.ink3} />
             </button>
             <button onClick={async () => { setSheet(null); await sair(); }} style={{ minHeight: 54, padding: '0 14px', borderRadius: 16, border: '1px solid #F1DEDE', background: '#FFF9F9', color: '#A43C3C', display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left' }}>
