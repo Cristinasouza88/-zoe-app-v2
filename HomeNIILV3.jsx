@@ -129,14 +129,16 @@ export default function HomeNIILV3({
           <div className="niil-home-v3-goal-title">
             <strong>{marcoAtual?.fase?.marco || 'M1'}</strong> · {marcoAtual?.fase?.nome || 'O que vale o esforço?'}
           </div>
-          <div style={{display:'flex',alignItems:'baseline',gap:7,margin:'10px 0 7px'}}>
-            <strong style={{fontSize:28,lineHeight:1,color:'#17151D',letterSpacing:'-.6px'}}>{pctMarcoAtual}%</strong>
-            <span style={{fontSize:11,fontWeight:800,color:'#5F5A66'}}>para concluir este marco</span>
+          <div style={{margin:'12px 0 9px'}}>
+            <div style={{display:'flex',alignItems:'baseline',gap:7,flexWrap:'wrap'}}>
+              <strong style={{fontSize:34,lineHeight:1,color:GREEN,letterSpacing:'-1px'}}>{pctMarcoAtual}%</strong>
+              <span style={{fontSize:11.5,fontWeight:800,color:'#B9B7BD'}}>do {marcoAtual?.fase?.marco || 'M1'} concluído</span>
+            </div>
           </div>
           <div className="niil-home-v3-goal-bar" aria-hidden="true">
             <i style={{ width: `${pctMarcoAtual}%` }} />
           </div>
-          <small>{concluidasMarcoAtual} de {totalMarcoAtual || 0} passos concluídos · {marcosConcluidos} de {totalMarcos} marcos</small>
+          <small>{concluidasMarcoAtual} de {totalMarcoAtual || 0} passos concluídos</small>
           <span className="niil-home-v3-goal-link">Continuar trilha <ChevronRight size={16} /></span>
         </div>
 
