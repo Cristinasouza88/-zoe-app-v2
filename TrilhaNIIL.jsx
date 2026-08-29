@@ -42,7 +42,7 @@ const MOTIVACAO_PERFIS={
     modulos:['Sono','Ritmo diário']
   },
   'Dinheiro':{
-    motivos:['Quero parar de me preocupar tanto','Quero organizar o que entra e sai','Quero sair de dívidas','Quero construir segurança','Quero conseguir realizar um plano'],
+    motivos:['Quero parar de me preocupar tanto','Quero organizar o que entra e sai','Quero sair de dívidas','Quero construir segurança','Quero conseguir realizar meus planos','Quero fazer meu patrimônio crescer'],
     recompensas:['Ter tranquilidade com dinheiro','Ter uma reserva','Poder escolher com mais liberdade','Parar de apagar incêndios','Ver meu patrimônio crescer'],
     modulos:['Financeiro']
   },
@@ -86,48 +86,74 @@ const RODA_AREA_POR_OBJETIVO={
 
 const PRIMEIROS_MOVIMENTOS={
   'Saúde':[
-    {acao:'Observar minha energia em 3 momentos de hoje',duracao:5},
-    {acao:'Registrar uma refeição principal hoje',duracao:5},
-    {acao:'Fazer 10 minutos de movimento possível hoje',duracao:10}
+    {acao:'Registrar como meu corpo acordou hoje',duracao:3,ferramenta:'Sono',modulo:'sono'},
+    {acao:'Registrar uma refeição principal hoje',duracao:5,ferramenta:'Nutrição',modulo:'comida'},
+    {acao:'Fazer e registrar 10 minutos de movimento possível hoje',duracao:10,ferramenta:'Treino',modulo:'treino'}
   ],
   'Energia':[
-    {acao:'Registrar minha energia ao acordar por 3 dias',duracao:3},
-    {acao:'Observar meu horário de sono por 3 noites',duracao:3},
-    {acao:'Fazer uma pausa real de 10 minutos hoje',duracao:10}
+    {acao:'Registrar minha energia ao acordar por 3 dias',duracao:3,ferramenta:'Trilha'},
+    {acao:'Observar meu horário de sono por 3 noites',duracao:3,ferramenta:'Sono',modulo:'sono'},
+    {acao:'Reservar uma pausa real de 10 minutos hoje',duracao:10,ferramenta:'Agenda',modulo:'agenda'}
   ],
   'Dinheiro':[
-    {acao:'Registrar tudo que eu gastar hoje',duracao:5},
-    {acao:'Separar 15 minutos para olhar minhas contas',duracao:15},
-    {acao:'Listar meus compromissos financeiros fixos',duracao:15}
+    {acao:'Registrar um gasto de hoje no Financeiro',duracao:5,ferramenta:'Financeiro',modulo:'financeiro'},
+    {acao:'Separar 15 minutos na Agenda para olhar minhas contas',duracao:15,ferramenta:'Agenda',modulo:'agenda'},
+    {acao:'Listar meus compromissos financeiros fixos',duracao:15,ferramenta:'Financeiro',modulo:'financeiro'}
   ],
   'Carreira':[
-    {acao:'Separar 15 minutos para definir meu próximo passo profissional',duracao:15},
-    {acao:'Anotar uma oportunidade que eu quero perseguir',duracao:10},
-    {acao:'Revisar uma pendência profissional importante',duracao:15}
+    {acao:'Reservar 15 minutos para definir meu próximo passo profissional',duracao:15,ferramenta:'Agenda',modulo:'agenda'},
+    {acao:'Retomar um aprendizado que apoie minha carreira',duracao:15,ferramenta:'Cursos',modulo:'cursos'},
+    {acao:'Anotar uma oportunidade que eu quero perseguir',duracao:10,ferramenta:'Agenda',modulo:'agenda'}
   ],
   'Aprendizado':[
-    {acao:'Reservar 15 minutos para retomar um aprendizado',duracao:15},
-    {acao:'Escolher uma aula ou capítulo para concluir',duracao:15},
-    {acao:'Aplicar uma coisa que eu já aprendi',duracao:15}
+    {acao:'Reservar 15 minutos para retomar um aprendizado',duracao:15,ferramenta:'Agenda',modulo:'agenda'},
+    {acao:'Escolher uma aula ou capítulo para concluir',duracao:15,ferramenta:'Cursos',modulo:'cursos'},
+    {acao:'Aplicar uma coisa que eu já aprendi',duracao:15,ferramenta:'Cursos',modulo:'cursos'}
   ],
   'Relacionamentos':[
-    {acao:'Separar 15 minutos de presença real para uma relação importante',duracao:15},
-    {acao:'Enviar uma mensagem que estou adiando',duracao:5},
-    {acao:'Anotar uma conversa que merece acontecer',duracao:10}
+    {acao:'Reservar 15 minutos de presença real para uma relação importante',duracao:15,ferramenta:'Agenda',modulo:'agenda'},
+    {acao:'Enviar uma mensagem que estou adiando',duracao:5,ferramenta:'Agenda',modulo:'agenda'},
+    {acao:'Anotar uma conversa que merece acontecer',duracao:10,ferramenta:'Trilha'}
   ],
   'Organizar minha vida':[
-    {acao:'Escolher uma única pendência para encerrar hoje',duracao:15},
-    {acao:'Organizar um espaço pequeno por 10 minutos',duracao:10},
-    {acao:'Definir as 3 coisas que realmente importam hoje',duracao:5}
+    {acao:'Escolher uma única pendência para encerrar hoje',duracao:15,ferramenta:'Agenda',modulo:'agenda'},
+    {acao:'Organizar um espaço pequeno por 10 minutos',duracao:10,ferramenta:'Agenda',modulo:'agenda'},
+    {acao:'Definir as 3 coisas que realmente importam hoje',duracao:5,ferramenta:'Agenda',modulo:'agenda'}
   ],
   'Outra coisa':[
-    {acao:'Reservar 15 minutos para um primeiro movimento concreto',duracao:15},
-    {acao:'Escrever qual seria a menor evidência de progresso',duracao:10},
-    {acao:'Fazer uma ação de até 10 minutos na direção que escolhi',duracao:10}
+    {acao:'Reservar 15 minutos para um primeiro movimento concreto',duracao:15,ferramenta:'Agenda',modulo:'agenda'},
+    {acao:'Escrever qual seria a menor evidência de progresso',duracao:10,ferramenta:'Trilha'},
+    {acao:'Fazer uma ação de até 10 minutos na direção que escolhi',duracao:10,ferramenta:'Agenda',modulo:'agenda'}
   ]
 };
 const primeirosMovimentos=objetivo=>PRIMEIROS_MOVIMENTOS[objetivo]||PRIMEIROS_MOVIMENTOS['Outra coisa'];
-
+const MOVIMENTO_POR_AREA_RODA={
+  'Saúde':{acao:'Registrar como meu corpo acordou hoje',duracao:3,ferramenta:'Sono',modulo:'sono',area:'Saúde'},
+  'Família':{acao:'Reservar 10 minutos de presença sem tela com alguém da família',duracao:10,ferramenta:'Agenda',modulo:'agenda',area:'Família'},
+  'Relacionamentos':{acao:'Reservar um momento curto para uma relação importante',duracao:10,ferramenta:'Agenda',modulo:'agenda',area:'Relacionamentos'},
+  'Lazer':{acao:'Proteger 15 minutos para algo que realmente me renova',duracao:15,ferramenta:'Agenda',modulo:'agenda',area:'Lazer'},
+  'Espiritualidade':{acao:'Reservar 10 minutos para uma prática que me dá sentido',duracao:10,ferramenta:'Agenda',modulo:'agenda',area:'Espiritualidade'},
+  'Carreira':{acao:'Reservar 15 minutos para um próximo passo profissional',duracao:15,ferramenta:'Agenda',modulo:'agenda',area:'Carreira'},
+  'Finanças':{acao:'Registrar um gasto de hoje no Financeiro',duracao:5,ferramenta:'Financeiro',modulo:'financeiro',area:'Finanças'},
+  'Crescimento pessoal':{acao:'Retomar uma aula ou conteúdo que eu já escolhi aprender',duracao:15,ferramenta:'Cursos',modulo:'cursos',area:'Crescimento pessoal'},
+  'Social':{acao:'Fazer um contato intencional com alguém que me faz bem',duracao:5,ferramenta:'Agenda',modulo:'agenda',area:'Social'},
+  'Emocional':{acao:'Escrever em uma frase como eu cheguei ao fim do dia',duracao:3,ferramenta:'Trilha',area:'Emocional'},
+  'Intelectual':{acao:'Retomar 15 minutos de um aprendizado em andamento',duracao:15,ferramenta:'Cursos',modulo:'cursos',area:'Intelectual'},
+  'Contribuição':{acao:'Fazer uma pequena ação útil para alguém ou algo que importa',duracao:10,ferramenta:'Agenda',modulo:'agenda',area:'Contribuição'}
+};
+const movimentosFechamento=(objetivo,snapshot)=>{
+  const base=primeirosMovimentos(objetivo).map(x=>({...x,area:RODA_AREA_POR_OBJETIVO[objetivo]||objetivoLegivel(objetivo)}));
+  if(!snapshot?.valores)return base;
+  const areaPrincipal=RODA_AREA_POR_OBJETIVO[objetivo];
+  const extras=[...RODA_SETORES]
+    .filter(a=>a!==areaPrincipal)
+    .sort((a,b)=>Number(snapshot.valores[a])-Number(snapshot.valores[b]))
+    .slice(0,2)
+    .map(a=>MOVIMENTO_POR_AREA_RODA[a])
+    .filter(Boolean);
+  const todos=[...base,...extras];
+  return todos.filter((x,i,arr)=>arr.findIndex(y=>y.acao===x.acao)===i).slice(0,5);
+};
 
 const hoje=()=>new Date().toISOString().slice(0,10);
 const vibrar=()=>{try{navigator.vibrate?.(18)}catch{}};
@@ -165,11 +191,13 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const[rodaAtivacao,setRodaAtivacao]=useState({area:null,etapa:'foco',razoes:[],metaNota:null});
   const recRef=useRef(null);
   const[vozCommit,setVozCommit]=useState({status:'idle',url:null,error:''});
+  const[vozTocando,setVozTocando]=useState(false);
   const mediaRecorderRef=useRef(null);
   const mediaStreamRef=useRef(null);
   const audioChunksRef=useRef([]);
   const audioTimerRef=useRef(null);
   const audioPlayerRef=useRef(null);
+  const vozPressionadaRef=useRef(false);
   const atual=useMemo(()=>faseAtualNIIL(d.etapas||{}),[d.etapas]);
   const marcos=useMemo(()=>marcosConcluidosNIIL(d.etapas||{}),[d.etapas]);
   const recomendacoes=useMemo(()=>recomendacoesContextuaisNIIL(d),[d]);
@@ -201,6 +229,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     let cancelado=false;
     const meta=d.trilhaNIIL?.vozCompromisso;
     const objetivo=resp['meta-inicial'];
+    setVozTocando(false);
     if(passo?.interacao!=='sentence-choice'||!meta?.storageKey||meta?.objetivo!==objetivo||meta?.pulado){
       setVozCommit(prev=>{
         if(prev.url)try{URL.revokeObjectURL(prev.url)}catch{}
@@ -223,7 +252,6 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     }).catch(()=>!cancelado&&setVozCommit({status:'idle',url:null,error:''}));
     return()=>{cancelado=true};
   },[passo?.id,resp['meta-inicial'],d.trilhaNIIL?.vozCompromisso?.storageKey]);
-
 
   const salvar=(chave,valor)=>up(s=>({...s,trilhaNIIL:{...(s.trilhaNIIL||{}),respostas:{...(s.trilhaNIIL?.respostas||{}),[chave]:valor}}}));
   const ler=chave=>resp[chave];
@@ -359,10 +387,16 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     }catch{}
   };
 
+  const finalizarPressaoVoz=()=>{
+    vozPressionadaRef.current=false;
+    pararGravacao();
+  };
+
   const selecionarObjetivoFrase=(e,item)=>{
     if(mediaRecorderRef.current?.state==='recording')pararGravacao();
     const anterior=d.trilhaNIIL?.vozCompromisso;
     if(anterior?.objetivo&&anterior.objetivo!==item.valor&&anterior.storageKey)store.set(anterior.storageKey,null).catch(()=>{});
+    setVozTocando(false);
     setVozCommit(prev=>{
       if(prev.url)try{URL.revokeObjectURL(prev.url)}catch{}
       return{status:'idle',url:null,error:''};
@@ -385,15 +419,14 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       return;
     }
     try{
+      try{audioPlayerRef.current?.pause?.()}catch{}
+      setVozTocando(false);
       const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
       mediaStreamRef.current=stream;
       const ua=String(navigator.userAgent||'');
       const ios=/iP(hone|ad|od)/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
       const candidatos=ios?[]:['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];
       const mime=candidatos.find(t=>MediaRecorder.isTypeSupported?.(t));
-      // No iPhone/iPad deixamos o Safari escolher o contêiner nativo.
-      // Forçar audio/mp4 + chunks temporizados pode gerar um arquivo com duração,
-      // mas que não inicia a reprodução em alguns WebKit.
       const recorder=ios?new MediaRecorder(stream):new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
       mediaRecorderRef.current=recorder;
       audioChunksRef.current=[];
@@ -406,11 +439,9 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         encerrarStreamAudio();
         const partes=audioChunksRef.current.filter(x=>x?.size);
         const tipo=partes.find(x=>x.type)?.type||recorder.mimeType||mime||(ios?'audio/mp4':'audio/webm');
-        // Em iOS, preservar o Blob final original evita reempacotar MP4 e perder
-        // metadados necessários ao player do Safari.
         const blob=partes.length===1?partes[0]:new Blob(partes,{type:tipo});
         if(blob.size<700){
-          setVozCommit({status:'error',url:null,error:'A gravação ficou curta demais. Tente falar a frase novamente.'});
+          setVozCommit({status:'error',url:null,error:'A gravação ficou curta demais. Segure o botão enquanto fala e solte ao terminar.'});
           return;
         }
         const existente=d.trilhaNIIL?.vozCompromisso;
@@ -429,12 +460,11 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
           setVozCommit({status:'error',url:null,error:'Não consegui salvar o áudio neste dispositivo.'});
         }
       };
-      // Safari/iOS: gerar um único Blob final é mais confiável para replay.
-      // Outros navegadores continuam podendo emitir chunks durante a gravação.
       if(ios)recorder.start(); else recorder.start(250);
       setVozCommit(prev=>({status:'recording',url:prev.url||null,error:''}));
       feedback('tap',d);
-      audioTimerRef.current=setTimeout(()=>pararGravacao(),12000);
+      if(!vozPressionadaRef.current){window.setTimeout(()=>pararGravacao(),0);return;}
+      audioTimerRef.current=setTimeout(()=>{vozPressionadaRef.current=false;pararGravacao()},20000);
     }catch(err){
       encerrarStreamAudio();
       const negado=err?.name==='NotAllowedError'||err?.name==='SecurityError';
@@ -442,7 +472,33 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     }
   };
 
+  const iniciarPressaoVoz=(e,frase,objetivo)=>{
+    if(vozCommit.status==='recording')return;
+    vozPressionadaRef.current=true;
+    iniciarGravacaoCompromisso(e,frase,objetivo);
+  };
+
+  const ouvirVoz=async()=>{
+    const player=audioPlayerRef.current;
+    if(!player||!vozCommit.url)return;
+    try{
+      player.currentTime=0;
+      setVozTocando(true);
+      await player.play();
+    }catch{
+      setVozTocando(false);
+      setVozCommit(prev=>({...prev,error:'A gravação foi salva, mas não consegui reproduzi-la neste dispositivo. Você pode refazer.'}));
+    }
+  };
+
+  const prepararRegravacao=()=>{
+    try{audioPlayerRef.current?.pause?.()}catch{}
+    setVozTocando(false);
+    setVozCommit(prev=>({status:'idle',url:prev.url,error:''}));
+  };
+
   const seguirSemGravar=(objetivo,frase)=>{
+    vozPressionadaRef.current=false;
     up(s=>({...s,trilhaNIIL:{...(s.trilhaNIIL||{}),vozCompromisso:{objetivo,frase,storageKey:null,gravadaEm:null,localOnly:true,pulado:true,motivo:'microfone-indisponivel'}}}));
     setVozCommit({status:'skipped',url:null,error:''});
   };
@@ -469,11 +525,14 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     up(s=>{
       const trilha=s.trilhaNIIL||{},respostas=trilha.respostas||{},objetivo=respostas['meta-inicial']||'Outra coisa';
       const agora=new Date().toISOString();
-      const base={objetivo,importancia:Number(respostas['meta-importancia']??5),motivo:respostas['meta-motivo']||null,recompensa:respostas['meta-recompensa']||null,valores:Array.isArray(respostas['meta-valores'])?respostas['meta-valores']:[],contraste:respostas['meta-contraste']||null,confirmadaEm:agora,versao:2};
+      const vozCompromisso=trilha.vozCompromisso||null;
+      const valoresLegados=Array.isArray(respostas['meta-valores'])?respostas['meta-valores']:[];
+      const significado=String(respostas['meta-significado']||valoresLegados.join(' · ')||'').trim()||null;
+      const sentimentoAoReler=String(respostas['meta-significado-sentimento']||'').trim()||null;
+      const base={objetivo,importancia:Number(respostas['meta-importancia']??5),motivo:respostas['meta-motivo']||null,recompensa:respostas['meta-recompensa']||null,significado,sentimentoAoReler,valores:valoresLegados,contraste:respostas['meta-contraste']||null,gravacaoInicial:vozCompromisso,confirmadaEm:agora,versao:3};
       const temporadas=Array.isArray(trilha.temporadas)?trilha.temporadas:[];
       const ativa=temporadas.find(t=>t.id===trilha.temporadaAtualId&&t.status==='ativa');
       const id=ativa?.id||('temporada-'+Date.now());
-      const vozCompromisso=trilha.vozCompromisso||null;
       const temporada=ativa?{...ativa,objetivo,motivacaoBase:base,vozCompromisso}:{id,numero:temporadas.length+1,status:'ativa',iniciadaEm:agora,objetivo,motivacaoBase:base,vozCompromisso,rodaInicialSnapshotId:null,rodaFinalSnapshotId:null};
       const novas=ativa?temporadas.map(t=>t.id===id?temporada:t):[...temporadas,temporada];
       return{...s,trilhaNIIL:{...trilha,respostas:{...respostas,[e.chave]:'sim'},motivacaoBase:base,temporadas:novas,temporadaAtualId:id}};
@@ -498,7 +557,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       const registro={...movimento,objetivo,criadoEm:agora,status:temAcaoAtiva?'guardado':'ativo',origem:'m1-primeiro-movimento'};
       const jornada=temAcaoAtiva
         ?{...(s.jornada||{}),movimentosGuardados:[...(s.jornada?.movimentosGuardados||[]),registro]}
-        :{...(s.jornada||{}),planoSemana:{ativo:true,acao:movimento.acao,contexto:'Primeiro movimento da temporada',hora:'Ao longo do dia',duracao:movimento.duracao||10,dias:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],origem:'m1-primeiro-movimento',recorrencia:'ate-concluir',criadoEm:agora}};
+        :{...(s.jornada||{}),planoSemana:{ativo:true,acao:movimento.acao,contexto:movimento.ferramenta?`Primeiro movimento · ${movimento.ferramenta}`:'Primeiro movimento da temporada',hora:'Ao longo do dia',duracao:movimento.duracao||10,dias:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],origem:'m1-primeiro-movimento',recorrencia:'ate-concluir',modulo:movimento.modulo||null,area:movimento.area||null,criadoEm:agora}};
       return{
         ...s,
         jornada,
@@ -556,16 +615,17 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     window.setTimeout(()=>{
       up(s=>{
         const trilha=s.trilhaNIIL||{},temporadas=Array.isArray(trilha.temporadas)?trilha.temporadas:[],tid=trilha.temporadaAtualId;
+        const baseAtualizada=e.papel==='abertura'?{...(trilha.motivacaoBase||{}),snapshotRodaInicialId:snap.id,snapshotRodaInicial:snap,atualizadaEm:snap.concluidaEm}:trilha.motivacaoBase;
         const temporadasAtualizadas=temporadas.map(t=>{
           if(t.id!==tid)return t;
-          if(e.papel==='abertura')return{...t,rodaInicialSnapshotId:snap.id,rodaInicialEm:snap.concluidaEm};
+          if(e.papel==='abertura')return{...t,rodaInicialSnapshotId:snap.id,rodaInicialEm:snap.concluidaEm,motivacaoBase:{...(t.motivacaoBase||baseAtualizada||{}),snapshotRodaInicialId:snap.id,snapshotRodaInicial:snap}};
           if(e.papel==='fechamento'){
             const inicio=Date.parse(t.iniciadaEm||snap.concluidaEm),fim=Date.parse(snap.concluidaEm);
             return{...t,rodaFinalSnapshotId:snap.id,rodaFinalEm:snap.concluidaEm,status:'em_fechamento',duracaoDias:Math.max(0,Math.round((fim-inicio)/86400000))};
           }
           return t;
         });
-        return{...s,rodas:{...(s.rodas||{}),[e.rodaId]:valores},trilhaNIIL:{...trilha,rodaSnapshots:[...(trilha.rodaSnapshots||[]),snap],temporadas:temporadasAtualizadas}};
+        return{...s,rodas:{...(s.rodas||{}),[e.rodaId]:valores},trilhaNIIL:{...trilha,motivacaoBase:baseAtualizada,rodaSnapshots:[...(trilha.rodaSnapshots||[]),snap],temporadas:temporadasAtualizadas}};
       });
       feedback('marco',d);
     },300);
@@ -741,6 +801,12 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       const vozMeta=d.trilhaNIIL?.vozCompromisso;
       const gravacaoValida=vozMeta?.objetivo===v&&!!vozMeta?.storageKey&&vozCommit.status==='ready'&&!!vozCommit.url;
       const pulou=vozMeta?.objetivo===v&&vozMeta?.pulado===true;
+      const iniciarPeloTeclado=ev=>{
+        if((ev.key===' '||ev.key==='Enter')&&!ev.repeat){ev.preventDefault();iniciarPressaoVoz(e,frase,v)}
+      };
+      const finalizarPeloTeclado=ev=>{
+        if(ev.key===' '||ev.key==='Enter'){ev.preventDefault();finalizarPressaoVoz()}
+      };
       return <div className="tn-sentence-exercise">
         <div className="tn-sentence-label">COMPLETE A FRASE</div>
         <h1>Eu mudaria <span>{textoEscolhido||'________'}</span> primeiro.</h1>
@@ -753,27 +819,20 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
               <small>AGORA DIGA COM A SUA VOZ</small>
               <b>“{frase}”</b>
               {vozCommit.status==='recording'?
-                <button className="tn-ownvoice-record stop" type="button" onClick={pararGravacao}><Square size={17} fill="currentColor"/> Parar gravação</button>
+                <button className="tn-ownvoice-record stop" type="button" onPointerUp={finalizarPressaoVoz} onPointerCancel={finalizarPressaoVoz} onKeyUp={finalizarPeloTeclado}><Mic size={18}/> Solte para terminar</button>
                 :gravacaoValida?
                 <div className="tn-ownvoice-actions">
-                  <div className="tn-ownvoice-ready"><Check size={16}/> Gravação pronta · toque no play para se ouvir</div>
-                  <audio
-                    key={vozCommit.url}
-                    ref={audioPlayerRef}
-                    src={vozCommit.url}
-                    preload="metadata"
-                    controls
-                    playsInline
-                    onError={()=>setVozCommit(prev=>({...prev,error:'A gravação foi salva, mas este formato não abriu para reprodução. Toque em Refazer e grave novamente.'}))}
-                  />
-                  <button className="redo" type="button" onClick={()=>iniciarGravacaoCompromisso(e,frase,v)}><RotateCcw size={16}/> Refazer</button>
+                  <div className="tn-ownvoice-ready"><Check size={16}/> Gravação pronta.</div>
+                  <audio key={vozCommit.url} ref={audioPlayerRef} src={vozCommit.url} preload="auto" playsInline style={{display:'none'}} onEnded={()=>setVozTocando(false)} onPause={()=>setVozTocando(false)} onError={()=>{setVozTocando(false);setVozCommit(prev=>({...prev,error:'A gravação foi salva, mas este formato não abriu para reprodução. Você pode refazer.'}))}}/>
+                  <button className="tn-ownvoice-record" type="button" onClick={ouvirVoz}><Mic size={17}/>{vozTocando?'Ouvindo…':'Ouvir minha voz'}</button>
+                  <button className="redo" type="button" onClick={prepararRegravacao}><RotateCcw size={16}/> Refazer</button>
                 </div>
                 :pulou?
                 <div className="tn-ownvoice-skipped"><Check size={16}/> Etapa de voz ignorada neste dispositivo.</div>
                 :
-                <button className="tn-ownvoice-record" type="button" onClick={()=>iniciarGravacaoCompromisso(e,frase,v)}><Mic size={18}/> Gravar minha frase</button>
+                <button className="tn-ownvoice-record" type="button" onPointerDown={ev=>{ev.preventDefault();try{ev.currentTarget.setPointerCapture?.(ev.pointerId)}catch{};iniciarPressaoVoz(e,frase,v)}} onPointerUp={finalizarPressaoVoz} onPointerCancel={finalizarPressaoVoz} onKeyDown={iniciarPeloTeclado} onKeyUp={finalizarPeloTeclado}><Mic size={18}/> Segure para gravar</button>
               }
-              {vozCommit.status==='recording'&&<div className="tn-ownvoice-live"><i/> Gravando… fale a frase e toque em parar.</div>}
+              {vozCommit.status==='recording'&&<div className="tn-ownvoice-live"><i/> Gravando enquanto você segura.</div>}
               {vozCommit.error&&<div className="tn-ownvoice-error"><span>{vozCommit.error}</span><button type="button" onClick={()=>seguirSemGravar(v,frase)}>Continuar sem gravar</button></div>}
             </>}
           </div>
@@ -800,6 +859,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         <span className="tn-motivation-kicker">ENCONTRE O SEU MOTIVO</span>
         <h1>{pergunta}</h1>
         <p>Escolha a razão que mais parece sua agora. Não a que “deveria” ser.</p>
+        {e.reflexao&&<div className="tn-load-guard"><Sparkles size={17}/><span>{e.reflexao}</span></div>}
         <div className="tn-motivation-options">{perfil.motivos.map(x=><button key={x} onClick={()=>concluirMotivacaoRapido(e,x,'motivo')}>{x}<ChevronRight size={18}/></button>)}</div>
       </div>;
     }
@@ -808,9 +868,10 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       const perfil=perfilMotivacao(objetivo);
       return <div className="tn-motivation-step tn-reward-step">
         <div className="tn-motivation-icon"><Target size={32}/></div>
-        <span className="tn-motivation-kicker">RECOMPENSA QUE PUXA O ESFORÇO</span>
+        <span className="tn-motivation-kicker">O QUE VOCÊ GANHA</span>
         <h1>Se {objetivoLegivel(objetivo).toLowerCase()} mudar, o que você ganha de verdade?</h1>
         <p>Procure o resultado que você conseguiria sentir ou perceber na vida real.</p>
+        {e.reflexao&&<div className="tn-load-guard"><Sparkles size={17}/><span>{e.reflexao}</span></div>}
         <div className="tn-motivation-options">{perfil.recompensas.map(x=><button key={x} onClick={()=>concluirMotivacaoRapido(e,x,'recompensa')}>{x}<ChevronRight size={18}/></button>)}</div>
       </div>;
     }
@@ -819,7 +880,9 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       const importancia=Number(ler('meta-importancia')??5);
       const motivo=ler('meta-motivo')||'isso importa para você';
       const recompensa=ler('meta-recompensa')||'ver uma mudança concreta';
-      const valores=Array.isArray(ler('meta-valores'))?ler('meta-valores'):[];
+      const significado=String(ler('meta-significado')||'').trim();
+      const sentimento=String(ler('meta-significado-sentimento')||'').trim();
+      const valoresLegados=Array.isArray(ler('meta-valores'))?ler('meta-valores'):[];
       const contraste=ler('meta-contraste')||{};
       return <div className="tn-motivation-insight">
         <NIILOrb state="thinking" size={92} label="Insight NIIL"/>
@@ -829,10 +892,12 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         <div className="tn-motivation-summary">
           <div><small>IMPORTÂNCIA</small><b>{importancia}/10</b></div>
           <div><small>SEU MOTIVO</small><b>{motivo}</b></div>
-          {valores.length>0&&<div><small>O QUE REPRESENTA</small><b>{valores.join(' · ')}</b></div>}
+          {significado&&<div><small>NAS SUAS PALAVRAS</small><b>{significado}</b></div>}
+          {!significado&&valoresLegados.length>0&&<div><small>O QUE REPRESENTA</small><b>{valoresLegados.join(' · ')}</b></div>}
+          {sentimento&&<div><small>AO RELER</small><b>{sentimento}</b></div>}
           {Number.isFinite(Number(contraste.atual))&&<div><small>PERCEPÇÃO</small><b>{contraste.atual} → {contraste.desejado}</b></div>}
         </div>
-        <p>Isso vira contexto para a temporada, não uma lista de tarefas. O NIIL pode encontrar várias oportunidades, mas vai ativar poucas mudanças por vez.</p>
+        <p>O NIIL está organizando apenas o que você contou. Isso vira contexto para a temporada, não um diagnóstico nem uma lista de tarefas.</p>
         <button className="tn-motivation-confirm" onClick={()=>confirmarMotivacaoBase(e)}>Guardar como ponto de partida <ChevronRight size={18}/></button>
       </div>;
     }
@@ -859,12 +924,15 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       const objetivo=ler('meta-inicial')||'Outra coisa';
       const importancia=Number(ler('meta-importancia')??5);
       const recompensa=ler('meta-recompensa')||'uma mudança concreta';
-      const valores=Array.isArray(ler('meta-valores'))?ler('meta-valores'):[];
+      const significado=String(ler('meta-significado')||'').trim();
+      const sentimento=String(ler('meta-significado-sentimento')||'').trim();
+      const valoresLegados=Array.isArray(ler('meta-valores'))?ler('meta-valores'):[];
       const contraste=ler('meta-contraste')||{};
       const snapId=temporadaAtual?.rodaInicialSnapshotId;
       const snap=snapId?(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.id===snapId):null;
       const area=RODA_AREA_POR_OBJETIVO[objetivo];
       const notaRoda=area&&snap?Number(snap.valores?.[area]):null;
+      const menores=snap?[...RODA_SETORES].sort((a,b)=>Number(snap.valores[a])-Number(snap.valores[b])).slice(0,2):[];
       return <div className="tn-m1-synthesis">
         <NIILOrb state="thinking" size={100} label="Insight NIIL"/>
         <span>INSIGHT NIIL</span>
@@ -872,32 +940,41 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         <p>Você colocou <b>{objetivoLegivel(objetivo).toLowerCase()}</b> em primeiro lugar e marcou <b>{importancia}/10</b> de importância.</p>
         <div className="tn-m1-synthesis-grid">
           <div><small>O QUE VOCÊ QUER SENTIR OU GANHAR</small><b>{recompensa}</b></div>
-          {valores.length>0&&<div><small>O QUE ISSO REPRESENTA</small><b>{valores.join(' · ')}</b></div>}
+          {significado&&<div><small>O QUE ISSO REPRESENTA, NAS SUAS PALAVRAS</small><b>{significado}</b></div>}
+          {!significado&&valoresLegados.length>0&&<div><small>O QUE ISSO REPRESENTA</small><b>{valoresLegados.join(' · ')}</b></div>}
+          {sentimento&&<div><small>O QUE VOCÊ PERCEBEU AO RELER</small><b>{sentimento}</b></div>}
           {Number.isFinite(Number(contraste.atual))&&<div><small>COMO VOCÊ SE PERCEBE</small><b>{contraste.atual} → {contraste.desejado}</b></div>}
           {Number.isFinite(notaRoda)&&<div><small>NA RODA · {area.toUpperCase()}</small><b>{notaRoda}/10</b></div>}
+          {menores.length>0&&<div><small>OUTRAS ÁREAS QUE FICAM NO RADAR</small><b>{menores.join(' · ')}</b></div>}
         </div>
         <div className="tn-m1-synthesis-rule">
-          <b>Descobrir não significa adicionar uma tarefa.</b>
-          <p>O NIIL vai guardar o restante como contexto e ativar apenas o próximo movimento que fizer sentido agora.</p>
+          <b>Entender melhor não significa mudar tudo agora.</b>
+          <p>O NIIL guarda este retrato como contexto e vai usar poucas ações para você começar a observar a própria vida na prática.</p>
         </div>
       </div>;
     }
     if(e.interacao==='first-movement'){
       const objetivo=ler('meta-inicial')||'Outra coisa';
       const jaTemOutraAcao=!!d.jornada?.planoSemana?.ativo&&d.jornada?.planoSemana?.origem!=='m1-primeiro-movimento';
+      const snapId=temporadaAtual?.rodaInicialSnapshotId;
+      const snap=snapId?(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.id===snapId):null;
+      const opcoes=movimentosFechamento(objetivo,snap);
       return <div className="tn-first-movement">
-        <div className="tn-first-movement-head"><Footprints size={30}/><span>PRÓXIMO MOVIMENTO</span></div>
-        <h1>Uma coisa pequena. Só uma.</h1>
-        <p>Escolha a menor evidência de movimento que cabe na vida real agora. O restante continua guardado como contexto da temporada.</p>
+        <div className="tn-first-movement-head"><Footprints size={30}/><span>PRIMEIROS MOVIMENTOS</span></div>
+        <h1>Comece pequeno. Uma coisa por vez.</h1>
+        <p>Seu retrato pode sugerir vários caminhos. Escolha só um movimento para entrar na Agenda agora; os outros continuam como possibilidades, não obrigações.</p>
         {jaTemOutraAcao&&<div className="tn-load-guard"><Sparkles size={17}/><span>Sua Agenda já tem uma ação ativa. A escolha abaixo será guardada para depois, sem adicionar outra obrigação agora.</span></div>}
-        <div className="tn-first-movement-options">{primeirosMovimentos(objetivo).map((m,i)=><button key={m.acao} onClick={()=>concluirPrimeiroMovimento(e,m)}>
-          <span>{i+1}</span><div><b>{m.acao}</b><small>~{m.duracao||10} min</small></div><ChevronRight size={18}/>
+        <div className="tn-first-movement-options">{opcoes.map((m,i)=><button key={m.acao} onClick={()=>concluirPrimeiroMovimento(e,m)}>
+          <span>{i+1}</span><div><b>{m.acao}</b><small>{m.area?m.area+' · ':''}~{m.duracao||10} min{m.ferramenta?' · '+m.ferramenta:''}</small></div><ChevronRight size={18}/>
         </button>)}</div>
-        <small className="tn-first-movement-note">O próximo marco pode descobrir outras oportunidades. Elas não entram automaticamente na Agenda.</small>
+        <small className="tn-first-movement-note">O NIIL usa a Roda e o foco que você escolheu para sugerir entradas no ecossistema. Você continua decidindo o que cabe agora.</small>
       </div>;
     }
     if(['choice','binary','module-decision'].includes(e.interacao))return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}<ChevronRight size={16}/></button>)}</div>;
-    if(e.interacao==='scale')return <div className="tn-scale tn-scale-reflect"><div className="tn-scale-icon"><Target size={30}/></div><strong>{v??5}/10</strong><input type="range" min="1" max="10" value={v??5} onChange={ev=>salvar(e.chave,Number(ev.target.value))}/><div><span>{e.minimo}</span><span>{e.maximo}</span></div><small>{Number(v??5)>=8?'Isso parece importante de verdade para você.':Number(v??5)>=5?'Isso tem peso, mas ainda disputa espaço com outras coisas.':'Talvez isso ainda não seja uma prioridade real agora.'}</small></div>;
+    if(e.interacao==='scale')return <div className="tn-scale tn-scale-reflect">
+      {e.reflexao&&<div className="tn-m1-synthesis-rule"><b>Antes de dar a nota</b><p>{e.reflexao}</p></div>}
+      <div className="tn-scale-icon"><Target size={30}/></div><strong>{v??5}/10</strong><input type="range" min="1" max="10" value={v??5} onChange={ev=>salvar(e.chave,Number(ev.target.value))}/><div><span>{e.minimo}</span><span>{e.maximo}</span></div><small>{Number(v??5)>=8?'Isso ocupa bastante espaço para você hoje.':Number(v??5)>=5?'Isso importa, mas parece dividir espaço com outras prioridades.':'Talvez valha observar se isso precisa mesmo ser prioridade agora.'}</small>
+    </div>;
     if(e.interacao==='dual-scale')return <div className="tn-stack">
       {[['querer','Quanto eu quero'],['fazer','Quanto eu faço']].map(([k,l])=><label className="tn-slider" key={k}><span>{l}<b>{v?.[k]||5}/10</b></span><input type="range" min="1" max="10" value={v?.[k]||5} onChange={ev=>salvar(e.chave,{...(v||{}),[k]:Number(ev.target.value)})}/></label>)}
     </div>;
@@ -912,7 +989,18 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     if(e.interacao==='anchor')return <div className="tn-anchor"><span>DEPOIS DE</span><input placeholder="algo que já acontece" value={v?.ancora||''} onChange={ev=>salvar(e.chave,{...(v||{}),ancora:ev.target.value})}/><span>EU VOU</span><input placeholder="uma ação pequena" value={v?.acao||''} onChange={ev=>salvar(e.chave,{...(v||{}),acao:ev.target.value})}/></div>;
     if(e.interacao==='minimum')return <div className="tn-minimum">{['5 minutos','10 minutos','15 minutos','Uma ação mínima personalizada'].map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}</button>)}</div>;
     if(e.interacao==='agenda')return <div className="tn-agenda-link"><CalendarDays size={30}/><b>{d.jornada?.planoSemana?.ativo?'Já entrou na sua agenda':'Transforme intenção em contexto real.'}</b><p>{(ler('ancora-acao')||{}).acao||'Use a ação que você acabou de montar.'}</p><button onClick={criarAgenda}>{d.jornada?.planoSemana?.ativo?'Atualizar na agenda':'Adicionar à agenda'}</button><button className="ghost" onClick={()=>abrirModulo('agenda')}>Ver Agenda</button></div>;
-    if(e.interacao==='voice')return <div className="tn-voice"><textarea value={v||''} onChange={ev=>salvar(e.chave,ev.target.value)} placeholder="Uma frase já basta."/><button onClick={()=>iniciarVoz(e)}><Mic size={18}/> Falar em vez de escrever</button></div>;
+    if(e.interacao==='voice'){
+      const significado=e.id==='m1-valores';
+      const sentimento=e.id==='m1-sentido-espelho';
+      const textoAnterior=sentimento?String(ler('meta-significado')||'').trim():'';
+      return <div className="tn-voice">
+        {significado&&<div className="tn-m1-synthesis-rule"><b>Não procure a palavra certa.</b><p>Escreva o que essa mudança representa para você antes de tentar encaixar a resposta em algum rótulo.</p></div>}
+        {sentimento&&textoAnterior&&<div className="tn-motivation-quote">“{textoAnterior}”</div>}
+        {sentimento&&<div className="tn-m1-synthesis-rule"><b>Leia antes de responder.</b><p>Observe sua reação ao que você mesma escreveu. Não precisa explicar perfeitamente.</p></div>}
+        <textarea value={v||''} onChange={ev=>salvar(e.chave,ev.target.value)} placeholder={e.placeholder||(sentimento?'Eu me sinto assim porque…':'Uma frase já basta.')}/>
+        {!significado&&!sentimento&&<button onClick={()=>iniciarVoz(e)}><Mic size={18}/> Falar em vez de escrever</button>}
+      </div>;
+    }
     if(e.interacao==='budget')return <div className="tn-stack">{[['tempo','Tempo por semana'],['dinheiro','Dinheiro'],['atencao','Atenção']].map(([k,l])=><label className="tn-slider" key={k}><span>{l}<b>{v?.[k]??5}/10</b></span><input type="range" min="0" max="10" value={v?.[k]??5} onChange={ev=>salvar(e.chave,{...(v||{}),[k]:Number(ev.target.value)})}/></label>)}</div>;
     if(e.interacao==='insight')return <div className="tn-insight"><span className="tn-insight-label">INSIGHT NIIL</span><Brain size={28}/><b>Seus registros já formam algumas peças para comparar.</b><div className="tn-insight-grid"><span>{d.sono?.registros?.length||0}<small>noites</small></span><span>{d.treinos?.length||0}<small>treinos</small></span><span>{d.cursos?.length||0}<small>cursos</small></span><span>{d.financeiro?.transacoes?.length||0}<small>movimentos</small></span></div></div>;
     return <div className="tn-options"><button onClick={()=>salvar(e.chave,'ok')}>Entendi</button></div>;
@@ -927,7 +1015,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         {passo.tipo!=='roda'&&!['sentence-choice','motivation-why','reward-choice','motivation-insight'].includes(passo.interacao)&&<><div className="tn-kicker">UMA COISA POR VEZ</div><h1>{passo.pergunta||passo.perguntaCurta||passo.titulo}</h1>{passo.perguntaCurta&&<p>{passo.perguntaCurta}</p>}</>}
         <Interacao e={passo}/>
         {passo.modulo&&!['sleep','agenda','photo'].includes(passo.interacao)&&<button className="tn-open-module" onClick={()=>abrirModulo(passo.modulo)}>Abrir {passo.modulo==='financeiro'?'Financeiro':passo.modulo==='cursos'?'Cursos':passo.modulo==='sono'?'Sono':'módulo relacionado'} <ChevronRight size={16}/></button>}
-        {passo.ciencia&&<details className="tn-science"><summary>Por que o NIIL pergunta isso?</summary><p>{passo.ciencia}</p>{passo.fonte&&<small>{passo.fonte}</small>}</details>}
+        {passo.ciencia&&fase.id!=='m1'&&<details className="tn-science"><summary>Por que o NIIL pergunta isso?</summary><p>{passo.ciencia}</p>{passo.fonte&&<small>{passo.fonte}</small>}</details>}
         {passo.base&&<small className="tn-base">{passo.base}</small>}
       </main>
       {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum','motivation-why','reward-choice','motivation-insight','first-movement'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{passo.interacao==='sentence-choice'?'Confirmar':'Continuar'} <ChevronRight size={18}/></button></footer>}
