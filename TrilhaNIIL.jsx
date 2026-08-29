@@ -8,7 +8,8 @@ import NIILOrb from'./NIILOrb.jsx';
 import{RODA_SETORES}from'./conteudo.js';
 import{TRILHA_NIIL,moduloParaAba,faseAtualNIIL,marcosConcluidosNIIL,recomendacoesContextuaisNIIL}from'./trilha.niil.data.js';
 import{iniciarReconhecimentoVoz,reconhecimentoDisponivel}from'./ia.jsx';
-import{registrarEventoGamificacao}from'./gamificacao.core.js';
+import{registrarEventoGamificacao,PONTOS_NIIL}from'./gamificacao.core.js';
+import{brasaoPorMarco}from'./brasoes.niil.js';
 import{store}from'./ui.jsx';
 import'./TrilhaNIIL.css';
 
@@ -200,6 +201,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
   const vozPressionadaRef=useRef(false);
   const atual=useMemo(()=>faseAtualNIIL(d.etapas||{}),[d.etapas]);
   const marcos=useMemo(()=>marcosConcluidosNIIL(d.etapas||{}),[d.etapas]);
+  const brasaoMarco=marco?brasaoPorMarco(marco.id):null;
   const recomendacoes=useMemo(()=>recomendacoesContextuaisNIIL(d),[d]);
   const temporadas=d.trilhaNIIL?.temporadas||[];
   const temporadaAtual=temporadas.find(t=>t.id===d.trilhaNIIL?.temporadaAtualId)||null;
@@ -346,7 +348,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       if(ultima)next=registrarEventoGamificacao(next,{
         key:`trilha:v3:${next.trilhaNIIL?.temporadaAtualId||estado.trilhaNIIL?.temporadaAtualId||'sem-temporada'}:marco:${e.fase.id}`,
         tipo:'trail.phase.completed',
-        pontos:50,
+        pontos:PONTOS_NIIL.FASE,
         titulo:`Marco concluído · ${e.fase.nome}`,
         area:'trilha',
         data:hoje(),
@@ -1008,7 +1010,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
 
   if(passo){
     const fase=passo.fase;
-    return <div className="tn-shell tn-detail">
+    return <div key={passo.id} className="tn-shell tn-detail">
       <header className="tn-detail-head"><button onClick={()=>setAberta(null)}><ArrowLeft size={20}/></button><div><span>{passo.tipo==='roda'?'RODA DA VIDA':fase.marco+' · '+passo.min+' min'}</span><b>{passo.tipo==='roda'?(snapshotRoda?'Seu retrato':RODA_SETORES[rodaPasso]):passo.titulo}</b></div><i>{passo.tipo==='roda'&&!snapshotRoda?(rodaPasso+1)+'/'+RODA_SETORES.length:(fase.etapas.findIndex(x=>x.id===passo.id)+1)+'/'+fase.etapas.length}</i></header>
       <div className="tn-detail-progress"><i style={{width:(passo.tipo==='roda'&&!snapshotRoda?((rodaPasso+1)/RODA_SETORES.length)*100:((fase.etapas.findIndex(x=>x.id===passo.id)+1)/fase.etapas.length)*100)+'%'}}/></div>
       <main className="tn-detail-main">
@@ -1100,6 +1102,6 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
 
     {marcos>=5&&recomendacoes.length>0&&<section className="tn-context"><span>INSIGHT NIIL · CAMINHOS PARA APROFUNDAR</span>{recomendacoes.map(r=><button key={r.id} onClick={()=>abrirModulo(r.modulo)}><Sparkles size={18}/><div><b>{r.titulo}</b><p>{r.texto}</p></div><ChevronRight size={17}/></button>)}</section>}
 
-    {marco&&<div className="tn-marco-overlay" onClick={()=>setMarco(null)}><div onClick={e=>e.stopPropagation()}><NIILOrb state="done" size={150} label="Marco concluído"/><span>{marco.marco} CONCLUÍDO</span><h2>{marco.nome}</h2><p>Você fechou este marco. O próximo caminho usa o que você acabou de construir — não começa do zero.</p><button onClick={()=>setMarco(null)}>Ver próximo marco</button></div></div>}
+    {marco&&<div className="tn-marco-overlay" onClick={()=>setMarco(null)}><div onClick={e=>e.stopPropagation()}>{brasaoMarco?.imagem?<img className="tn-marco-badge" src={brasaoMarco.imagem} alt={`Brasão ${brasaoMarco.nome}`}/>:<NIILOrb state="done" size={140} label="Marco concluído"/>}<span>BRASÃO DESBLOQUEADO · {marco.marco}</span><h2>{brasaoMarco?.nome||marco.nome}</h2><p>{brasaoMarco?.frase||'Você fechou este marco. O próximo caminho usa o que você acabou de construir.'}</p><div className="tn-marco-points">+{brasaoMarco?.bonusMarco||PONTOS_NIIL.FASE} Pontos NIIL</div><div className="tn-marco-rule">O brasão foi liberado porque todos os passos deste marco foram concluídos. Pontos acompanham o movimento, mas não substituem a conclusão.</div><button onClick={()=>setMarco(null)}>Conhecer o próximo marco</button></div></div>}
   </div>;
 }
