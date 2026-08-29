@@ -64,20 +64,23 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
   const[aberta,setAberta]=useState(null);
   const[marco,setMarco]=useState(null);
   const[rodaPasso,setRodaPasso]=useState(0);
+  const[rodaAtivacao,setRodaAtivacao]=useState({area:null,etapa:'foco',razoes:[],metaNota:null});
   const recRef=useRef(null);
   const atual=useMemo(()=>faseAtualNIIL(d.etapas||{}),[d.etapas]);
   const marcos=useMemo(()=>marcosConcluidosNIIL(d.etapas||{}),[d.etapas]);
   const recomendacoes=useMemo(()=>recomendacoesContextuaisNIIL(d),[d]);
   const passo=TRILHA_NIIL.flatMap(f=>f.etapas.map(e=>({...e,fase:f}))).find(e=>e.id===aberta);
   const resp=d.trilhaNIIL?.respostas||{};
-  const snapshotValido=x=>x?.versao===2&&RODA_SETORES.every(s=>Number(x?.valores?.[s])>=1&&Number(x?.valores?.[s])<=10);
+  const snapshotValido=x=>x?.versao===3&&RODA_SETORES.every(s=>Number.isFinite(Number(x?.valores?.[s]))&&Number(x?.valores?.[s])>=0&&Number(x?.valores?.[s])<=10);
   const snapshotRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===passo.id&&snapshotValido(x)):null;
   const rascunhoRoda=passo?.tipo==='roda'?(d.trilhaNIIL?.rodaRascunhos?.[passo.rodaId]||{}):{};
 
   useEffect(()=>{
-    if(passo?.tipo!=='roda'||snapshotRoda)return;
-    const i=RODA_SETORES.findIndex(s=>!rascunhoRoda?.[s]?.nota);
+    if(passo?.tipo!=='roda')return;
+    if(snapshotRoda){setRodaAtivacao({area:null,etapa:'foco',razoes:[],metaNota:null});return;}
+    const i=RODA_SETORES.findIndex(s=>rascunhoRoda?.[s]?.nota===undefined);
     setRodaPasso(i<0?0:i);
+    setRodaAtivacao({area:null,etapa:'foco',razoes:[],metaNota:null});
   },[passo?.id,snapshotRoda?.id]);
 
 
@@ -98,7 +101,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
 
   const valido=e=>{
     const v=ler(e.chave);
-    if(e.tipo==='roda')return RODA_SETORES.every(s=>Number(d.rodas?.[e.rodaId]?.[s])>=1);
+    if(e.tipo==='roda')return !!(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.etapaId===e.id&&snapshotValido(x));
     if(e.interacao==='multi'||e.interacao==='modules'||e.interacao==='swipe')return Array.isArray(v)&&v.length>0;
     if(e.interacao==='energy')return v&&Object.keys(v).length>=4;
     if(e.interacao==='sleep')return v?.dormir&&v?.acordar;
@@ -186,38 +189,64 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
     });
   };
 
-  const salvarRodaCampo=(e,setor,patch)=>up(s=>{
-    const atual=s.trilhaNIIL||{},rascunhos=atual.rodaRascunhos||{},roda=rascunhos[e.rodaId]||{},item=roda[setor]||{};
-    return{...s,trilhaNIIL:{...atual,rodaRascunhos:{...rascunhos,[e.rodaId]:{...roda,[setor]:{...item,...patch}}}}};
+  const salvarRodaNota=(e,setor,nota)=>up(s=>{
+    const atual=s.trilhaNIIL||{},rascunhos=atual.rodaRascunhos||{},roda=rascunhos[e.rodaId]||{};
+    return{...s,trilhaNIIL:{...atual,rodaRascunhos:{...rascunhos,[e.rodaId]:{...roda,[setor]:{nota}}}}};
   });
 
-  const concluirAreaRoda=e=>{
-    const setor=RODA_SETORES[rodaPasso],item=rascunhoRoda?.[setor]||{};
-    const justificou=(item.razoes||[]).length>0||String(item.detalhe||'').trim().length>=3;
-    if(!item.nota)return aviso('Escolha uma nota antes de continuar.');
-    if(!justificou)return aviso('Marque pelo menos um ponto que explica sua nota.');
-    if(rodaPasso<RODA_SETORES.length-1){setRodaPasso(x=>x+1);window.setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),30);return;}
-    const respostas={...rascunhoRoda,[setor]:item};
-    const valores={};RODA_SETORES.forEach(s=>valores[s]=Number(respostas[s]?.nota||0));
-    const snap={id:'roda-'+e.rodaId+'-'+Date.now(),versao:2,rodaId:e.rodaId,etapaId:e.id,concluidaEm:new Date().toISOString(),data:hoje(),valores,respostas};
-    up(s=>({...s,rodas:{...(s.rodas||{}),[e.rodaId]:valores},trilhaNIIL:{...(s.trilhaNIIL||{}),rodaSnapshots:[...(s.trilhaNIIL?.rodaSnapshots||[]),snap]}}));
+  const responderRoda=(e,setor,nota)=>{
+    if(rascunhoRoda?.[setor]?.nota!==undefined)return;
+    salvarRodaNota(e,setor,nota);
+    feedback('snap',d);
+    if(rodaPasso<RODA_SETORES.length-1){
+      window.setTimeout(()=>{
+        setRodaPasso(x=>Math.min(RODA_SETORES.length-1,x+1));
+        window.scrollTo({top:0,behavior:'smooth'});
+      },300);
+      return;
+    }
+    const respostas={...rascunhoRoda,[setor]:{nota}};
+    const valores={};RODA_SETORES.forEach(s=>valores[s]=Number(respostas[s]?.nota));
+    const snap={id:'roda-'+e.rodaId+'-'+Date.now(),versao:3,rodaId:e.rodaId,etapaId:e.id,concluidaEm:new Date().toISOString(),data:hoje(),valores};
+    window.setTimeout(()=>{
+      up(s=>({...s,rodas:{...(s.rodas||{}),[e.rodaId]:valores},trilhaNIIL:{...(s.trilhaNIIL||{}),rodaSnapshots:[...(s.trilhaNIIL?.rodaSnapshots||[]),snap]}}));
+      feedback('marco',d);
+    },300);
   };
 
-  const alternarRazaoRoda=(e,setor,razao)=>{
-    const item=rascunhoRoda?.[setor]||{},atuais=Array.isArray(item.razoes)?item.razoes:[];
-    salvarRodaCampo(e,setor,{razoes:atuais.includes(razao)?atuais.filter(x=>x!==razao):[...atuais,razao]});
+  const escolherFocoRoda=(area)=>{
+    setRodaAtivacao({area,etapa:'razao',razoes:[],metaNota:null});
+    window.scrollTo({top:0,behavior:'smooth'});
   };
 
-  const ativarFocoRoda=(e,snapshot,area)=>{
-    const modulo=RODA_MODULO(area),nota=Number(snapshot?.valores?.[area]||0);
+  const escolherRazaoRoda=(razao)=>{
+    setRodaAtivacao(a=>({...a,razoes:[razao],etapa:'meta'}));
+    feedback('snap',d);
+    window.setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),220);
+  };
+
+  const escolherMetaRoda=(nota)=>{
+    setRodaAtivacao(a=>({...a,metaNota:nota,etapa:'confirmar'}));
+    feedback('snap',d);
+    window.setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),220);
+  };
+
+  const ativarFocoRoda=(e,snapshot)=>{
+    const area=rodaAtivacao.area;
+    if(!area)return;
+    const modulo=RODA_MODULO(area),nota=Number(snapshot?.valores?.[area]||0),notaDesejada=Number(rodaAtivacao.metaNota||nota);
     const areaSlug=area.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
-    const meta={id:'meta-roda-'+snapshot.id+'-'+areaSlug,titulo:'Evoluir '+area,area,notaInicial:nota,snapshotId:snapshot.id,origem:'roda-da-vida',status:'ativa',criadaEm:new Date().toISOString()};
+    const meta={id:'meta-roda-'+snapshot.id+'-'+areaSlug,titulo:'Evoluir '+area,area,notaInicial:nota,notaDesejada,motivos:rodaAtivacao.razoes,snapshotId:snapshot.id,origem:'roda-da-vida',status:'ativa',criadaEm:new Date().toISOString()};
     up(s=>{
       const atual=s.trilhaNIIL||{},metas=Array.isArray(atual.metas)?atual.metas:[],trilhas=atual.trilhasContextuais||{};
-      return{...s,trilhaNIIL:{...atual,focoAtual:meta,metas:metas.some(x=>x.id===meta.id)?metas:[...metas,meta],trilhasContextuais:{...trilhas,[area]:{area,origem:'roda-da-vida',snapshotId:snapshot.id,notaInicial:nota,status:modulo?'conectada':'sugerida',modulo}},handoff:{id:'handoff-'+Date.now(),area,modulo,snapshotId:snapshot.id,notaInicial:nota,consumido:false}}};
+      return{...s,trilhaNIIL:{...atual,focoAtual:meta,metas:metas.some(x=>x.id===meta.id)?metas:[...metas,meta],trilhasContextuais:{...trilhas,[area]:{area,origem:'roda-da-vida',snapshotId:snapshot.id,notaInicial:nota,notaDesejada,motivos:rodaAtivacao.razoes,status:modulo?'conectada':'sugerida',modulo}},handoff:{id:'handoff-'+Date.now(),area,modulo,snapshotId:snapshot.id,notaInicial:nota,notaDesejada,consumido:false}}};
     });
+    feedback('marco',d);
     concluir(e,{ignorarValidacao:true,semFeedback:true});
-    if(modulo){setAberta(null);setAba(modulo);}
+    window.setTimeout(()=>{
+      setAberta(null);
+      if(modulo)setAba(modulo);
+    },260);
   };
 
   const Interacao=({e})=>{
