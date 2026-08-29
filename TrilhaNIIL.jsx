@@ -325,9 +325,14 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     try{
       const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
       mediaStreamRef.current=stream;
-      const candidatos=['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'];
+      const ua=String(navigator.userAgent||'');
+      const ios=/iP(hone|ad|od)/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+      const candidatos=ios?[]:['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];
       const mime=candidatos.find(t=>MediaRecorder.isTypeSupported?.(t));
-      const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+      // No iPhone/iPad deixamos o Safari escolher o contêiner nativo.
+      // Forçar audio/mp4 + chunks temporizados pode gerar um arquivo com duração,
+      // mas que não inicia a reprodução em alguns WebKit.
+      const recorder=ios?new MediaRecorder(stream):new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
       mediaRecorderRef.current=recorder;
       audioChunksRef.current=[];
       recorder.ondataavailable=ev=>{if(ev.data?.size)audioChunksRef.current.push(ev.data)};
@@ -337,7 +342,11 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       };
       recorder.onstop=async()=>{
         encerrarStreamAudio();
-        const blob=new Blob(audioChunksRef.current,{type:recorder.mimeType||mime||'audio/webm'});
+        const partes=audioChunksRef.current.filter(x=>x?.size);
+        const tipo=partes.find(x=>x.type)?.type||recorder.mimeType||mime||(ios?'audio/mp4':'audio/webm');
+        // Em iOS, preservar o Blob final original evita reempacotar MP4 e perder
+        // metadados necessários ao player do Safari.
+        const blob=partes.length===1?partes[0]:new Blob(partes,{type:tipo});
         if(blob.size<700){
           setVozCommit({status:'error',url:null,error:'A gravação ficou curta demais. Tente falar a frase novamente.'});
           return;
@@ -358,7 +367,9 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
           setVozCommit({status:'error',url:null,error:'Não consegui salvar o áudio neste dispositivo.'});
         }
       };
-      recorder.start(180);
+      // Safari/iOS: gerar um único Blob final é mais confiável para replay.
+      // Outros navegadores continuam podendo emitir chunks durante a gravação.
+      if(ios)recorder.start(); else recorder.start(250);
       setVozCommit(prev=>({status:'recording',url:prev.url||null,error:''}));
       feedback('tap',d);
       audioTimerRef.current=setTimeout(()=>pararGravacao(),12000);
@@ -646,9 +657,10 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
                     key={vozCommit.url}
                     ref={audioPlayerRef}
                     src={vozCommit.url}
-                    preload="auto"
+                    preload="metadata"
                     controls
                     playsInline
+                    onError={()=>setVozCommit(prev=>({...prev,error:'A gravação foi salva, mas este formato não abriu para reprodução. Toque em Refazer e grave novamente.'}))}
                   />
                   <button className="redo" type="button" onClick={()=>iniciarGravacaoCompromisso(e,frase,v)}><RotateCcw size={16}/> Refazer</button>
                 </div>
