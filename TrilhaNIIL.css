@@ -346,8 +346,10 @@ body:has(.tn-detail) .niil-bottom-nav{display:none!important}
 .tn-ownvoice-record.stop{background:#FF8A3D;color:#17151D}
 .tn-ownvoice-actions{position:relative;z-index:2;display:grid;grid-template-columns:1fr;gap:9px}
 .tn-ownvoice-ready{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:850;color:#6C9700}
-.tn-ownvoice-actions audio{display:block;width:100%;height:42px;accent-color:#B7F20C}
-.tn-ownvoice-actions button{min-height:42px;border-radius:14px;font:inherit;font-size:10.5px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:6px}
+.tn-ownvoice-actions audio{display:none}
+.tn-ownvoice-actions button{min-height:46px;border-radius:14px;font:inherit;font-size:10.5px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:6px}
+.tn-ownvoice-actions .play{border:0;background:#B7F20C;color:#17151D;box-shadow:0 4px 0 rgba(108,151,0,.18)}
+.tn-ownvoice-actions .play:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(108,151,0,.18)}
 .tn-ownvoice-actions .redo{border:1.5px solid #E0DEE3;background:#fff;color:#17151D;padding:0 12px}
 .tn-ownvoice-live{position:relative;z-index:2;margin-top:9px;font-size:8.5px;font-weight:750;color:#7D593E;display:flex;align-items:center;gap:6px}
 .tn-ownvoice-live i{width:8px;height:8px;border-radius:50%;background:#FF8A3D;animation:tnVoicePulse 1s ease-in-out infinite}
