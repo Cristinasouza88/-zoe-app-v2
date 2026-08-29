@@ -11,7 +11,7 @@
   to = "/index.html"
   status = 200
 
-# deploy-trigger: scale-continue-fix-20260828
+# deploy-trigger: m1-sentence-duolingo-layout-20260828
 
 
 [[headers]]
