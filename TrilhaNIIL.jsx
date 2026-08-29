@@ -2,7 +2,7 @@ import React,{useEffect,useMemo,useRef,useState}from'react';
 import{
   ArrowLeft,Target,Moon,Home,Repeat2,Network,Flag,CalendarDays,TrendingUp,
   Lock,Check,ChevronRight,BookOpen,Wallet,Dumbbell,Droplets,Utensils,GraduationCap,
-  Languages,Camera,Clock3,Mic,Square,Brain,Footprints,Sparkles
+  Languages,Camera,Clock3,Mic,Square,Brain,Footprints,Sparkles,Volume2
 }from'lucide-react';
 import NIILOrb from'./NIILOrb.jsx';
 import{RODA_SETORES}from'./conteudo.js';
@@ -47,6 +47,18 @@ const som=(kind='tap',enabled=true)=>{
   }catch{}
 };
 const feedback=(kind,d)=>{vibrar();som(kind,d?.preferencias?.sonsNIIL!==false)};
+const falarFrase=texto=>{
+  try{
+    if(!window.speechSynthesis||!texto)return;
+    window.speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(texto);
+    u.lang='pt-BR';u.rate=.92;u.pitch=1;
+    const vozes=window.speechSynthesis.getVoices?.()||[];
+    const pt=vozes.find(v=>String(v.lang||'').toLowerCase().startsWith('pt-br'))||vozes.find(v=>String(v.lang||'').toLowerCase().startsWith('pt'));
+    if(pt)u.voice=pt;
+    window.speechSynthesis.speak(u);
+  }catch{}
+};
 
 const Radar=({valores={}})=>{
   const n=RODA_SETORES.length,cx=150,cy=150,r=110;
@@ -353,6 +365,32 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
         <small className="tn-roda-scan-auto">Toque em uma nota. O próximo item abre sozinho.</small>
       </div>;
     }
+    if(e.interacao==='sentence-choice'){
+      const escolhida=(e.opcoesFrase||[]).find(x=>x.valor===v);
+      const textoEscolhido=escolhida?.texto||'';
+      const frase=textoEscolhido?(e.fraseInicio+' '+textoEscolhido+' '+e.fraseFim):(e.fraseInicio+' ... '+e.fraseFim);
+      return <div className="tn-sentence-exercise">
+        <div className="tn-sentence-label">COMPLETE A FRASE</div>
+        <h1>Eu mudaria <span>{textoEscolhido||'________'}</span> primeiro.</h1>
+
+        <div className="tn-sentence-stage">
+          <div className="tn-sentence-symbol" aria-hidden="true"><Target size={56} strokeWidth={1.7}/></div>
+          <div className={`tn-sentence-bubble ${textoEscolhido?'ready':''}`}>
+            <button type="button" aria-label="Ouvir frase" disabled={!textoEscolhido} onClick={()=>falarFrase(frase)}><Volume2 size={25}/></button>
+            <div><small>OUÇA SUA FRASE</small><b>{e.fraseInicio} {textoEscolhido?<mark>{textoEscolhido}</mark>:'______'} {e.fraseFim}</b></div>
+          </div>
+        </div>
+
+        <div className="tn-sentence-answer">
+          <span>Eu mudaria</span>
+          <button className={textoEscolhido?'filled':'blank'} type="button" onClick={()=>textoEscolhido&&salvar(e.chave,null)}>{textoEscolhido||'escolha uma opção'}</button>
+          <span>primeiro.</span>
+        </div>
+
+        <div className="tn-sentence-divider"/>
+        <div className="tn-sentence-bank">{(e.opcoesFrase||[]).map(x=><button type="button" key={x.valor} className={v===x.valor?'selected':''} onClick={()=>{salvar(e.chave,x.valor);feedback('tap',d)}}>{x.texto}</button>)}</div>
+      </div>;
+    }
     if(['choice','binary','module-decision'].includes(e.interacao))return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}<ChevronRight size={16}/></button>)}</div>;
     if(e.interacao==='scale')return <div className="tn-scale tn-scale-reflect"><div className="tn-scale-icon"><Target size={30}/></div><strong>{v??5}/10</strong><input type="range" min="1" max="10" value={v??5} onChange={ev=>salvar(e.chave,Number(ev.target.value))}/><div><span>{e.minimo}</span><span>{e.maximo}</span></div><small>{Number(v??5)>=8?'Isso parece importante de verdade para você.':Number(v??5)>=5?'Isso tem peso, mas ainda disputa espaço com outras coisas.':'Talvez isso ainda não seja uma prioridade real agora.'}</small></div>;
     if(e.interacao==='dual-scale')return <div className="tn-stack">
@@ -381,13 +419,13 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
       <header className="tn-detail-head"><button onClick={()=>setAberta(null)}><ArrowLeft size={20}/></button><div><span>{passo.tipo==='roda'?'RODA DA VIDA':fase.marco+' · '+passo.min+' min'}</span><b>{passo.tipo==='roda'?(snapshotRoda?'Seu retrato':RODA_SETORES[rodaPasso]):passo.titulo}</b></div><i>{passo.tipo==='roda'&&!snapshotRoda?(rodaPasso+1)+'/'+RODA_SETORES.length:(fase.etapas.findIndex(x=>x.id===passo.id)+1)+'/'+fase.etapas.length}</i></header>
       <div className="tn-detail-progress"><i style={{width:(passo.tipo==='roda'&&!snapshotRoda?((rodaPasso+1)/RODA_SETORES.length)*100:((fase.etapas.findIndex(x=>x.id===passo.id)+1)/fase.etapas.length)*100)+'%'}}/></div>
       <main className="tn-detail-main">
-        {passo.tipo!=='roda'&&<><div className="tn-kicker">UMA COISA POR VEZ</div><h1>{passo.pergunta||passo.perguntaCurta||passo.titulo}</h1>{passo.perguntaCurta&&<p>{passo.perguntaCurta}</p>}</>}
+        {passo.tipo!=='roda'&&passo.interacao!=='sentence-choice'&&<><div className="tn-kicker">UMA COISA POR VEZ</div><h1>{passo.pergunta||passo.perguntaCurta||passo.titulo}</h1>{passo.perguntaCurta&&<p>{passo.perguntaCurta}</p>}</>}
         <Interacao e={passo}/>
         {passo.modulo&&!['sleep','agenda','photo'].includes(passo.interacao)&&<button className="tn-open-module" onClick={()=>abrirModulo(passo.modulo)}>Abrir {passo.modulo==='financeiro'?'Financeiro':passo.modulo==='cursos'?'Cursos':passo.modulo==='sono'?'Sono':'módulo relacionado'} <ChevronRight size={16}/></button>}
         {passo.ciencia&&<details className="tn-science"><summary>Por que o NIIL pergunta isso?</summary><p>{passo.ciencia}</p>{passo.fonte&&<small>{passo.fonte}</small>}</details>}
         {passo.base&&<small className="tn-base">{passo.base}</small>}
       </main>
-      {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{feito(passo.id)?'Continuar':'Continuar'} <ChevronRight size={18}/></button></footer>}
+      {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{passo.interacao==='sentence-choice'?'Confirmar':'Continuar'} <ChevronRight size={18}/></button></footer>}
     </div>;
   }
 
