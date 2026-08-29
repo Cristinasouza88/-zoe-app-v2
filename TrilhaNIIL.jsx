@@ -1064,6 +1064,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         {passo.base&&<small className="tn-base">{passo.base}</small>}
       </main>
       {passo.tipo!=='roda'&&!['choice','binary','module-decision','experiment','sort','minimum','motivation-why','reward-choice','motivation-insight','first-movement'].includes(passo.interacao)&&<footer className="tn-detail-foot"><button disabled={!valido(passo)} onClick={()=>concluir(passo)}>{passo.interacao==='sentence-choice'?'Confirmar':'Continuar'} <ChevronRight size={18}/></button></footer>}
+      {recompensa&&<div className="tn-reward-pop" aria-live="polite"><div className="tn-reward-burst" aria-hidden="true"><i/><i/><i/><i/><i/><i/></div><strong>+{recompensa.pontos}</strong><span>PONTOS NIIL</span><small>{recompensa.titulo}</small></div>}
     </div>;
   }
 
