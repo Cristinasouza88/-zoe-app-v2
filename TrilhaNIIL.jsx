@@ -613,6 +613,21 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         const snapInicialId=temporadaAtiva?.rodaInicialSnapshotId;
         const snapInicial=(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.id===snapInicialId)||null;
         const comparacao=e.papel==='fechamento'&&snapInicial?RODA_SETORES.map(s=>({setor:s,antes:Number(snapInicial.valores?.[s]||0),agora:Number(snap.valores?.[s]||0),delta:Number(snap.valores?.[s]||0)-Number(snapInicial.valores?.[s]||0)})):[];
+        if(e.papel==='abertura'){
+          return <div className="tn-roda-result tn-roda-reveal tn-roda-opening">
+            <div className="tn-roda-result-head"><span>RETRATO INICIAL</span><b>{dataFmt}</b></div>
+            <h2>Agora existe um ponto de partida.</h2>
+            <p className="tn-roda-reveal-copy">A Roda não cria metas automaticamente. Ela guarda como você percebe sua vida hoje para que o NIIL possa comparar mudanças ao longo da temporada.</p>
+            <Radar valores={snap.valores}/>
+            <div className="tn-insight-callout">
+              <span>INSIGHT NIIL</span>
+              <h3>{ordenadas.slice(0,3).join(', ')} aparecem com as menores notas neste retrato.</h3>
+              <p>Isso não significa que precisam virar três metas. É contexto. A Trilha vai ativar poucas mudanças por vez.</p>
+            </div>
+            <button className="tn-roda-finish-compare" onClick={()=>concluir(e,{ignorarValidacao:true})}>Guardar este retrato e continuar <ChevronRight size={18}/></button>
+            <div className="tn-roda-locked-note"><Lock size={14}/><span>Este retrato fica fechado para comparação com o fim da temporada.</span></div>
+          </div>;
+        }
         if(rodaAtivacao.etapa==='razao'&&area){
           return <div className="tn-roda-activate">
             <span className="tn-roda-activate-kicker">{area} · {notaAtual}/10</span>
@@ -797,7 +812,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       const importancia=Number(ler('meta-importancia')??5);
       const motivo=ler('meta-motivo')||'isso importa para você';
       const recompensa=ler('meta-recompensa')||'ver uma mudança concreta';
-      const perfil=perfilMotivacao(objetivo);
+      const valores=Array.isArray(ler('meta-valores'))?ler('meta-valores'):[];
+      const contraste=ler('meta-contraste')||{};
       return <div className="tn-motivation-insight">
         <NIILOrb state="thinking" size={92} label="Insight NIIL"/>
         <span>INSIGHT NIIL</span>
@@ -806,10 +822,11 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         <div className="tn-motivation-summary">
           <div><small>IMPORTÂNCIA</small><b>{importancia}/10</b></div>
           <div><small>SEU MOTIVO</small><b>{motivo}</b></div>
+          {valores.length>0&&<div><small>O QUE REPRESENTA</small><b>{valores.join(' · ')}</b></div>}
+          {Number.isFinite(Number(contraste.atual))&&<div><small>PERCEPÇÃO</small><b>{contraste.atual} → {contraste.desejado}</b></div>}
         </div>
-        <p>O NIIL vai guardar isso como sua motivação-base e usar essa informação para dar contexto aos próximos passos — sem prometer que motivação sozinha muda comportamento.</p>
-        <div className="tn-motivation-path"><small>QUANDO FIZER SENTIDO, A TRILHA VAI PRIORIZAR</small><div>{perfil.modulos.map(x=><span key={x}>{x}</span>)}</div></div>
-        <button className="tn-motivation-confirm" onClick={()=>confirmarMotivacaoBase(e)}>Usar isso na minha trilha <ChevronRight size={18}/></button>
+        <p>Isso vira contexto para a temporada, não uma lista de tarefas. O NIIL pode encontrar várias oportunidades, mas vai ativar poucas mudanças por vez.</p>
+        <button className="tn-motivation-confirm" onClick={()=>confirmarMotivacaoBase(e)}>Guardar como ponto de partida <ChevronRight size={18}/></button>
       </div>;
     }
     if(['choice','binary','module-decision'].includes(e.interacao))return <div className="tn-options">{e.opcoes.map(x=><button key={x} className={v===x?'on':''} onClick={()=>concluirRapido(e,x)}>{x}<ChevronRight size={16}/></button>)}</div>;
