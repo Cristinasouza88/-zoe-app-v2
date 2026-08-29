@@ -252,3 +252,39 @@ body:has(.tn-detail) .niil-bottom-nav{display:none!important}
   .tn-sentence-bubble>button{width:42px;height:42px}
   .tn-sentence-bubble b{font-size:13px}
 }
+
+
+/* ══════════ M1 · motivação-base ══════════ */
+.tn-motivation-step{padding:8px 0 110px}
+.tn-motivation-icon{width:70px;height:70px;border-radius:24px;background:#F3F9DB;color:#6C9700;display:grid;place-items:center;margin-bottom:18px}
+.tn-motivation-kicker{display:block;font-size:9.5px;font-weight:950;letter-spacing:1.15px;color:#6C9700;margin-bottom:10px}
+.tn-motivation-step h1{font-size:36px!important;line-height:1.04!important;letter-spacing:-1.15px!important;margin:0 0 10px!important;font-weight:700!important;color:#17151D}
+.tn-motivation-step>p{font-size:11.5px!important;line-height:1.5!important;color:#747178!important;margin:0 0 22px!important}
+.tn-motivation-options{display:grid;gap:10px}
+.tn-motivation-options button{min-height:58px;border:1.5px solid #E2E1E5;border-radius:18px;background:#fff;color:#17151D;padding:0 15px;display:flex;align-items:center;justify-content:space-between;gap:12px;font:inherit;font-size:13px;font-weight:760;text-align:left;box-shadow:0 4px 0 rgba(23,21,29,.055)}
+.tn-motivation-options button:active{transform:translateY(2px);background:#F5FBD9;border-color:#8AB500;box-shadow:0 2px 0 rgba(108,151,0,.12)}
+.tn-reward-step .tn-motivation-icon{background:#17151D;color:#B7F20C}
+
+.tn-motivation-insight{padding:8px 0 120px;text-align:center}
+.tn-motivation-insight .niil-orb-wrap{margin:0 auto 12px}
+.tn-motivation-insight>span{display:block;font-size:9px;font-weight:950;letter-spacing:1.1px;color:#6C9700;margin-bottom:9px}
+.tn-motivation-insight>h1{font-size:31px!important;line-height:1.05!important;letter-spacing:-.9px!important;margin:0 auto 14px!important;max-width:430px;font-weight:690!important}
+.tn-motivation-quote{background:#17151D;color:#fff;border-radius:22px;padding:18px 16px;font-size:17px;line-height:1.35;margin:0 auto 14px;text-align:left}
+.tn-motivation-quote b{color:#B7F20C}
+.tn-motivation-summary{display:grid;grid-template-columns:118px 1fr;gap:9px;margin-bottom:14px;text-align:left}
+.tn-motivation-summary>div{background:#fff;border:1px solid #E8E6EA;border-radius:17px;padding:13px}
+.tn-motivation-summary small{display:block;font-size:7.5px;font-weight:900;letter-spacing:.8px;color:#8E8A93;margin-bottom:5px}
+.tn-motivation-summary b{display:block;font-size:12px;line-height:1.35}
+.tn-motivation-summary>div:first-child b{font-size:24px;color:#6C9700}
+.tn-motivation-insight>p{font-size:10.5px!important;line-height:1.5!important;color:#76727A!important;margin:0 0 14px!important;text-align:left}
+.tn-motivation-path{background:#F6F8EF;border:1px solid #E4EDC1;border-radius:18px;padding:13px 14px;text-align:left;margin-bottom:16px}
+.tn-motivation-path>small{display:block;font-size:7.5px;font-weight:900;letter-spacing:.75px;color:#77737C;margin-bottom:8px}
+.tn-motivation-path>div{display:flex;flex-wrap:wrap;gap:7px}
+.tn-motivation-path span{background:#fff;border:1px solid #DDE7B9;border-radius:999px;padding:8px 10px;font-size:10px;font-weight:800;color:#17151D}
+.tn-motivation-confirm{width:100%;min-height:58px;border:0;border-radius:18px;background:#B7F20C;color:#17151D;font:inherit;font-size:12px;font-weight:950;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 6px 0 rgba(108,151,0,.22)}
+.tn-motivation-confirm:active{transform:translateY(2px);box-shadow:0 4px 0 rgba(108,151,0,.22)}
+
+@media(max-width:380px){
+  .tn-motivation-step h1{font-size:32px!important}
+  .tn-motivation-summary{grid-template-columns:102px 1fr}
+}
