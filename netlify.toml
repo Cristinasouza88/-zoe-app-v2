@@ -11,7 +11,7 @@
   to = "/index.html"
   status = 200
 
-# deploy-trigger: roda-footer-cache-hotfix-20260828
+# deploy-trigger: roda-scan-gamificada-v3-20260828
 
 
 [[headers]]
