@@ -321,7 +321,7 @@ const inicial = {
   visao: {}, medidas: [], biblioteca: [], ritual: {}, jejum: null, alarmes: [],
   metasSOL: [], redes: [], cartas: {}, gratidoes: [], fotos: [], cursos: [], agendaCursos: [],
   jornada: { checkins: [], mapaNos: [], planoSemana: null },
-  trilhaNIIL: { respostas: {}, modulosVisitados: {} },
+  trilhaNIIL: { respostas: {}, modulosVisitados: {}, temporadas: [], temporadaAtualId: null },
   sono: { objetivoHoras: 8, registros: [], despertador: { ativo:false, hora:'07:00', janelaMin:30, dias:[1,2,3,4,5] }, integracoes:{} },
   guardaRoupa: { pecas: [] },
   treinos: [],
