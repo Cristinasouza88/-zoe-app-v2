@@ -7,7 +7,7 @@ export const TRILHA_NIIL = [
       {id:'m1-quer',tipo:'micro',titulo:'O que você quer há tempo demais?',min:2,interacao:'choice',chave:'meta-inicial',pergunta:'Se você pudesse mover uma coisa primeiro, qual seria?',opcoes:['Saúde e energia','Dinheiro','Carreira','Aprendizado','Relacionamentos','Organizar minha vida','Outra coisa'],pontos:10},
       {id:'m1-importa',tipo:'micro',titulo:'Quanto isso importa?',min:1,interacao:'scale',chave:'meta-importancia',pergunta:'Hoje, quanto isso realmente importa para você?',minimo:'Pouco',maximo:'Muito',pontos:5,ciencia:'Importância percebida ajuda a entender intenção, mas intenção sozinha não garante comportamento.',fonte:'Ciência comportamental · intenção e execução'},
       {id:'m1-presenca',tipo:'micro',titulo:'E quanto isso aparece na sua vida?',min:1,interacao:'scale',chave:'meta-presenca',pergunta:'Quanto desse objetivo já aparece no que você faz hoje?',minimo:'Quase nada',maximo:'Muito',pontos:5},
-      {id:'m1-roda-v2',tipo:'roda',rodaId:'m1-v2',titulo:'Roda da Vida',min:6,perguntaCurta:'Construa seu retrato atual, uma área de cada vez.',pontos:20,versaoFerramenta:2},
+      {id:'m1-roda-v3',tipo:'roda',rodaId:'m1-v3',titulo:'Roda da Vida',min:3,perguntaCurta:'Um scan rápido da sua vida, uma área por toque.',pontos:20,versaoFerramenta:3},
       {id:'m1-ecossistema',tipo:'micro',titulo:'Tudo isso está conectado',min:3,interacao:'modules',chave:'ecossistema',pergunta:'Quais partes da sua vida parecem ter relação com o que você quer construir?',opcoes:['Sono','Água','Alimentação','Movimento','Leitura','Cursos','Inglês','Finanças','Ambiente','Minha Visão','Agenda'],pontos:15},
     ]
   },
