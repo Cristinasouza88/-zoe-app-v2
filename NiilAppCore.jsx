@@ -3,7 +3,7 @@ import {
   Home, Route, Plus, Utensils, TrendingUp, Camera, ImagePlus, Bell, BellRing, ChevronLeft, ChevronRight,
   X, Check, Lock, Timer, Droplets, Dumbbell, BookOpen, Film, Video, Sparkles, Target,
   Heart, Scale, Circle, LogOut, Flame, Trash2, Compass, PenLine, ClipboardList, Sun,
-  Wallet, Languages, Trophy, Moon, Smile, CheckCircle2, Zap, CalendarDays, ChevronDown, ChevronUp, MessageCircle
+  Wallet, Languages, Trophy, Moon, Smile, CheckCircle2, Zap, CalendarDays, ChevronDown, ChevronUp, MessageCircle, RotateCcw
 } from 'lucide-react';
 import { TRILHA, RODA_SETORES, RITUAL_ACORDAR, VISAO_PILARES, RESUMO_VISAO, PILARES, VINCULOS } from './conteudo';
 import { store, C, sobre, CLARAS, hoje, CSS, Card, Btn, Campo, Area, Barra, Sheet, Wordmark, Foto, GraficoBarras, GraficoLinha } from './ui.jsx';
