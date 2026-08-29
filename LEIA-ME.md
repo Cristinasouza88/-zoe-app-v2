@@ -1,5 +1,9 @@
 # NIIL
 
+> **Antes de alterar produto, Trilha, UX ou arquitetura:** consulte [docs/NIIL-PRODUCT-CONTEXT.md](docs/NIIL-PRODUCT-CONTEXT.md).  
+> Para retomar o trabalho em outro chat, use [docs/NIIL-CHAT-MEMORY.md](docs/NIIL-CHAT-MEMORY.md).
+
+
 Sua vida extraordinária, um dia por vez.
 
 ---
