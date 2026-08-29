@@ -29,6 +29,51 @@ const RODA_GUIA={
 };
 const RODA_MODULO=area=>RODA_GUIA[area]?.modulo||null;
 
+const MOTIVACAO_PERFIS={
+  'Saúde':{
+    motivos:['Quero me sentir melhor','Estou cansada de adiar','Quero cuidar do meu corpo','Quero prevenir problemas','Quero voltar a me priorizar'],
+    recompensas:['Gostar mais do meu corpo','Ter mais disposição','Me sentir confiante','Ter uma rotina mais saudável','Sentir que estou me cuidando'],
+    modulos:['Nutrição','Treino']
+  },
+  'Energia':{
+    motivos:['Acordo sem disposição','Minha energia cai no meio do dia','Meu sono não parece recuperar','Quero parar de viver no limite','Quero render sem me esgotar'],
+    recompensas:['Acordar com disposição','Ter energia mais estável','Chegar ao fim do dia melhor','Conseguir treinar ou estudar','Sentir menos cansaço'],
+    modulos:['Sono','Ritmo diário']
+  },
+  'Dinheiro':{
+    motivos:['Quero parar de me preocupar tanto','Quero organizar o que entra e sai','Quero sair de dívidas','Quero construir segurança','Quero conseguir realizar um plano'],
+    recompensas:['Ter tranquilidade com dinheiro','Ter uma reserva','Poder escolher com mais liberdade','Parar de apagar incêndios','Ver meu patrimônio crescer'],
+    modulos:['Financeiro']
+  },
+  'Carreira':{
+    motivos:['Quero crescer profissionalmente','Quero ser mais reconhecida','Estou cansada de me sentir parada','Quero mudar de trabalho','Quero ganhar mais autonomia'],
+    recompensas:['Sentir orgulho do meu trabalho','Ter mais autonomia','Aumentar minha renda','Chegar a uma nova posição','Trabalhar com mais propósito'],
+    modulos:['Cursos','Agenda']
+  },
+  'Aprendizado':{
+    motivos:['Quero parar de só consumir conteúdo','Quero aprender algo que importa','Tenho um projeto que depende disso','Quero me sentir mais preparada','Quero transformar estudo em prática'],
+    recompensas:['Dominar uma habilidade','Concluir um curso','Usar o que aprendi na vida real','Me sentir mais capaz','Abrir novas oportunidades'],
+    modulos:['Cursos']
+  },
+  'Relacionamentos':{
+    motivos:['Quero melhorar minhas relações','Quero me comunicar melhor','Quero me sentir mais próxima das pessoas','Quero colocar limites melhores','Quero construir relações mais recíprocas'],
+    recompensas:['Ter relações mais leves','Me sentir compreendida','Criar mais conexão','Ter limites mais claros','Viver relações mais recíprocas'],
+    modulos:['Trilha contextual']
+  },
+  'Organizar minha vida':{
+    motivos:['Estou cansada de apagar incêndios','Quero parar de esquecer coisas','Minha rotina está me consumindo','Quero ter mais clareza','Quero sentir que estou no controle'],
+    recompensas:['Ter uma semana mais leve','Saber o que fazer primeiro','Ter tempo para o que importa','Reduzir a sensação de caos','Conseguir cumprir o que planejo'],
+    modulos:['Agenda']
+  },
+  'Outra coisa':{
+    motivos:['Isso vem me incomodando há algum tempo','Quero parar de adiar','Quero provar para mim que consigo','Quero mudar como me sinto hoje','Quero construir uma versão diferente da minha vida'],
+    recompensas:['Sentir progresso de verdade','Me sentir mais confiante','Ter mais liberdade de escolha','Parar de carregar isso','Ver uma mudança concreta'],
+    modulos:['Trilha contextual']
+  }
+};
+const perfilMotivacao=objetivo=>MOTIVACAO_PERFIS[objetivo]||MOTIVACAO_PERFIS['Outra coisa'];
+const objetivoLegivel=objetivo=>objetivo==='Dinheiro'?'Finanças':objetivo||'isso';
+
 
 const hoje=()=>new Date().toISOString().slice(0,10);
 const vibrar=()=>{try{navigator.vibrate?.(18)}catch{}};
@@ -191,6 +236,28 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{}}){
     salvar(e.chave,valor);
     feedback('snap',d);
     window.setTimeout(()=>concluir(e,{ignorarValidacao:true,semFeedback:true}),260);
+  };
+
+  const concluirMotivacaoRapido=(e,valor,campo)=>{
+    up(s=>{
+      const trilha=s.trilhaNIIL||{},respostas=trilha.respostas||{};
+      const objetivo=respostas['meta-inicial']||d.trilhaNIIL?.respostas?.['meta-inicial']||'Outra coisa';
+      const importancia=Number(respostas['meta-importancia']??d.trilhaNIIL?.respostas?.['meta-importancia']??5);
+      const atual=trilha.motivacaoBase||{};
+      return{...s,trilhaNIIL:{...trilha,respostas:{...respostas,[e.chave]:valor},motivacaoBase:{...atual,objetivo,importancia,[campo]:valor,atualizadaEm:new Date().toISOString()}}};
+    });
+    feedback('snap',d);
+    window.setTimeout(()=>concluir(e,{ignorarValidacao:true,semFeedback:true}),280);
+  };
+
+  const confirmarMotivacaoBase=e=>{
+    up(s=>{
+      const trilha=s.trilhaNIIL||{},respostas=trilha.respostas||{},objetivo=respostas['meta-inicial']||'Outra coisa';
+      const perfil=perfilMotivacao(objetivo);
+      const base={objetivo,importancia:Number(respostas['meta-importancia']??5),motivo:respostas['meta-motivo']||null,recompensa:respostas['meta-recompensa']||null,modulosPrioritarios:perfil.modulos,confirmadaEm:new Date().toISOString(),versao:1};
+      return{...s,trilhaNIIL:{...trilha,respostas:{...respostas,[e.chave]:'sim'},motivacaoBase:base}};
+    });
+    concluir(e,{ignorarValidacao:true});
   };
 
   const toggleMulti=(e,item)=>{
