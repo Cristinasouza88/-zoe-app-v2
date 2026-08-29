@@ -75,6 +75,59 @@ const MOTIVACAO_PERFIS={
 const perfilMotivacao=objetivo=>MOTIVACAO_PERFIS[objetivo]||MOTIVACAO_PERFIS['Outra coisa'];
 const objetivoLegivel=objetivo=>objetivo==='Dinheiro'?'Finanças':objetivo||'isso';
 
+const RODA_AREA_POR_OBJETIVO={
+  'Saúde':'Saúde',
+  'Energia':'Saúde',
+  'Dinheiro':'Finanças',
+  'Carreira':'Carreira',
+  'Aprendizado':'Crescimento pessoal',
+  'Relacionamentos':'Relacionamentos'
+};
+
+const PRIMEIROS_MOVIMENTOS={
+  'Saúde':[
+    {acao:'Observar minha energia em 3 momentos de hoje',duracao:5},
+    {acao:'Registrar uma refeição principal hoje',duracao:5},
+    {acao:'Fazer 10 minutos de movimento possível hoje',duracao:10}
+  ],
+  'Energia':[
+    {acao:'Registrar minha energia ao acordar por 3 dias',duracao:3},
+    {acao:'Observar meu horário de sono por 3 noites',duracao:3},
+    {acao:'Fazer uma pausa real de 10 minutos hoje',duracao:10}
+  ],
+  'Dinheiro':[
+    {acao:'Registrar tudo que eu gastar hoje',duracao:5},
+    {acao:'Separar 15 minutos para olhar minhas contas',duracao:15},
+    {acao:'Listar meus compromissos financeiros fixos',duracao:15}
+  ],
+  'Carreira':[
+    {acao:'Separar 15 minutos para definir meu próximo passo profissional',duracao:15},
+    {acao:'Anotar uma oportunidade que eu quero perseguir',duracao:10},
+    {acao:'Revisar uma pendência profissional importante',duracao:15}
+  ],
+  'Aprendizado':[
+    {acao:'Reservar 15 minutos para retomar um aprendizado',duracao:15},
+    {acao:'Escolher uma aula ou capítulo para concluir',duracao:15},
+    {acao:'Aplicar uma coisa que eu já aprendi',duracao:15}
+  ],
+  'Relacionamentos':[
+    {acao:'Separar 15 minutos de presença real para uma relação importante',duracao:15},
+    {acao:'Enviar uma mensagem que estou adiando',duracao:5},
+    {acao:'Anotar uma conversa que merece acontecer',duracao:10}
+  ],
+  'Organizar minha vida':[
+    {acao:'Escolher uma única pendência para encerrar hoje',duracao:15},
+    {acao:'Organizar um espaço pequeno por 10 minutos',duracao:10},
+    {acao:'Definir as 3 coisas que realmente importam hoje',duracao:5}
+  ],
+  'Outra coisa':[
+    {acao:'Reservar 15 minutos para um primeiro movimento concreto',duracao:15},
+    {acao:'Escrever qual seria a menor evidência de progresso',duracao:10},
+    {acao:'Fazer uma ação de até 10 minutos na direção que escolhi',duracao:10}
+  ]
+};
+const primeirosMovimentos=objetivo=>PRIMEIROS_MOVIMENTOS[objetivo]||PRIMEIROS_MOVIMENTOS['Outra coisa'];
+
 
 const hoje=()=>new Date().toISOString().slice(0,10);
 const vibrar=()=>{try{navigator.vibrate?.(18)}catch{}};
