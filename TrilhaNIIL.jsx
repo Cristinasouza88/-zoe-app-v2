@@ -377,6 +377,10 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
         const area=rodaAtivacao.area;
         const notaAtual=area?Number(snap.valores[area]):null;
         const guia=area?(RODA_GUIA[area]||{exemplos:[]}):null;
+        const temporadaAtiva=(d.trilhaNIIL?.temporadas||[]).find(t=>t.id===d.trilhaNIIL?.temporadaAtualId)||null;
+        const snapInicialId=temporadaAtiva?.rodaInicialSnapshotId;
+        const snapInicial=(d.trilhaNIIL?.rodaSnapshots||[]).find(x=>x.id===snapInicialId)||null;
+        const comparacao=e.papel==='fechamento'&&snapInicial?RODA_SETORES.map(s=>({setor:s,antes:Number(snapInicial.valores?.[s]||0),agora:Number(snap.valores?.[s]||0),delta:Number(snap.valores?.[s]||0)-Number(snapInicial.valores?.[s]||0)})):[];
         if(rodaAtivacao.etapa==='razao'&&area){
           return <div className="tn-roda-activate">
             <span className="tn-roda-activate-kicker">{area} · {notaAtual}/10</span>
@@ -409,6 +413,28 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
             <button className="tn-roda-text-back" onClick={()=>setRodaAtivacao(a=>({...a,etapa:'meta'}))}>Voltar</button>
           </div>;
         }
+        if(e.papel==='fechamento'){
+          const maiores=[...comparacao].sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,3);
+          const inicioFmt=snapInicial?new Date(snapInicial.concluidaEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}):null;
+          return <div className="tn-roda-result tn-roda-reveal tn-roda-compare">
+            <div className="tn-roda-result-head"><span>FECHAMENTO DA TEMPORADA</span><b>{dataFmt}</b></div>
+            <h2>O mesmo retrato. Outro momento.</h2>
+            <p className="tn-roda-reveal-copy">{inicioFmt?('Compare com a Roda feita em '+inicioFmt+'. Não existe nota certa: a mudança é o dado.'):'Este retrato fica salvo para ser comparado com os próximos ciclos.'}</p>
+            <Radar valores={snap.valores}/>
+            {comparacao.length>0&&<>
+              <div className="tn-insight-callout">
+                <span>INSIGHT NIIL</span>
+                <h3>As maiores mudanças desta temporada apareceram aqui.</h3>
+                <p>Isso mostra diferença entre duas percepções no tempo. Não prova causa nem diz sozinho o que gerou a mudança.</p>
+              </div>
+              <div className="tn-roda-delta-list">{maiores.map(x=><div key={x.setor}><b>{x.setor}</b><span>{x.antes} → {x.agora}</span><strong className={x.delta>0?'up':x.delta<0?'down':'same'}>{x.delta>0?'+':''}{x.delta}</strong></div>)}</div>
+              <details className="tn-roda-compare-all"><summary>Ver todas as áreas</summary><div>{comparacao.map(x=><div key={x.setor}><span>{x.setor}</span><b>{x.antes} → {x.agora}</b><em>{x.delta>0?'+':''}{x.delta}</em></div>)}</div></details>
+            </>}
+            <button className="tn-roda-finish-compare" onClick={()=>concluir(e,{ignorarValidacao:true})}>Continuar a leitura da temporada <ChevronRight size={18}/></button>
+            <div className="tn-roda-locked-note"><Lock size={14}/><span>Os dois retratos ficam preservados no histórico da temporada.</span></div>
+          </div>;
+        }
+
         return <div className="tn-roda-result tn-roda-reveal">
           <div className="tn-roda-result-head"><span>SEU RETRATO</span><b>{dataFmt}</b></div>
           <h2>Agora dá para ver o todo.</h2>
@@ -416,8 +442,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
           <Radar valores={snap.valores}/>
           <div className="tn-roda-score-grid">{RODA_SETORES.map(s=><div key={s}><span>{s}</span><b>{snap.valores[s]}/10</b></div>)}</div>
           <div className="tn-roda-focus">
-            <span>A NIIL PERCEBEU 3 PONTOS DE ATENÇÃO</span>
-            <h3>Qual merece entrar primeiro no seu sistema?</h3>
+            <span>INSIGHT NIIL</span>
+            <h3>Três áreas aparecem com as menores notas agora.</h3><h4>Qual merece entrar primeiro no seu sistema?</h4>
             <p>Começamos pelas menores notas, mas você decide o foco.</p>
             <div className="tn-roda-focus-list">{ordenadas.slice(0,3).map(areaItem=>{
               const mod=RODA_MODULO(areaItem);
@@ -512,8 +538,8 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       const recompensa=ler('meta-recompensa')||'ver uma mudança concreta';
       const perfil=perfilMotivacao(objetivo);
       return <div className="tn-motivation-insight">
-        <NIILOrb state="thinking" size={92} label="A NIIL percebeu algo"/>
-        <span>A NIIL PERCEBEU ALGO</span>
+        <NIILOrb state="thinking" size={92} label="Insight NIIL"/>
+        <span>INSIGHT NIIL</span>
         <h1>Você não escolheu apenas {objetivoLegivel(objetivo).toLowerCase()}.</h1>
         <div className="tn-motivation-quote">Você quer <b>{recompensa.toLowerCase()}</b>.</div>
         <div className="tn-motivation-summary">
@@ -543,7 +569,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
     if(e.interacao==='agenda')return <div className="tn-agenda-link"><CalendarDays size={30}/><b>{d.jornada?.planoSemana?.ativo?'Já entrou na sua agenda':'Transforme intenção em contexto real.'}</b><p>{(ler('ancora-acao')||{}).acao||'Use a ação que você acabou de montar.'}</p><button onClick={criarAgenda}>{d.jornada?.planoSemana?.ativo?'Atualizar na agenda':'Adicionar à agenda'}</button><button className="ghost" onClick={()=>abrirModulo('agenda')}>Ver Agenda</button></div>;
     if(e.interacao==='voice')return <div className="tn-voice"><textarea value={v||''} onChange={ev=>salvar(e.chave,ev.target.value)} placeholder="Uma frase já basta."/><button onClick={()=>iniciarVoz(e)}><Mic size={18}/> Falar em vez de escrever</button></div>;
     if(e.interacao==='budget')return <div className="tn-stack">{[['tempo','Tempo por semana'],['dinheiro','Dinheiro'],['atencao','Atenção']].map(([k,l])=><label className="tn-slider" key={k}><span>{l}<b>{v?.[k]??5}/10</b></span><input type="range" min="0" max="10" value={v?.[k]??5} onChange={ev=>salvar(e.chave,{...(v||{}),[k]:Number(ev.target.value)})}/></label>)}</div>;
-    if(e.interacao==='insight')return <div className="tn-insight"><Brain size={28}/><b>A NIIL já tem algumas peças suas.</b><div className="tn-insight-grid"><span>{d.sono?.registros?.length||0}<small>noites</small></span><span>{d.treinos?.length||0}<small>treinos</small></span><span>{d.cursos?.length||0}<small>cursos</small></span><span>{d.financeiro?.transacoes?.length||0}<small>movimentos</small></span></div></div>;
+    if(e.interacao==='insight')return <div className="tn-insight"><span className="tn-insight-label">INSIGHT NIIL</span><Brain size={28}/><b>Seus registros já formam algumas peças para comparar.</b><div className="tn-insight-grid"><span>{d.sono?.registros?.length||0}<small>noites</small></span><span>{d.treinos?.length||0}<small>treinos</small></span><span>{d.cursos?.length||0}<small>cursos</small></span><span>{d.financeiro?.transacoes?.length||0}<small>movimentos</small></span></div></div>;
     return <div className="tn-options"><button onClick={()=>salvar(e.chave,'ok')}>Entendi</button></div>;
   };
 
@@ -618,7 +644,7 @@ export default function TrilhaNIIL({d,up,setAba,aviso=()=>{},abrirTreino=null}){
       })}
     </div>
 
-    {marcos>=5&&recomendacoes.length>0&&<section className="tn-context"><span>A NIIL ENCONTROU CAMINHOS PARA APROFUNDAR</span>{recomendacoes.map(r=><button key={r.id} onClick={()=>abrirModulo(r.modulo)}><Sparkles size={18}/><div><b>{r.titulo}</b><p>{r.texto}</p></div><ChevronRight size={17}/></button>)}</section>}
+    {marcos>=5&&recomendacoes.length>0&&<section className="tn-context"><span>INSIGHT NIIL · CAMINHOS PARA APROFUNDAR</span>{recomendacoes.map(r=><button key={r.id} onClick={()=>abrirModulo(r.modulo)}><Sparkles size={18}/><div><b>{r.titulo}</b><p>{r.texto}</p></div><ChevronRight size={17}/></button>)}</section>}
 
     {marco&&<div className="tn-marco-overlay" onClick={()=>setMarco(null)}><div onClick={e=>e.stopPropagation()}><NIILOrb state="done" size={150} label="Marco concluído"/><span>{marco.marco} CONCLUÍDO</span><h2>{marco.nome}</h2><p>Você fechou este marco. O próximo caminho usa o que você acabou de construir — não começa do zero.</p><button onClick={()=>setMarco(null)}>Ver próximo marco</button></div></div>}
   </div>;
