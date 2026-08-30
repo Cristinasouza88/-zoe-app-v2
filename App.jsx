@@ -1,7 +1,6 @@
 import React,{useEffect,useState}from'react';
 import './niil-brand.css';
 import './niil-flat-theme.css';
-import './niil-runtime.js';
 import './niil-interactions.css';
 import NIILAppCore from './NiilAppCore.jsx';
 import {Wordmark} from './ui.jsx';
