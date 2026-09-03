@@ -10,11 +10,13 @@
 .niil-launch-mark i:before,.niil-launch-mark i:after{content:"";position:absolute;background:#B7F20C;border-radius:99px}
 .niil-launch-mark i:before{width:4px;height:34px;left:5px;top:-10px}.niil-launch-mark i:after{width:34px;height:4px;left:-10px;top:5px}
 .niil-launch-word{font-size:35px;font-weight:900;letter-spacing:5px}.niil-launch-sub{font-size:10px;font-weight:850;letter-spacing:1.4px;opacity:.68}
-.niil-app-stage{min-height:100vh;animation:niilPageIn .34s cubic-bezier(.2,.8,.2,1) both}
+/* A tela raiz não pode manter transform: isso muda o containing block de position:fixed
+   no Safari/iOS e empurra sheets/modais para fora da viewport. */
+.niil-app-stage{min-height:100vh;animation:niilPageFade .24s ease both;transform:none!important}
 .niil-app-stage button,.tn-shell button,.performance-niil button{transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease,border-color .16s ease}
 .niil-app-stage button:active,.tn-shell button:active,.performance-niil button:active{transform:scale(.975)}
 .tn-detail .tn-detail-head{animation:niilDropIn .28s ease both}
-.tn-detail .tn-detail-main{animation:niilPageIn .36s .03s cubic-bezier(.2,.8,.2,1) both}
+.tn-detail .tn-detail-main{animation:niilDetailIn .30s .02s ease both}
 .tn-olympo-node.current .tn-olympo-node-circle{animation:niilCurrentPulse 1.8s ease-in-out infinite}
 .tn-marco-overlay{animation:niilOverlayIn .22s ease both}
 .tn-marco-overlay>div{animation:niilUnlockSheet .5s cubic-bezier(.18,.9,.25,1) both}
@@ -22,12 +24,13 @@
 .tn-marco-points{display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:0 12px;border-radius:99px;background:#B7F20C;color:#17151D;font-size:11px;font-weight:900;margin:4px auto 12px}
 .tn-marco-rule{font-size:10.5px;line-height:1.45;opacity:.72;margin:0 auto 14px;max-width:320px}
 @keyframes niilLaunchIn{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:scale(1)}}
-@keyframes niilPageIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
-@keyframes niilDropIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes niilPageFade{from{opacity:.35}to{opacity:1}}
+@keyframes niilDetailIn{from{opacity:0}to{opacity:1}}
+@keyframes niilDropIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 @keyframes niilCurrentPulse{0%,100%{box-shadow:0 0 0 0 rgba(183,242,12,.22)}50%{box-shadow:0 0 0 10px rgba(183,242,12,0)}}
 @keyframes niilOverlayIn{from{opacity:0}to{opacity:1}}
-@keyframes niilUnlockSheet{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes niilBadgeUnlock{0%{opacity:0;transform:scale(.38) rotate(-8deg)}60%{opacity:1;transform:scale(1.08) rotate(2deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes niilUnlockSheet{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes niilBadgeUnlock{0%{opacity:0;transform:scale(.38) rotate(-8deg)}60%{opacity:1;transform:scale(1.08) rotate(2deg)}100%{transform:none}}
 @media(prefers-reduced-motion:reduce){
   .niil-launch-inner,.niil-app-stage,.tn-detail .tn-detail-head,.tn-detail .tn-detail-main,.tn-olympo-node.current .tn-olympo-node-circle,.tn-marco-overlay,.tn-marco-overlay>div,.tn-marco-badge{animation:none!important}
   .niil-launch-screen,.niil-app-stage button,.tn-shell button,.performance-niil button{transition:none!important}
