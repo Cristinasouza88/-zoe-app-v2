@@ -1,0 +1,34 @@
+/* Correções de interação mobile do Financeiro — iPhone/PWA */
+.fx2{position:relative;isolation:isolate}
+.fx2 button,.fx2 [role="button"],.fx2-more-card,.fx2-row.click,.fx2-alert{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.fx2 button,.fx2-more-card,.fx2-row.click{min-height:44px}
+.fx2-btn,.fx2-back,.fx2-close,.fx2-mainnav-btn,.fx2-quick button,.fx2-month button,.fx2-option{position:relative;z-index:2}
+
+/* O input real cobre toda a área. Mais confiável no Safari/PWA do que depender só de label for=... */
+.fx2-file{position:relative;min-height:146px;display:grid;place-items:center;overflow:hidden;isolation:isolate}
+.fx2-file input[type="file"]{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;opacity:.001!important;z-index:5!important;cursor:pointer!important;font-size:120px!important;touch-action:manipulation!important}
+.fx2-file label{position:relative;z-index:2;pointer-events:none!important;width:100%;min-height:104px;display:flex!important;flex-direction:column;align-items:center;justify-content:center;padding:8px}
+.fx2-file:focus-within{outline:3px solid rgba(183,242,12,.35);outline-offset:2px}
+
+/* Evita folhas modais capturarem toque fora da área visível e melhora rolagem no iPhone */
+.fx2-overlay{overscroll-behavior:contain;touch-action:none}
+.fx2-sheet{position:relative;z-index:101;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+.fx2-sheet button,.fx2-sheet input,.fx2-sheet select,.fx2-sheet textarea{touch-action:manipulation}
+.fx2-field input,.fx2-field select,.fx2-field textarea{font-size:16px!important;min-height:44px}
+
+/* Cartões de navegação que ainda são divs recebem comportamento de botão no mobile */
+.fx2-more-card,.fx2-row.click,.fx2-alert{position:relative;z-index:2;cursor:pointer;user-select:none;-webkit-user-select:none}
+.fx2-more-card:active,.fx2-row.click:active{transform:scale(.985)}
+
+@media(max-width:520px){
+  .fx2-shell{padding:14px 14px calc(112px + env(safe-area-inset-bottom))!important}
+  .fx2-mainnav{z-index:70!important;padding-bottom:calc(8px + env(safe-area-inset-bottom))!important}
+  .fx2-file{min-height:156px;padding:18px!important}
+  .fx2-quick button{min-height:58px}
+  .fx2-more-card{min-height:82px}
+}
+
+@supports(-webkit-touch-callout:none){
+  .fx2-file input[type="file"]{cursor:default!important}
+  .fx2-sheet{max-height:calc(88dvh - env(safe-area-inset-top))!important}
+}
