@@ -11,30 +11,35 @@
 .fx2-file:focus-within{outline:3px solid rgba(183,242,12,.35);outline-offset:2px}
 
 /*
-  Sheets financeiras são modais de tarefa: precisam ficar ACIMA da navegação global.
-  Não usamos stacking-context na raiz .fx2 porque isso prendia o modal atrás do menu inferior.
+  Sheets financeiras são modais de tarefa: abrem no CENTRO DA VIEWPORT,
+  na altura dos olhos, independentemente do scroll da página por trás.
+  A navegação inferior fica atrás do overlay e a rolagem acontece só dentro do modal.
 */
 .fx2-overlay{
   position:fixed!important;
   inset:0!important;
   z-index:2147482000!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
   overscroll-behavior:contain;
   touch-action:none;
-  padding:12px 10px max(14px,env(safe-area-inset-bottom));
-  align-items:flex-end!important;
+  padding:max(18px,env(safe-area-inset-top)) 14px max(18px,env(safe-area-inset-bottom));
 }
 .fx2-sheet{
   position:relative;
   z-index:1;
-  width:min(100%,520px)!important;
-  max-height:calc(100dvh - 72px)!important;
+  width:min(94vw,520px)!important;
+  max-height:min(82dvh,760px)!important;
   overflow-y:auto!important;
   overflow-x:hidden!important;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
   touch-action:pan-y;
-  padding-bottom:calc(34px + env(safe-area-inset-bottom))!important;
+  border-radius:26px!important;
+  padding:18px 18px calc(28px + env(safe-area-inset-bottom))!important;
   scroll-padding-bottom:120px;
+  box-shadow:0 24px 70px rgba(15,23,42,.28)!important;
 }
 .fx2-sheet-head{
   position:sticky;
@@ -63,11 +68,15 @@
   .fx2-file{min-height:156px;padding:18px!important}
   .fx2-quick button{min-height:58px}
   .fx2-more-card{min-height:82px}
-  .fx2-overlay{padding-left:8px;padding-right:8px}
-  .fx2-sheet{border-radius:26px 26px 20px 20px!important;max-height:calc(100dvh - 58px)!important}
+  .fx2-overlay{padding-left:12px!important;padding-right:12px!important}
+  .fx2-sheet{width:calc(100vw - 24px)!important;max-height:84dvh!important;border-radius:24px!important}
+}
+
+@media(max-height:700px){
+  .fx2-sheet{max-height:88dvh!important}
 }
 
 @supports(-webkit-touch-callout:none){
   .fx2-file input[type="file"]{cursor:default!important}
-  .fx2-sheet{max-height:calc(100dvh - max(58px,env(safe-area-inset-top)))!important}
+  .fx2-sheet{max-height:min(84dvh,760px)!important}
 }
