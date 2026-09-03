@@ -1,5 +1,5 @@
 /* Correções de interação mobile do Financeiro — iPhone/PWA */
-.fx2{position:relative;isolation:isolate}
+.fx2{position:relative;isolation:auto}
 .fx2 button,.fx2 [role="button"],.fx2-more-card,.fx2-row.click,.fx2-alert{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .fx2 button,.fx2-more-card,.fx2-row.click{min-height:44px}
 .fx2-btn,.fx2-back,.fx2-close,.fx2-mainnav-btn,.fx2-quick button,.fx2-month button,.fx2-option{position:relative;z-index:2}
@@ -10,11 +10,48 @@
 .fx2-file label{position:relative;z-index:2;pointer-events:none!important;width:100%;min-height:104px;display:flex!important;flex-direction:column;align-items:center;justify-content:center;padding:8px}
 .fx2-file:focus-within{outline:3px solid rgba(183,242,12,.35);outline-offset:2px}
 
-/* Evita folhas modais capturarem toque fora da área visível e melhora rolagem no iPhone */
-.fx2-overlay{overscroll-behavior:contain;touch-action:none}
-.fx2-sheet{position:relative;z-index:101;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+/*
+  Sheets financeiras são modais de tarefa: precisam ficar ACIMA da navegação global.
+  Não usamos stacking-context na raiz .fx2 porque isso prendia o modal atrás do menu inferior.
+*/
+.fx2-overlay{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147482000!important;
+  overscroll-behavior:contain;
+  touch-action:none;
+  padding:12px 10px max(14px,env(safe-area-inset-bottom));
+  align-items:flex-end!important;
+}
+.fx2-sheet{
+  position:relative;
+  z-index:1;
+  width:min(100%,520px)!important;
+  max-height:calc(100dvh - 72px)!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  touch-action:pan-y;
+  padding-bottom:calc(34px + env(safe-area-inset-bottom))!important;
+  scroll-padding-bottom:120px;
+}
+.fx2-sheet-head{
+  position:sticky;
+  top:-18px;
+  z-index:20;
+  background:#fff;
+  padding:18px 0 10px;
+  margin-top:-18px;
+}
 .fx2-sheet button,.fx2-sheet input,.fx2-sheet select,.fx2-sheet textarea{touch-action:manipulation}
 .fx2-field input,.fx2-field select,.fx2-field textarea{font-size:16px!important;min-height:44px}
+
+/* Botões finais nunca devem terminar encostados no home indicator/rodapé. */
+.fx2-sheet>.fx2-btn.wide:last-child,
+.fx2-sheet>form>.fx2-btn.wide:last-child{
+  margin-bottom:calc(12px + env(safe-area-inset-bottom));
+}
 
 /* Cartões de navegação que ainda são divs recebem comportamento de botão no mobile */
 .fx2-more-card,.fx2-row.click,.fx2-alert{position:relative;z-index:2;cursor:pointer;user-select:none;-webkit-user-select:none}
@@ -26,9 +63,11 @@
   .fx2-file{min-height:156px;padding:18px!important}
   .fx2-quick button{min-height:58px}
   .fx2-more-card{min-height:82px}
+  .fx2-overlay{padding-left:8px;padding-right:8px}
+  .fx2-sheet{border-radius:26px 26px 20px 20px!important;max-height:calc(100dvh - 58px)!important}
 }
 
 @supports(-webkit-touch-callout:none){
   .fx2-file input[type="file"]{cursor:default!important}
-  .fx2-sheet{max-height:calc(88dvh - env(safe-area-inset-top))!important}
+  .fx2-sheet{max-height:calc(100dvh - max(58px,env(safe-area-inset-top)))!important}
 }
